@@ -1,0 +1,27 @@
+# Node/Electron
+node_modules/
+dist/
+out/
+release/
+*.log
+
+# Electron builder / caches
+*.cache
+.cache/
+.DS_Store
+
+# Wallet/DBs locais e temporários
+*.db
+*.sqlite
+*.sqlite3
+*.txt
+/tmp/
+von_genesis.txn
+
+# Rust (se houver workspace/compilação no repo)
+target/
+
+# IDEs
+.vscode/
+.idea/
+

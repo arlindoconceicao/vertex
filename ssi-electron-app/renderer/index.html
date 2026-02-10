@@ -1,0 +1,325 @@
+<!--
+index.html (Renderer) — interface principal do app SSI Electron: define a estrutura da tela (formulários, botões,
+áreas de saída e modais) usada pelo `renderer/app.js`. Cada input/textarea possui um `id` que é consumido
+diretamente pelo JavaScript (via document.getElementById / `$`), e cada botão possui um `id` associado a um handler
+(btnTest, btnDid, btnSchema, btnCredDef, btnIssue, btnVerify, etc.). A página é organizada em “cards” (Config e
+Operações) e inclui uma área de saída (`<pre id="out">`) para logs/resultados. Também define dois modais:
+`credModal` (visualizar credencial) e `presModal` (visualizar apresentação), cujos campos internos (vm*/pm*)
+são preenchidos dinamicamente pelo app.js. O CSS é carregado via `styles.css` e a lógica da UI é carregada no final
+via `app.js` para garantir que o DOM já exista quando os listeners forem registrados.
+-->
+
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>SSI Electron (Von-Network)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h2>SSI Electron (Von-Network)</h2>
+        <div class="subtitle">Wallet • DID • Schema • CredDef • Credential • Verify</div>
+      </div>
+      <div class="badge">Rede local: von-network</div>
+    </div>
+
+    <div class="grid">
+      <!-- CONFIG -->
+      <div class="card">
+        <h3>Config</h3>
+
+        <div class="field">
+          <label for="genesisUrl">Genesis URL</label>
+          <input id="genesisUrl" name="genesisUrl" value="http://localhost:9000/genesis" />
+        </div>
+
+        <div class="field">
+          <label for="genesisFile">Genesis File</label>
+          <input id="genesisFile" name="genesisFile" value="/tmp/von_genesis.txn" />
+        </div>
+
+        <div class="field">
+          <label for="walletPath">Wallet Path</label>
+          <input id="walletPath" name="walletPath" value="./wallet.db" />
+        </div>
+
+        <div class="field">
+          <label for="walletPass">Wallet Pass</label>
+          <input id="walletPass" name="walletPass" value="indicio_key_secure" />
+        </div>
+
+        <div class="field">
+          <label for="trusteeSeed">Trustee Seed</label>
+          <input id="trusteeSeed" name="trusteeSeed" value="000000000000000000000000Trustee1" />
+        </div>
+
+        <div class="field">
+          <label for="trusteeDid">Trustee DID</label>
+          <input id="trusteeDid" name="trusteeDid" value="V4SGRU86Z58d6TV7PBUe6f" />
+        </div>
+
+        <div class="actions">
+          <button id="btnTest" class="primary">Testar conexão</button>
+        </div>
+
+        <div class="section">
+          <h4>DID / Seed do usuário inicial</h4>
+
+          <div class="field">
+            <label for="issuerSeed">Seed (Usuário/Issuer)</label>
+            <input id="issuerSeed" name="issuerSeed"
+              placeholder="Opcional: seed do issuer (se vazio, usa Trustee Seed)" />
+          </div>
+
+          <div class="field">
+            <label for="newDidRole">Role do novo DID</label>
+            <input id="newDidRole" name="newDidRole" value="ENDORSER" />
+          </div>
+
+          <div class="actions">
+            <button id="btnDid" class="primary">Criar DID + Registrar</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <h4>Issuer para registrar no Ledger</h4>
+
+          <div class="field">
+            <label for="issuerMode">Modo atual</label>
+            <input id="issuerMode" name="issuerMode" value="TRUSTEE" readonly />
+          </div>
+
+          <div class="actions">
+            <button id="btnUseTrustee" class="success">Usar Trustee DID (atual)</button>
+            <button id="btnUseNewDid" class="success">Usar DID recém-criado (ENDORSER)</button>
+          </div>
+
+          <div class="field">
+            <label for="issuerDidSelected">Issuer DID selecionado</label>
+            <input id="issuerDidSelected" name="issuerDidSelected" placeholder="Será preenchido automaticamente"
+              readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERAÇÕES -->
+      <div class="card">
+        <h3>Operações</h3>
+
+        <div class="section">
+          <h4>Schema</h4>
+
+          <div class="field">
+            <label for="schemaName">Nome</label>
+            <input id="schemaName" name="schemaName" value="IdentitySchema" />
+          </div>
+
+          <div class="field">
+            <label for="schemaVersion">Versão</label>
+            <input id="schemaVersion" name="schemaVersion" value="1.0.1" />
+          </div>
+
+          <div class="field">
+            <label for="schemaAttrs">Atributos (1 por linha)</label>
+            <textarea id="schemaAttrs" name="schemaAttrs" rows="4">nome
+idade
+cpf</textarea>
+          </div>
+
+          <div class="actions">
+            <button id="btnSchema" class="success">Criar Schema</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4>CredDef</h4>
+
+          <div class="field">
+            <label for="schemaId">Schema ID</label>
+            <input id="schemaId" name="schemaId" placeholder="...:2:Nome:Versao" />
+          </div>
+
+          <div class="field">
+            <label for="credDefTag">Tag</label>
+            <input id="credDefTag" name="credDefTag" value="TAG_PROOF_V1" />
+          </div>
+
+          <div class="actions">
+            <button id="btnCredDef" class="success">Criar CredDef</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4>Emitir Credencial</h4>
+
+          <div class="field">
+            <label for="credDefId">CredDef ID</label>
+            <input id="credDefId" name="credDefId" placeholder="...:3:CL:..." />
+          </div>
+
+          <div class="field">
+            <label for="credValues">Valores (JSON)</label>
+            <textarea id="credValues" name="credValues" rows="4">{"nome":"Alice","idade":"25","cpf":"123"}</textarea>
+          </div>
+
+          <div class="actions">
+            <button id="btnIssue" class="primary">Emitir + Exportar</button>
+          </div>
+
+
+          <div class="divider"></div>
+
+          <h4>Fluxo 2 instâncias (Offer → Request → Credential)</h4>
+          <div class="actions">
+            <button id="btnOffer" class="primary">1) Criar Oferta (Exportar)</button>
+            <button id="btnAcceptOffer" class="success">2) Aceitar Oferta (Gerar Request)</button>
+            <button id="btnIssueFromReq" class="primary">3) Emitir (a partir do Request)</button>
+            <button id="btnStoreCred" class="success">4) Importar Credencial (Store)</button>
+          </div>
+
+          <div class="subtitle" style="margin-top:10px;">
+            Use o textarea “Credential / Presentation Package (JSON)” para colar o JSON de <b>Offer</b>, <b>Request</b>
+            e <b>Credential</b>.
+            Salve/abra via “Salvar JSON / Abrir JSON”.
+          </div>
+
+        </div>
+
+        <div class="section">
+          <h4>Verificar</h4>
+
+          <div class="field">
+            <label for="credPkg">Credential / Presentation Package (JSON)</label>
+            <textarea id="credPkg" name="credPkg" rows="6"
+              placeholder="Cole aqui o pacote exportado... (credencial OU apresentação)"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="verifySchemaId">Schema ID (para buscar no ledger)</label>
+            <input id="verifySchemaId" name="verifySchemaId" placeholder="...:2:Nome:Versao" />
+          </div>
+
+          <div class="actions">
+            <!-- Credencial -->
+            <button id="btnVerify" class="success">Verificar (Credencial)</button>
+
+            <button id="btnSaveCredFile" class="primary">Salvar Credencial (JSON)</button>
+            <button id="btnOpenCredFile" class="primary">Abrir Credencial (JSON)</button>
+            <button id="btnViewCred" class="primary">Visualizar Credencial</button>
+
+            <!-- Apresentação -->
+            <button id="btnMakePres" class="success">Gerar Apresentação (Exportar)</button>
+            <button id="btnVerifyPres" class="success">Verificar Apresentação</button>
+
+            <button id="btnSavePresFile" class="primary">Salvar Apresentação (JSON)</button>
+            <button id="btnOpenPresFile" class="primary">Abrir Apresentação (JSON)</button>
+            <button id="btnViewPres" class="primary">Visualizar Apresentação</button>
+          </div>
+
+          <div class="subtitle" style="margin-top:10px;">
+            Dica multi-instância: <b>Issuer</b> exporta <b>Offer</b> → <b>Holder</b> gera <b>Request</b> → <b>Issuer</b>
+            exporta <b>Credential</b> → <b>Holder</b> faz <b>Store</b> e gera <b>Apresentação</b>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output">
+      <h3>Saída</h3>
+      <pre id="out"></pre>
+    </div>
+  </div>
+
+  <!-- Modal: Visualizar Credencial -->
+  <div id="credModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Visualizar Credencial</div>
+          <div class="modal-subtitle">Resumo amigável do pacote JSON</div>
+        </div>
+        <button id="btnCloseCredModal" class="modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="kv">
+          <div class="k">Schema ID</div>
+          <div class="v" id="vmSchemaId">—</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">CredDef ID</div>
+          <div class="v" id="vmCredDefId">—</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">DID do emissor</div>
+          <div class="v" id="vmIssuerDid">—</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="modal-title" style="font-size:14px;margin:0 0 10px;">Atributos</div>
+        <div id="vmAttrs" class="attrs-grid"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCopyCredSummary" class="success">Copiar resumo</button>
+        <button id="btnCloseCredModal2" class="primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Visualizar Apresentação -->
+  <div id="presModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Visualizar Apresentação</div>
+          <div class="modal-subtitle">Resumo amigável da apresentação (presentation/proof)</div>
+        </div>
+        <button id="btnClosePresModal" class="modal-close" title="Fechar">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="kv">
+          <div class="k">Schema ID</div>
+          <div class="v" id="pmSchemaId">—</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">CredDef ID</div>
+          <div class="v" id="pmCredDefId">—</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">DID do emissor (derivado)</div>
+          <div class="v" id="pmIssuerDid">—</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="modal-title" style="font-size:14px;margin:0 0 10px;">Atributos revelados</div>
+        <div id="pmAttrs" class="attrs-grid"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCopyPresSummary" class="success">Copiar resumo</button>
+        <button id="btnClosePresModal2" class="primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="./app.js"></script>
+</body>
+
+</html>

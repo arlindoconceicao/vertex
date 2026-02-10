@@ -1,0 +1,415 @@
+/*
+PARA RODAR ESTE TESTE:
+TRUSTEE_SEED="000000000000000000000000Trustee1" \
+TRUSTEE_DID="V4SGRU86Z58d6TV7PBUe6f" \
+WALLET_PASS="minha_senha_teste" GENESIS_FILE=./genesis.txn \
+node teste-node/presentations/teste_duas_credenciais_file_exchange_crypto_newdids_zkp_idade.js
+
+O QUE ESTE TESTE FAZ:
+- 2 credenciais (CPF e ENDERECO) emitidas via troca de ARQUIVOS CIFRADOS
+  Offer -> Request -> Credential -> Store receipt (para cada credencial)
+- Holder cria Presentation usando 2 credenciais, revelando:
+  - CPF: nome, cpf
+  - ENDERECO: endereco
+- E adiciona ZKP: idade >= 18 (predicado) usando a credencial CPF
+- Verificação (issuer) também é recebida via arquivo cifrado e validada
+- Arquivos em: teste-node/presentations/exchange_2creds_newdids_zkp18
+*/
+
+/* eslint-disable no-console */
+const fs = require("fs");
+const path = require("path");
+
+// Importa a classe IndyAgent do binding N-API (index.node) na raiz do projeto.
+const { IndyAgent } = require(path.join(__dirname, "..", "..", "index.node"));
+
+// Remove arquivos da wallet (db + sidecar KDF + wal/shm) para resetar o teste.
+function rmIfExists(walletDbPath) {
+  const sidecar = `${walletDbPath}.kdf.json`;
+  try { fs.unlinkSync(walletDbPath); } catch (_) {}
+  try { fs.unlinkSync(sidecar); } catch (_) {}
+  try { fs.unlinkSync(`${sidecar}.tmp`); } catch (_) {}
+  try { fs.unlinkSync(`${walletDbPath}-shm`); } catch (_) {}
+  try { fs.unlinkSync(`${walletDbPath}-wal`); } catch (_) {}
+}
+
+// Lê uma variável de ambiente obrigatória; se faltar, lança erro e interrompe o teste.
+function mustEnv(name) {
+  const v = process.env[name];
+  if (!v) throw new Error(`Env ${name} não definida.`);
+  return v;
+}
+
+// Cria a pasta do arquivo (se preciso) e escreve o conteúdo em UTF-8 no caminho.
+function writeFileAtomic(filePath, data) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, data, "utf8");
+}
+
+// Lê um arquivo como texto UTF-8 e retorna o conteúdo (string).
+function readFileUtf8(filePath) {
+  return fs.readFileSync(filePath, "utf8");
+}
+
+// Criptografa um payload para a verkey do destinatário e salva o JSON cifrado em arquivo.
+async function encryptToFile(senderAgent, senderDid, recipientVerkey, plaintext, filePath) {
+  const encryptedJson = await senderAgent.encryptMessage(senderDid, recipientVerkey, plaintext);
+  writeFileAtomic(filePath, encryptedJson);
+}
+
+// Lê o JSON cifrado do arquivo e o decifra usando o DID do receiver e verkey do remetente.
+async function decryptFromFile(receiverAgent, receiverDid, senderVerkey, filePath) {
+  const encryptedJson = readFileUtf8(filePath);
+  const plaintext = await receiverAgent.decryptMessage(receiverDid, senderVerkey, encryptedJson);
+  return plaintext;
+}
+
+// Tenta registrar o DID (NYM) no ledger; se já existir, ignora e segue o teste.
+async function tryRegisterDid(issuerAgent, GENESIS_FILE, submitterDid, did, verkey, role) {
+  try {
+    await issuerAgent.registerDidOnLedger(GENESIS_FILE, submitterDid, did, verkey, role);
+  } catch (e) {
+    const msg = e?.message || String(e);
+    if (/already exists|exists|DID.*exist|NYM.*exist|Ledger/i.test(msg)) {
+      console.log(`ℹ️ DID já estava no ledger, seguindo: ${did}`);
+      return;
+    }
+    throw e;
+  }
+}
+
+/**
+ * Emite 1 credencial via arquivos cifrados (Offer->Request->Credential->Receipt).
+ * Retorna dados úteis para prova.
+ */
+async function issueOneCredentialViaFiles(params) {
+  const {
+    label,
+    GENESIS_FILE,
+    exchangeDir,
+    issuer,
+    holder,
+    issuerDid,
+    issuerVerkey,
+    holderDid,
+    holderVerkey,
+    credDefId,
+    credIdInWallet,
+    valuesObj,
+    filePrefix
+  } = params;
+
+  console.log(`${label}) Issuer criando Offer (${filePrefix}) e gravando (cifrado)...`);
+  const offerId = `offer-${filePrefix}-${Date.now()}`;
+  const offerJson = await issuer.createCredentialOffer(credDefId, offerId);
+
+  const offerFile = path.join(exchangeDir, `${filePrefix}_01_offer.enc.json`);
+  await encryptToFile(issuer, issuerDid, holderVerkey, offerJson, offerFile);
+
+  console.log(`${label + 1}) Holder lendo Offer (${filePrefix}), criando Request (cifrado)...`);
+  const offerPlain = await decryptFromFile(holder, holderDid, issuerVerkey, offerFile);
+
+  const offerObj = JSON.parse(offerPlain);
+  const reqMetaId = offerObj?.nonce;
+  if (!reqMetaId) throw new Error(`${filePrefix}: Offer sem nonce (reqMetaId).`);
+
+  const credDefJsonLedger = await holder.fetchCredDefFromLedger(GENESIS_FILE, credDefId);
+
+  const reqJson = await holder.createCredentialRequest(
+    "default",
+    holderDid,
+    credDefJsonLedger,
+    offerPlain
+  );
+
+  const reqFile = path.join(exchangeDir, `${filePrefix}_02_request.enc.json`);
+  await encryptToFile(holder, holderDid, issuerVerkey, reqJson, reqFile);
+
+  console.log(`${label + 2}) Issuer lendo Request (${filePrefix}), emitindo Credential (cifrado)...`);
+  const reqPlain = await decryptFromFile(issuer, issuerDid, holderVerkey, reqFile);
+
+  const credJson = await issuer.createCredential(
+    credDefId,
+    offerJson,
+    reqPlain,
+    JSON.stringify(valuesObj)
+  );
+
+  const credFile = path.join(exchangeDir, `${filePrefix}_03_credential.enc.json`);
+  await encryptToFile(issuer, issuerDid, holderVerkey, credJson, credFile);
+
+  console.log(`${label + 3}) Holder lendo Credential (${filePrefix}), Store + receipt (cifrado)...`);
+  const credPlain = await decryptFromFile(holder, holderDid, issuerVerkey, credFile);
+
+  await holder.storeCredential(
+    credIdInWallet,
+    credPlain,
+    reqMetaId,
+    credDefJsonLedger,
+    null
+  );
+
+  const receipt = JSON.stringify({
+    ok: true,
+    step: "storeCredential",
+    kind: filePrefix,
+    cred_id: credIdInWallet,
+    cred_def_id: credDefId
+  });
+
+  const receiptFile = path.join(exchangeDir, `${filePrefix}_04_store_receipt.enc.json`);
+  await encryptToFile(holder, holderDid, issuerVerkey, receipt, receiptFile);
+
+  console.log(`${label + 4}) Issuer lendo receipt (${filePrefix}) (cifrado)...`);
+  const receiptPlain = await decryptFromFile(issuer, issuerDid, holderVerkey, receiptFile);
+  const receiptObj = JSON.parse(receiptPlain);
+  if (!receiptObj?.ok) throw new Error(`${filePrefix}: receipt inválido.`);
+  console.log(`✅ Store OK (${filePrefix}): cred_id=${receiptObj.cred_id}`);
+
+  return { credIdInWallet, reqMetaId, credDefJsonLedger };
+}
+
+(async () => {
+  // Configurações e variáveis do teste (genesis, wallets, trustee).
+  const GENESIS_FILE = mustEnv("GENESIS_FILE");
+  const WALLET_PASS = process.env.WALLET_PASS || "minha_senha_teste";
+
+  const TRUSTEE_SEED = mustEnv("TRUSTEE_SEED");
+  const TRUSTEE_DID = mustEnv("TRUSTEE_DID");
+
+  // Pastas e arquivos para wallets e troca de mensagens (ofertas, requests, creds, provas).
+  const walletsDir = path.join(__dirname, "..", "wallets");
+  fs.mkdirSync(walletsDir, { recursive: true });
+
+  const exchangeDir = path.join(__dirname, "exchange_2creds_newdids_zkp18");
+  fs.mkdirSync(exchangeDir, { recursive: true });
+
+  const issuerWalletPath = path.join(walletsDir, "issuer_2creds_files_newdids_zkp18.db");
+  const holderWalletPath = path.join(walletsDir, "holder_2creds_files_newdids_zkp18.db");
+
+  // Limpa wallets para resetar o teste (remove arquivos db, sidecar KDF e wal/shm).
+  rmIfExists(issuerWalletPath);
+  rmIfExists(holderWalletPath);
+
+  // Iniciando os agentes da Biblioteca Indy (wrapper N-API).
+  const issuer = new IndyAgent();
+  const holder = new IndyAgent();
+
+  try {
+    console.log("1) Criando wallets...");
+    await issuer.walletCreate(issuerWalletPath, WALLET_PASS);
+    await holder.walletCreate(holderWalletPath, WALLET_PASS);
+
+    console.log("2) Abrindo wallets...");
+    await issuer.walletOpen(issuerWalletPath, WALLET_PASS);
+    await holder.walletOpen(holderWalletPath, WALLET_PASS);
+
+    console.log("3) Conectando na rede...");
+    await issuer.connectNetwork(GENESIS_FILE);
+    await holder.connectNetwork(GENESIS_FILE);
+
+    console.log("4) Importando Trustee DID no issuer...");
+    await issuer.importDidFromSeed(TRUSTEE_SEED);
+
+    console.log("5) Criando DID do emissor (createOwnDid)...");
+    const [issuerDid, issuerVerkey] = await issuer.createOwnDid();
+
+    console.log("6) Criando DID do holder (createOwnDid)...");
+    const [holderDid, holderVerkey] = await holder.createOwnDid();
+
+    console.log("7) Registrando DIDs no ledger (NYM) via Trustee...");
+    await tryRegisterDid(issuer, GENESIS_FILE, TRUSTEE_DID, issuerDid, issuerVerkey, "ENDORSER");
+    await tryRegisterDid(issuer, GENESIS_FILE, TRUSTEE_DID, holderDid, holderVerkey, null);
+
+    // ============================================================
+    // Schema + CredDef (CPF e ENDERECO)
+    // ============================================================
+    console.log("8) Criando+registrando Schema CPF...");
+    const schemaCpfVer = `1.0.${Date.now()}`;
+    const schemaCpfId = await issuer.createAndRegisterSchema(
+      GENESIS_FILE,
+      issuerDid,
+      "cpf",
+      schemaCpfVer,
+      ["nome", "cpf", "idade"]
+    );
+
+    console.log("9) Criando+registrando Schema ENDERECO...");
+    const schemaEndVer = `1.0.${Date.now()}`;
+    const schemaEndId = await issuer.createAndRegisterSchema(
+      GENESIS_FILE,
+      issuerDid,
+      "endereco",
+      schemaEndVer,
+      ["nome", "endereco", "cidade", "estado"]
+    );
+
+    console.log("10) Criando+registrando CredDef CPF...");
+    const credDefCpfTag = `TAG_CPF_${Date.now()}`;
+    const credDefCpfId = await issuer.createAndRegisterCredDef(
+      GENESIS_FILE,
+      issuerDid,
+      schemaCpfId,
+      credDefCpfTag
+    );
+
+    console.log("11) Criando+registrando CredDef ENDERECO...");
+    const credDefEndTag = `TAG_END_${Date.now()}`;
+    const credDefEndId = await issuer.createAndRegisterCredDef(
+      GENESIS_FILE,
+      issuerDid,
+      schemaEndId,
+      credDefEndTag
+    );
+
+    console.log("12) Garantindo Link Secret no holder...");
+    try { await holder.createLinkSecret("default"); } catch (_) {}
+
+    // ============================================================
+    // Emissões via arquivos cifrados
+    // ============================================================
+    const valuesCpf = {
+      nome: "Edimar Veríssimo",
+      cpf: "123.456.789-09",
+      // ⚠️ Para predicado/ZKP, "idade" deve ser número ou string numérica válida.
+      idade: "35" // string numérica (a lib detecta dígitos e usa encoded=35)
+    };
+
+    const valuesEnd = {
+      nome: "Edimar Veríssimo",
+      endereco: "Rua Exemplo, 123",
+      cidade: "São Paulo",
+      estado: "SP"
+    };
+
+    const credCpfIdInWallet = "cred-cpf-file";
+    const credEndIdInWallet = "cred-end-file";
+
+    await issueOneCredentialViaFiles({
+      label: 13,
+      GENESIS_FILE,
+      exchangeDir,
+      issuer,
+      holder,
+      issuerDid,
+      issuerVerkey,
+      holderDid,
+      holderVerkey,
+      credDefId: credDefCpfId,
+      credIdInWallet: credCpfIdInWallet,
+      valuesObj: valuesCpf,
+      filePrefix: "cpf"
+    });
+
+    await issueOneCredentialViaFiles({
+      label: 18,
+      GENESIS_FILE,
+      exchangeDir,
+      issuer,
+      holder,
+      issuerDid,
+      issuerVerkey,
+      holderDid,
+      holderVerkey,
+      credDefId: credDefEndId,
+      credIdInWallet: credEndIdInWallet,
+      valuesObj: valuesEnd,
+      filePrefix: "end"
+    });
+
+    // ============================================================
+    // PROVA: 2 credenciais + ZKP idade>=18 (CPF)
+    // ============================================================
+    console.log("23) Issuer criando Proof Request (2 creds + ZKP idade>=18) e gravando...");
+    const presReq = {
+      nonce: String(Date.now()),
+      name: "proof-cpf-endereco-zkp18",
+      version: "1.0",
+      requested_attributes: {
+        attr_nome: { name: "nome", restrictions: [{ cred_def_id: credDefCpfId }] },
+        attr_cpf: { name: "cpf", restrictions: [{ cred_def_id: credDefCpfId }] },
+        attr_endereco: { name: "endereco", restrictions: [{ cred_def_id: credDefEndId }] }
+      },
+      requested_predicates: {
+        // ✅ Predicado ZKP: idade >= 18 usando credencial CPF
+        pred_idade_ge_18: {
+          name: "idade",
+          p_type: ">=",
+          p_value: 18,
+          restrictions: [{ cred_def_id: credDefCpfId }]
+        }
+      }
+    };
+
+    const presReqFile = path.join(exchangeDir, "proof_01_request.enc.json");
+    await encryptToFile(issuer, issuerDid, holderVerkey, JSON.stringify(presReq), presReqFile);
+
+    console.log("24) Holder lendo Proof Request, criando Presentation (2 creds + ZKP)...");
+    const presReqPlain = await decryptFromFile(holder, holderDid, issuerVerkey, presReqFile);
+    const presReqObj = JSON.parse(presReqPlain);
+
+    // Schema/CredDef do ledger para montar maps
+    const schemaCpfJsonLedger = await holder.fetchSchemaFromLedger(GENESIS_FILE, schemaCpfId);
+    const schemaEndJsonLedger = await holder.fetchSchemaFromLedger(GENESIS_FILE, schemaEndId);
+    const credDefCpfJsonLedger = await holder.fetchCredDefFromLedger(GENESIS_FILE, credDefCpfId);
+    const credDefEndJsonLedger = await holder.fetchCredDefFromLedger(GENESIS_FILE, credDefEndId);
+
+    // Holder escolhe quais credenciais atendem cada item
+    const requestedCreds = {
+      requested_attributes: {
+        attr_nome: { cred_id: credCpfIdInWallet, revealed: true },
+        attr_cpf: { cred_id: credCpfIdInWallet, revealed: true },
+        attr_endereco: { cred_id: credEndIdInWallet, revealed: true }
+      },
+      requested_predicates: {
+        // ✅ ZKP: indica qual credencial satisfaz o predicado
+        pred_idade_ge_18: { cred_id: credCpfIdInWallet }
+      }
+    };
+
+    const schemasMap = JSON.stringify({
+      [schemaCpfId]: JSON.parse(schemaCpfJsonLedger),
+      [schemaEndId]: JSON.parse(schemaEndJsonLedger)
+    });
+
+    const credDefsMap = JSON.stringify({
+      [credDefCpfId]: JSON.parse(credDefCpfJsonLedger),
+      [credDefEndId]: JSON.parse(credDefEndJsonLedger)
+    });
+
+    const presJson = await holder.createPresentation(
+      JSON.stringify(presReqObj),
+      JSON.stringify(requestedCreds),
+      schemasMap,
+      credDefsMap
+    );
+
+    const presFile = path.join(exchangeDir, "proof_02_presentation.enc.json");
+    await encryptToFile(holder, holderDid, issuerVerkey, presJson, presFile);
+
+    console.log("25) Issuer lendo Presentation (arquivo) e verificando...");
+    const presPlain = await decryptFromFile(issuer, issuerDid, holderVerkey, presFile);
+
+    const ok = await issuer.verifyPresentation(
+      JSON.stringify(presReqObj),
+      presPlain,
+      schemasMap,
+      credDefsMap
+    );
+
+    if (!ok) throw new Error("❌ verifyPresentation retornou false.");
+
+    console.log("✅ OK: apresentação validada (2 credenciais + ZKP idade>=18).");
+    console.log("📝 Revealed:", JSON.parse(presPlain).requested_proof.revealed_attrs);
+    console.log("🧾 Predicates:", JSON.parse(presPlain).requested_proof.predicates);
+    console.log(`📁 Arquivos gerados em: ${exchangeDir}`);
+
+  } finally {
+    try { await issuer.walletClose(); } catch (_) {}
+    try { await holder.walletClose(); } catch (_) {}
+  }
+})().catch((e) => {
+  console.error("FALHA NO TESTE:", e?.message || e);
+  console.error(e?.stack || "");
+  process.exit(1);
+});

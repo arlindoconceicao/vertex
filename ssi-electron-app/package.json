@@ -1,0 +1,35 @@
+{
+  "name": "ssi-electron-app",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "br.com.ssi.electron",
+    "productName": "SSI-Electron",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "renderer/**/*",
+      "bindings/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "bindings",
+        "to": "bindings"
+      }
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility",
+      "icon": "assets/icon.png"
+    }
+  }
+}

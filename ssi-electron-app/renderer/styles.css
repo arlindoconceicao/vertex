@@ -1,0 +1,429 @@
+/* styles.css (Renderer) — define o tema visual “light” e o layout do app: estabelece variáveis CSS (paleta, tipografia,
+raios, sombras) em `:root`, aplica reset/base e compõe o fundo com gradientes sutis. Implementa a estrutura principal
+(.container, .header, .grid) e o design dos cards (.card/.section), formulários (inputs/textarea com foco e estados),
+botões (variações primary/success/danger) e painel de saída (<pre id="out">) com rolagem. Também define o sistema de
+modais (.modal-overlay/.modal) com blur apenas no overlay, z-index elevado, conteúdo opaco e scroll interno, além de
+componentes de resumo (kv, attrs-grid, attr-item) usados para renderizar credenciais e apresentações de forma legível.
+*/
+
+/* renderer/styles.css (LIGHT THEME) */
+
+/* ---------- Reset & Base ---------- */
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Light palette */
+  --bg: #f6f8ff;
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel2: rgba(255, 255, 255, 0.88);
+  --border: rgba(15, 23, 42, 0.12);
+
+  --text: #0f172a;
+  /* slate-900 */
+  --muted: rgba(15, 23, 42, 0.66);
+
+  --accent: #2563eb;
+  /* blue-600 */
+  --accent2: #7c3aed;
+  /* violet-600 */
+
+  --ok: #059669;
+  /* emerald-600 */
+  --warn: #d97706;
+  /* amber-600 */
+  --err: #dc2626;
+  /* red-600 */
+
+  --shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  --gap: 16px;
+  --gap-lg: 22px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+
+  /* Light background with subtle color blobs */
+  background:
+    radial-gradient(900px 520px at 12% 8%, rgba(37, 99, 235, 0.14), transparent 62%),
+    radial-gradient(850px 620px at 88% 0%, rgba(124, 58, 237, 0.12), transparent 58%),
+    radial-gradient(820px 620px at 70% 95%, rgba(5, 150, 105, 0.10), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--bg) 55%, #ffffff 100%);
+}
+
+/* ---------- Page Container ---------- */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 8px 0 14px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.2px;
+}
+
+.header .subtitle {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Grid ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: var(--gap-lg);
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+
+  /* subtle glass */
+  backdrop-filter: blur(10px);
+}
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(15, 23, 42, 0.16);
+}
+
+.section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.section h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: rgba(15, 23, 42, 0.90);
+}
+
+/* ---------- Form ---------- */
+.field {
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input,
+textarea {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+
+  /* light input background */
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+
+  padding: 10px 11px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+textarea {
+  min-height: 86px;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(15, 23, 42, 0.40);
+}
+
+input:focus,
+textarea:focus {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+/* ---------- Buttons ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+button {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  user-select: none;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.22);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.primary {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.94), rgba(124, 58, 237, 0.92));
+  border: 1px solid rgba(37, 99, 235, 0.30);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+}
+
+button.primary:hover {
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+}
+
+button.success {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.92), rgba(37, 99, 235, 0.80));
+  border: 1px solid rgba(5, 150, 105, 0.26);
+}
+
+button.danger {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.92), rgba(124, 58, 237, 0.78));
+  border: 1px solid rgba(220, 38, 38, 0.22);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---------- Output ---------- */
+.output {
+  margin-top: 18px;
+}
+
+.output h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: rgba(15, 23, 42, 0.90);
+}
+
+pre {
+  margin: 0;
+  border-radius: var(--radius);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+
+  /* light code panel */
+  background: rgba(255, 255, 255, 0.86);
+  color: rgba(15, 23, 42, 0.92);
+
+  padding: 14px;
+  overflow: auto;
+  max-height: 260px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Small helpers ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(15, 23, 42, 0.10);
+  margin: 14px 0;
+}
+
+/* ---------- Modal (Visualizar Credencial) ---------- */
+/* ---- Modal (fix blur/stacking) ---- */
+/* Overlay: borra SOMENTE o fundo */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 28, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Modal: NÃO pode ser translúcido demais */
+.modal {
+  width: min(900px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+
+  /* FUNDO QUASE OPACO (chave do problema) */
+  background: rgba(245, 247, 255, 0.96);
+  /* claro e opaco */
+  color: #111827;
+
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+
+  /* Garantias */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+/* Se você tem cards dentro do modal, deixe-os opacos também */
+.modal .attr-card,
+.modal .modal-card,
+.modal .card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(17, 24, 39, 0.10);
+}
+
+/* .modal * {
+  filter: none !important;
+} */
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.modal-close {
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.kv .k {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kv .v {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.attrs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.attr-item {
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.20);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.attr-name {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.attr-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

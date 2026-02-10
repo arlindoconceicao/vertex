@@ -1,0 +1,44 @@
+[package]
+name = "ssi_native_lib"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs" # Avisa o Cargo para usar o script de build
+
+[lib]
+crate-type = ["cdylib"] # Gera o .so/.dll para o Node/Electron
+
+# --- Dependências do Código Principal ---
+[dependencies]
+napi = { version = "2.12", features = ["tokio_rt", "async"] }
+napi-derive = "2.12"
+tokio = { version = "1", features = ["full"] }
+
+# Bibliotecas SSI
+indy-vdr = { path = "/home/yugi/programacao/indy-vdr/libindy_vdr" }
+aries-askar = { version = "0.4.0", features = ["sqlite"] }
+anoncreds = { git = "https://github.com/hyperledger/anoncreds-rs.git", branch = "main"}
+
+# Utilitários
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+env_logger = "0.10"
+
+# Utilitários de Criptografia (NOVOS)
+sha2 = "0.10"
+bs58 = "0.5"
+indy-data-types = "0.7.1"
+num-bigint = "0.4"
+once_cell = "1.21.3"
+base64 = "0.21"
+rand = "0.8" 
+askar-storage = "0.2.4"
+sha3 = "0.10.8"
+
+# Wallet/KDF + backup (fase 1)
+argon2 = "0.5"
+aes-gcm = "0.10"
+
+# --- Dependências do Script de Build (O QUE FALTOU) ---
+[build-dependencies]
+napi-build = "2.0"
