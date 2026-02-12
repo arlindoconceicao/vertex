@@ -24,6 +24,9 @@ use anoncreds::types::{Presentation, PresentationRequest};
 
 use anoncreds::verifier::verify_presentation;
 
+use aries_askar::entry::EntryTag;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 // Funções auxiliares:
 // -------------------------------
 // Helpers: Spec de UI -> RequestedCredentials (AnonCreds)
@@ -97,6 +100,33 @@ struct RequestedPredOut {
     cred_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     timestamp: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct StoredPresentationRecordV1 {
+    #[serde(default)]
+    presentation: JsonValue,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    presentation_request: Option<JsonValue>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    meta: Option<JsonValue>,
+}
+
+use std::collections::BTreeMap;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PresentationPackageV1 {
+    #[serde(rename = "type")]
+    pkg_type: String,
+    version: u32,
+    id_local: String,
+    stored_at_ms: i64,
+    record: StoredPresentationRecordV1,
+
+    #[serde(default)]
+    tags: BTreeMap<String, String>,
 }
 
 // -------------------------------
@@ -178,6 +208,7 @@ fn build_requested_credentials_from_spec(
     })
 }
 
+// =====================================================================================================
 #[napi]
 impl IndyAgent {
     // =========================================================================
@@ -1067,6 +1098,407 @@ impl IndyAgent {
                 })?;
 
                 Ok(serde_json::to_string(&presentation).unwrap())
+            },
+            |&mut env, data| env.create_string(&data),
+        )
+    }
+
+    #[napi]
+    pub fn store_presentation(
+        &self,
+        env: Env,
+        presentation_id_local: String,
+        presentation_json: String,
+        presentation_request_json: Option<String>,
+        meta_json: Option<String>,
+    ) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                // Parse apresentação (objeto)
+                let pres_val: JsonValue =
+                    serde_json::from_str(&presentation_json).map_err(|e| {
+                        napi::Error::from_reason(format!("Presentation JSON inválido: {}", e))
+                    })?;
+
+                // Opcional: parse request e extrair nonce para tag
+                let mut req_nonce: String = "".to_string();
+                let pres_req_val: Option<JsonValue> =
+                    if let Some(req_str) = presentation_request_json.as_ref() {
+                        if req_str.trim().is_empty() {
+                            None
+                        } else {
+                            let v: JsonValue = serde_json::from_str(req_str).map_err(|e| {
+                                napi::Error::from_reason(format!(
+                                    "PresentationRequest JSON inválido: {}",
+                                    e
+                                ))
+                            })?;
+                            if let Some(n) = v.get("nonce").and_then(|x| x.as_str()) {
+                                req_nonce = n.to_string();
+                            }
+                            Some(v)
+                        }
+                    } else {
+                        None
+                    };
+
+                // Meta livre (ex.: verifierDid, holderDid, verified=true, verified_at etc.)
+                let meta_val: Option<JsonValue> = if let Some(m) = meta_json.as_ref() {
+                    if m.trim().is_empty() {
+                        None
+                    } else {
+                        Some(serde_json::from_str(m).map_err(|e| {
+                            napi::Error::from_reason(format!("Meta JSON inválido: {}", e))
+                        })?)
+                    }
+                } else {
+                    None
+                };
+
+                let record = StoredPresentationRecordV1 {
+                    presentation: pres_val,
+                    presentation_request: pres_req_val,
+                    meta: meta_val,
+                };
+
+                let record_str = serde_json::to_string(&record).map_err(|e| {
+                    napi::Error::from_reason(format!("Erro serializar record: {}", e))
+                })?;
+
+                let now_ts = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+                    .to_string();
+
+                let mut tags = vec![EntryTag::Encrypted("created_at".to_string(), now_ts)];
+
+                if !req_nonce.is_empty() {
+                    tags.push(EntryTag::Encrypted("request_nonce".to_string(), req_nonce));
+                }
+
+                session
+                    .insert(
+                        "presentation",
+                        &presentation_id_local,
+                        record_str.as_bytes(),
+                        Some(&tags),
+                        None,
+                    )
+                    .await
+                    .map_err(|e| {
+                        napi::Error::from_reason(format!("Erro salvar apresentação: {}", e))
+                    })?;
+
+                session
+                    .commit()
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro commit: {}", e)))?;
+
+                Ok(presentation_id_local)
+            },
+            |&mut env, data| env.create_string(&data),
+        )
+    }
+
+    #[napi]
+    pub fn get_stored_presentation(
+        &self,
+        env: Env,
+        presentation_id_local: String,
+    ) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                let entry = session
+                    .fetch("presentation", &presentation_id_local, false)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro fetch: {}", e)))?
+                    .ok_or_else(|| napi::Error::from_reason("Apresentação não encontrada"))?;
+
+                let s = String::from_utf8(entry.value.to_vec()).unwrap_or_default();
+                Ok(s)
+            },
+            |&mut env, data| env.create_string(&data),
+        )
+    }
+
+    #[napi]
+    pub fn list_presentations(&self, env: Env) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                let entries = session
+                    .fetch_all(Some("presentation"), None, None, None, false, false)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro fetch_all: {}", e)))?;
+
+                let mut out = Vec::new();
+                for e in entries {
+                    let mut tags_obj = serde_json::Map::new();
+                    for t in &e.tags {
+                        tags_obj.insert(t.name().to_string(), serde_json::json!(t.value()));
+                    }
+                    out.push(serde_json::json!({
+                        "id_local": e.name,
+                        "tags": tags_obj,
+                    }));
+                }
+
+                serde_json::to_string(&out)
+                    .map_err(|_| napi::Error::from_reason("Erro serializando lista"))
+            },
+            |&mut env, data| env.create_string(&data),
+        )
+    }
+
+    #[napi]
+    pub fn delete_stored_presentation(
+        &self,
+        env: Env,
+        presentation_id_local: String,
+    ) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                let existing = session
+                    .fetch("presentation", &presentation_id_local, false)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro fetch: {}", e)))?;
+
+                if existing.is_none() {
+                    return Err(napi::Error::from_reason(format!(
+                        "Apresentação não encontrada: {}",
+                        presentation_id_local
+                    )));
+                }
+
+                session
+                    .remove("presentation", &presentation_id_local)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro ao deletar: {}", e)))?;
+
+                session
+                    .commit()
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro commit delete: {}", e)))?;
+
+                Ok(true)
+            },
+            |&mut env, data| env.get_boolean(data),
+        )
+    }
+
+    #[napi]
+    pub fn export_stored_presentation(
+        &self,
+        env: Env,
+        presentation_id_local: String,
+    ) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                let entry = session
+                    .fetch("presentation", &presentation_id_local, false)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro fetch: {}", e)))?
+                    .ok_or_else(|| napi::Error::from_reason("Apresentação não encontrada"))?;
+
+                let record_str = String::from_utf8(entry.value.to_vec()).unwrap_or_default();
+
+                let record: StoredPresentationRecordV1 = serde_json::from_str(&record_str)
+                    .map_err(|e| {
+                        napi::Error::from_reason(format!(
+                            "Record armazenado inválido (não é StoredPresentationRecordV1): {}",
+                            e
+                        ))
+                    })?;
+
+                let stored_at_ms = (SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis()) as i64;
+
+                let mut tags_map = BTreeMap::new();
+                for t in &entry.tags {
+                    // em geral, t.value() aqui vira string (compatível com seu list_presentations)
+                    tags_map.insert(t.name().to_string(), t.value().to_string());
+                }
+
+                let pkg = PresentationPackageV1 {
+                    pkg_type: "ssi.presentation.package".to_string(),
+                    version: 1,
+                    id_local: presentation_id_local,
+                    stored_at_ms,
+                    record,
+                    tags: tags_map,
+                };
+
+                serde_json::to_string(&pkg).map_err(|e| {
+                    napi::Error::from_reason(format!("Erro serializar package: {}", e))
+                })
+            },
+            |&mut env, data| env.create_string(&data),
+        )
+    }
+
+    #[napi]
+    pub fn import_stored_presentation(
+        &self,
+        env: Env,
+        package_json: String,
+        overwrite: Option<bool>,
+        new_id_local: Option<String>,
+    ) -> Result<JsObject> {
+        let store = match &self.store {
+            Some(s) => s.clone(),
+            None => return Err(Error::from_reason("Wallet fechada!")),
+        };
+
+        env.execute_tokio_future(
+            async move {
+                let overwrite = overwrite.unwrap_or(false);
+
+                let pkg: PresentationPackageV1 =
+                    serde_json::from_str(&package_json).map_err(|e| {
+                        napi::Error::from_reason(format!("Package JSON inválido: {}", e))
+                    })?;
+
+                if pkg.pkg_type != "ssi.presentation.package" || pkg.version != 1 {
+                    return Err(napi::Error::from_reason(format!(
+                        "Package inválido: type/version inesperados (type={}, version={})",
+                        pkg.pkg_type, pkg.version
+                    )));
+                }
+
+                let target_id = new_id_local.unwrap_or(pkg.id_local);
+
+                // serializa record como será salvo
+                let record_str = serde_json::to_string(&pkg.record).map_err(|e| {
+                    napi::Error::from_reason(format!("Erro serializar record: {}", e))
+                })?;
+
+                let mut tags: Vec<EntryTag> = Vec::new();
+
+                // 1) Se o package trouxe tags, use-as (preferência)
+                if !pkg.tags.is_empty() {
+                    for (k, v) in &pkg.tags {
+                        tags.push(EntryTag::Encrypted(k.to_string(), v.to_string()));
+                    }
+                } else {
+                    // tags: created_at + request_nonce (se houver)
+                    let now_ts = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs()
+                        .to_string();
+
+                    let mut tags = vec![EntryTag::Encrypted("created_at".to_string(), now_ts)];
+
+                    if let Some(req) = &pkg.record.presentation_request {
+                        if let Some(n) = req.get("nonce").and_then(|x| x.as_str()) {
+                            tags.push(EntryTag::Encrypted(
+                                "request_nonce".to_string(),
+                                n.to_string(),
+                            ));
+                        }
+                    }
+                }
+                
+                let mut session = store
+                    .session(None)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro sessão: {}", e)))?;
+
+                let existing = session
+                    .fetch("presentation", &target_id, false)
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro fetch: {}", e)))?;
+
+                if existing.is_some() && !overwrite {
+                    return Err(napi::Error::from_reason(format!(
+                        "Apresentação já existe: {} (use overwrite=true ou new_id_local)",
+                        target_id
+                    )));
+                }
+
+                if existing.is_some() && overwrite {
+                    session
+                        .remove("presentation", &target_id)
+                        .await
+                        .map_err(|e| {
+                            napi::Error::from_reason(format!("Erro remove overwrite: {}", e))
+                        })?;
+                }
+
+                session
+                    .insert(
+                        "presentation",
+                        &target_id,
+                        record_str.as_bytes(),
+                        Some(&tags),
+                        None,
+                    )
+                    .await
+                    .map_err(|e| {
+                        napi::Error::from_reason(format!(
+                            "Erro salvar apresentação (import): {}",
+                            e
+                        ))
+                    })?;
+
+                session
+                    .commit()
+                    .await
+                    .map_err(|e| napi::Error::from_reason(format!("Erro commit import: {}", e)))?;
+
+                Ok(target_id)
             },
             |&mut env, data| env.create_string(&data),
         )

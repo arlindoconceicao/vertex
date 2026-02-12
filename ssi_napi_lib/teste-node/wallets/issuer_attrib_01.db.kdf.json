@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "kdf": "argon2id",
+  "salt_b64": "vRRPzDxsKCVv9wx7kYwmgQ==",
+  "m_cost_kib": 65536,
+  "t_cost": 3,
+  "p_cost": 1,
+  "dk_len": 32,
+  "rounds": null
+}

@@ -1,0 +1,9 @@
+{
+  "issuerDid": "72f6ojMbjkW6WJkkNSPdXY",
+  "schemaCpfId": "72f6ojMbjkW6WJkkNSPdXY:2:cpf:1.0.1770817398857",
+  "schemaEndId": "72f6ojMbjkW6WJkkNSPdXY:2:endereco:1.0.1770817401877",
+  "schemaContatoId": "72f6ojMbjkW6WJkkNSPdXY:2:contato:1.0.1770817404903",
+  "credDefCpfId": "72f6ojMbjkW6WJkkNSPdXY:3:CL:64:TAG_CPF_1770817407931",
+  "credDefEndId": "72f6ojMbjkW6WJkkNSPdXY:3:CL:65:TAG_END_1770817410911",
+  "credDefContatoId": "72f6ojMbjkW6WJkkNSPdXY:3:CL:66:TAG_CONTATO_1770817413909"
+}

@@ -1,0 +1,20 @@
+{
+  "issuerA": {
+    "did": "BDhYWXkbXrndm2XZVyhxmW",
+    "schemaCpfId": "BDhYWXkbXrndm2XZVyhxmW:2:cpf:1.0.1770817172370",
+    "schemaEndId": "BDhYWXkbXrndm2XZVyhxmW:2:endereco:1.0.1770817175386",
+    "schemaContatoId": "BDhYWXkbXrndm2XZVyhxmW:2:contato:1.0.1770817178392",
+    "credDefCpfId": "BDhYWXkbXrndm2XZVyhxmW:3:CL:42:A_TAG_CPF_1770817181393",
+    "credDefEndId": "BDhYWXkbXrndm2XZVyhxmW:3:CL:43:A_TAG_END_1770817184398",
+    "credDefContatoId": "BDhYWXkbXrndm2XZVyhxmW:3:CL:44:A_TAG_CON_1770817187403"
+  },
+  "issuerB": {
+    "did": "UfcLYZGnVmsxhUZAWwvGS6",
+    "schemaCpfId": "UfcLYZGnVmsxhUZAWwvGS6:2:cpf:1.0.1770817190402",
+    "schemaEndId": "UfcLYZGnVmsxhUZAWwvGS6:2:endereco:1.0.1770817193422",
+    "schemaContatoId": "UfcLYZGnVmsxhUZAWwvGS6:2:contato:1.0.1770817196449",
+    "credDefCpfId": "UfcLYZGnVmsxhUZAWwvGS6:3:CL:48:B_TAG_CPF_1770817199447",
+    "credDefEndId": "UfcLYZGnVmsxhUZAWwvGS6:3:CL:49:B_TAG_END_1770817202447",
+    "credDefContatoId": "UfcLYZGnVmsxhUZAWwvGS6:3:CL:50:B_TAG_CON_1770817205456"
+  }
+}

@@ -7,17 +7,15 @@ mod modules {
     // Dentro da pasta modules, declare que o arquivo 'common.rs' existe
     pub mod common;
     pub mod creddefs;
-    pub mod credentials; // <--- NOVO MÓDULO DE CREDENTIALS
-    pub mod dids; // <--- NOVO MÓDULO DE DIDs
+    pub mod credentials;
+    pub mod dids;
+    pub mod envelope;
     pub mod messaging;
     pub mod presentations;
     pub mod schemas;
-    pub mod wallets; // <--- NOVO MÓDULO DE MESSAGING
+    pub mod wallets; 
 }
 use crate::modules::common::*;
-// use crate::modules::wallets::*;
-// use crate::modules::dids::*;
-// use crate::modules::schemas::*;
 
 // use once_cell::sync::Lazy;
 // use std::sync::{Arc, Mutex}; // <--- Adicione Arc aqui
@@ -563,5 +561,4 @@ impl IndyAgent {
             |&mut env, data| env.get_boolean(data),
         )
     }
-
 }
