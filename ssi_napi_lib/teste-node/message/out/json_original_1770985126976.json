@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-negative",
+  "ts": 1770985126976,
+  "from": {
+    "did": "Xh8sNX3hRo41buSwFBZ6pm",
+    "verkey": "HjEbfVYfPqaRLvWWTSRSWrUjGs3KJ5QzGES36nHWL4m9"
+  },
+  "to": {
+    "did": "8Pf3y7gM66hzQLwXzL8s5x",
+    "verkey": "52dfT6oypgCLRpRLP3jtvqekL7DjGwgb2yYyUgACX79g"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770985126976",
+    "n": 123,
+    "ok": true
+  }
+}

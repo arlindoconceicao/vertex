@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-sig-tamper",
+  "ts": 1770988247645,
+  "from": {
+    "did": "QCSybr4wUtFXoYn73W7eAh",
+    "verkey": "DeKG37pB7y6Z5JkMXH3W69VQZF51Px615jpHcMUijV3V"
+  },
+  "to": {
+    "did": "QnApMjUjJnJFXjqZY9m4Jj",
+    "verkey": "DxhG1r8xWZkxjRxUWSubKYTeJaBpgLduHpcRmovm5Uqt"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770988247645",
+    "n": 2026,
+    "ok": true
+  }
+}

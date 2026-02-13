@@ -1,0 +1,30 @@
+{
+  "v": 1,
+  "type": "roundtrip-json",
+  "ts": 1770984649833,
+  "from": {
+    "did": "MyJThDRjGaMWosz72iDYgq",
+    "verkey": "CRvg55KSmgQcAU38x2itvQ3Q3N5swgrwA4bpAvw7JbNt"
+  },
+  "to": {
+    "did": "LNQXscwysMBJas3Qyet6bK",
+    "verkey": "BZJ53gsogrxrh9bszoscTH4HU7WtvaoVJV57HhJaFsxw"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770984649833",
+    "attrs": {
+      "cpf": "12345678900",
+      "idade": "35",
+      "cidade": "São Paulo"
+    },
+    "flags": [
+      "a",
+      "b",
+      "c"
+    ],
+    "nested": {
+      "ok": true,
+      "n": 42
+    }
+  }
+}

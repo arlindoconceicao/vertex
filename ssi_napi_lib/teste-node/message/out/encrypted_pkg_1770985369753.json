@@ -1,0 +1,12 @@
+{
+  "ciphertext": "//4AKMSpuZwDqJ5O/8npVtKvP4dSYf4xxOZphVUBbZk0DckHgbX/93R/7JK/L7t47UduGdLKIzaXZoGQToGYjyzpHGfRPDuSHcp06Ugj++DjzN3a+lC2YDVudmHgfoLTcAAgf6l5UExsaOTnsBUAukJKWjH+EJo31+jwW2AaYOhDq7alDws1YyLQQ+J5muvcrnE+slHpdHJoyUEzRs6yY54WnvL8wDY+AA4JqXU0rQvFvlDtOHur0xp1SwHjPLZBXVSZtCyqGHWzjJlOkn4xoPb/eI5qPA2uMZyxd4WjUI+K1OUQpGZsPHSMkXEPBN/si701GW8r9wYOyThJe+f61N7TwGiVZ/ZpDfKn+RBJ11FQfJmEc/1dtXYb9X6OG3seopYOcRZobvCDJI4o6jUhfXhINAvIhUGVijgYXgCvVWSDAan+whxPvDeAIVZDj186w1KKTiNiW4TY5ACTfkZ3lVCHa9GsEDChrh2eCnc44arG+LcNm/T4XOWIZPWKizm4g4bobB7CFsxwAnXiRGfa/aIImBrMEeIYpZs=",
+  "meta": {
+    "bytes": 394,
+    "filename": "json_original_1770985369753.json"
+  },
+  "nonce": "OZrx3KGKQhpLtRD2y+k7QkUAvNMVlxfL",
+  "sender_verkey": "APK1ixVRDLmZvnDrKWL6CgZGq65dcV5VyAwjwBHJ4Lr1",
+  "target_verkey": "2GgGVyj7xsLLDZ6VPfgbv2gQTRn5cqWVougPgJQTEFdf",
+  "type": "ssi:filebox",
+  "v": 1
+}

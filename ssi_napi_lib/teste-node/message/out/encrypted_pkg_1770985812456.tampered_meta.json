@@ -1,0 +1,13 @@
+{
+  "ciphertext": "nutFiETrTBK/9Z4awsqGTYNffIa0IyxhNFEnZWsUwZpTrVmzMzXfJp8sUqMalImJ4BYUOrNtznWBrm45Y+AYBPHubs2RV7c/p6cqh6kick1JSM844Viq7Zf4cl+IfhYOaN4XbNUzgMysI9YCkm9mYLsOXLFW0LFJ4cXyrdrma/OVXFGFyzS7GgUF9GWWl4MbjX7em2qvRH236nTaZ/zAsi46yUyD1hCIJSSZh3oGpkUC8Pf+ktNvTmXSaqe85rzjR3ERlABbNq4c5FFMRCiTbEOMPQDBV+ZODFb3cO6pS7MltCGPU3wD9Nuw184emJWI7Dw+lcCOc9FUQAlrB0NssW5iA5SxdEBcASIx/AMmq5zFs0gcCW5mPEVrUBXb/JCYpkWnEJyCA1IM1dDfffNIPjcJonj82RCEk1uBeD+34mBNfVrEaQPoX2oFpfxjuUacfpJJ++Qo7ztgGP+F+H0EOHuPxobGRS8E1bJWCEwFJQ3Gg1WHZbOWXXALndAUl3WvP9fHnd4KwAd80daxrGGFMH7lTqyIMv8PGg==",
+  "meta": {
+    "bytes": 10392,
+    "filename": "HACKED_json_original_1770985812456.json",
+    "note": "meta adulterado no transporte (esperado: decrypt ainda funciona)"
+  },
+  "nonce": "jw0dc6Ioj73Rdbcs0zQc+cus4b+Bi33h",
+  "sender_verkey": "Gr72Aosfo84gfCHYvZKoPUFMusZe91FQyNmpru7HvBKK",
+  "target_verkey": "Fa9UfvLnPhdvgc5VXUMJso8hWBYTVPEjhqqwdrQwfeg1",
+  "type": "ssi:filebox",
+  "v": 1
+}

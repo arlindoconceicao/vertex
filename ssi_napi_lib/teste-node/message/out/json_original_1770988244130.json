@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-sig-tamper",
+  "ts": 1770988244130,
+  "from": {
+    "did": "EpqKKypFHZDRQvZp6VwHNu",
+    "verkey": "8Y2XLA2cJYsmVaZBBKervSCLoFxp8XzH4pFtsvk8bvdQ"
+  },
+  "to": {
+    "did": "VCtnvHeGBgFJCwztt7ch1L",
+    "verkey": "GNcoV6YAnRXFpB2DWsctbmV3GAy9KXQCnDSpiMbcAF6B"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770988244130",
+    "n": 2026,
+    "ok": true
+  }
+}

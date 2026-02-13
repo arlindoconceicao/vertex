@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-negative-tamper-nonce",
+  "ts": 1770987778768,
+  "from": {
+    "did": "7RDKsvER1LueWBtbUdfbp7",
+    "verkey": "4VsNXb8VPyBQyYnkv4eVyDBS1y6kVSNp7h4P5weWMV1B"
+  },
+  "to": {
+    "did": "F1wrT31z8J2xvCzAHQWU9f",
+    "verkey": "8e5pQKz8L714kGxGMLUfSnJnuW9BjnLod48epwh6LRgT"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770987778768",
+    "n": 101112,
+    "ok": true
+  }
+}

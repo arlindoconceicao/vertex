@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-negative-wrong-receiver",
+  "ts": 1770985232634,
+  "from": {
+    "did": "tK7XxfkeXXXQiPU6brsuR",
+    "verkey": "Uy5nhn7N84ZKxQPk5gjXa5zDBjCXKjQKksTAQQ4N1uE"
+  },
+  "to": {
+    "did": "QLGiBRZojoBnrKbZniP4u4",
+    "verkey": "DiaZU4L3X5oaFA8Q4UwpnLFzqteUfLGiyzPJPD9PwisB"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770985232634",
+    "n": 456,
+    "ok": true
+  }
+}

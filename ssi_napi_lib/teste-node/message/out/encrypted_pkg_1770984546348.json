@@ -1,0 +1,12 @@
+{
+  "ciphertext": "1AdWW97jCFhPnfMkOUxL0CnfGI4FT6/WQdMGdgOu78dZLrYFuV71Vvft2KwjyB6APNoJzGgABdz9Nf4qvRRbutIGoXe/D5l6CUpeytUhVa/a4jmjVWYwaCTZb1kJ2RBGmy9URO8aOtYLRV0RIDsW4inM3YbLitN3J5mfSUy9I9VwsepXx1fSc8fmUMzy0glL/iFiss+f35vTH0H7E/vbdqh/wgWxmxYxBQXPuXpjdqRPUj38HSsnlsJPSRtdPE9SQtqog2cf5D19rnjPjImugt+EbGo4z5gXH365Wt1UNBloFP9hptOMQEqQCUwULvsE2BsopqAL/GkLZKpy8wGbLrdI1TnFlo1Ap3/XFBooqxzaU1nFLxIrjjwbkdy6KF0/Ljt+4TR8PpHtueCxkI9ZlZVDedIA9U2Y9u0ulXs069XIPtm6ZPADG6PYx0J3IYWwUdT/6mwmfH1L8DgBwybUsVOv8lNGpugpJaS8KR4cUffJsheGSp2A1ycxp6tk4cjVgSd/jTWw9EP8V+SMy3fuOgxUuLKAFYxn/bMBSqm8Jb1hZ0mXaMsIiMyTqwTFjvDKBtcNBat7KzIsWzGj7YnBkltYdP1NM7Vrh7IILtMLCoXB2JUOS33zL1ommXebGn7DP/L8TDK2IKO15J1lXOmL7v092usdMB5Jt398K722Q9XOHwRz29vspqH+m6al2g0G+kQXwlBKSwErRll5qCNudwcAfJXEp7Cdx3cFQLBWBCC6OX3h/hpACLgV+LWz",
+  "meta": {
+    "bytes": 557,
+    "filename": "json_original_1770984546348.json"
+  },
+  "nonce": "tSDsBykDEq5WJ7YxsGIdtUji8AT+ZB3F",
+  "sender_verkey": "5W9o4vDQPKuJDb8b5mZVURVLEZWSy8J5kVStZWicrK1L",
+  "target_verkey": "6tPVn8ZUJgaqXALLZit79q6fw3c6cDabRNjZRyKEH8Mn",
+  "type": "ssi:filebox",
+  "v": 1
+}

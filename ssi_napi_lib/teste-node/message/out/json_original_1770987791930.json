@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "type": "roundtrip-json-meta-tamper",
+  "ts": 1770987791930,
+  "from": {
+    "did": "VaGp7JerdCBjZb9x1y1Hko",
+    "verkey": "GaGeyhH5QRQ17gyMoBBZhteY6AS57fYzq6H47Ue6eupj"
+  },
+  "to": {
+    "did": "6exs5rLwN93YHWZQJvyPF3",
+    "verkey": "45kZc6K1NiLBmezVeEwc57cY1ByaUPq59uzWw5wr2JUT"
+  },
+  "data": {
+    "msg": "Olá SSI ✅ 1770987791930",
+    "n": 131415,
+    "ok": true
+  }
+}

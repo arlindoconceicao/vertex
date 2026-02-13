@@ -1,0 +1,17 @@
+{
+  "ciphertext": "C4G54Y1HucN9LpyFK9+iUy2MKVdk6OigYGtjCzEzsq7GTiJBuw1x+XkPHo0gRnyTvnZvGErhoKy1Kq2VIa6KE8ARL+3Gsb+y2qiTRNdWYD8cTMhBqOWHnuFN734txyEiGFbilPvOrWO+XtFWk1UDPrhLnMXmwj85Fzd4g0jVX7+MuAxiP+SgOpPc9PKZltclWiyDUuRUrgSt8uQXEfrZTc9T/d+Lu7ROJ26GAwiSIWLrsscF8FihIXOu2gx81QBqALcFxceAODwkFHXram0uaruBpZccfRjxI8wk7Ga7OXuSnS+HEm7AFYRMJEv35+8Vd57Ud5NCX2lgHlubSuzyrJx//afoRWdzM7ME7LLPYPX4+uYchCmSpgt57QI7e2GXp8p5VrCLBlQQTgK3m9Gt4pG/UKawnrbTddTSOql2Qmq6rnTE7SNuHe1D1mEFdhtQ0TrnmD2yukIKXAe6vT1Es479uTEF9wPicjrQWPpphy4YhQHr8uOeKINRQl2kytIa6/InmM3i3N4XaofHKu8ikrWP9QKyyq+lug==",
+  "meta": {
+    "bytes": 393,
+    "filename": "json_original_1770987791930.json"
+  },
+  "nonce": "sRLHAgQ5tDOTfOLUuqEJVJ7XeaGXgedf",
+  "sender_verkey": "GaGeyhH5QRQ17gyMoBBZhteY6AS57fYzq6H47Ue6eupj",
+  "sig": {
+    "alg": "ed25519",
+    "signer_verkey": "GaGeyhH5QRQ17gyMoBBZhteY6AS57fYzq6H47Ue6eupj",
+    "value": "nZc5ujZjmQr4vitae4GSx/yi0Bz9Q+A3USV8SypxGOcpG7QfpYY0UwqiWNcyJAxpYhF/Ij1cQqQoXJyZgJf9DA=="
+  },
+  "target_verkey": "45kZc6K1NiLBmezVeEwc57cY1ByaUPq59uzWw5wr2JUT",
+  "type": "ssi:filebox",
+  "v": 2
+}

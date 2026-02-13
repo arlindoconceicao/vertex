@@ -305,4 +305,172 @@ impl IndyAgent {
 
         String::from_utf8(pt).map_err(|e| napi_err("BackupPlaintextInvalid", e.to_string()))
     }
+
+    #[napi]
+    pub async unsafe fn wallet_verify_pass(&mut self, path: String, pass: String) -> Result<bool> {
+        if path.trim().is_empty() {
+            return Err(napi_err("WalletPathInvalid", "wallet path vazio"));
+        }
+
+        let wallet_db_path = std::path::Path::new(&path);
+        if !wallet_db_path.exists() {
+            return Err(napi_err(
+                "WalletNotFound",
+                format!("wallet db não encontrada ({})", path),
+            ));
+        }
+
+        // não mexe no estado do agente (self.store). É uma verificação "stateless".
+        let config_uri = format!("sqlite://{}", path);
+        let sidecar_path = sidecar_path_for(&path);
+
+        let sc = if std::path::Path::new(&sidecar_path).exists() {
+            Some(read_sidecar(&sidecar_path)?)
+        } else {
+            None
+        };
+
+        let (raw_key_string, _opened_with_legacy) = if let Some(sc) = &sc {
+            (derive_raw_key_from_sidecar(&pass, sc)?, false)
+        } else {
+            // tenta legacy (migração)
+            (derive_raw_key_legacy(&pass, 128), true)
+        };
+
+        let store_res = Store::open(
+            &config_uri,
+            Some(StoreKeyMethod::RawKey),
+            PassKey::from(raw_key_string),
+            None,
+        )
+        .await;
+
+        match store_res {
+            Ok(mut s) => {
+                // best-effort close (não altera UX se falhar)
+                let _ = s.close().await;
+                Ok(true)
+            }
+            Err(e) => {
+                let emsg = e.to_string();
+
+                if sc.is_none() {
+                    // mesma política do wallet_open: sidecar obrigatório para wallets novas
+                    return Err(napi_err(
+                        "KdfParamsMissing",
+                        format!(
+                            "sidecar ausente ({}). Para wallets criadas nesta versão, o sidecar é obrigatório.",
+                            sidecar_path
+                        ),
+                    ));
+                }
+
+                if is_wallet_auth_error(&emsg) {
+                    return Ok(false);
+                }
+
+                Err(napi_err("WalletOpenFailed", emsg))
+            }
+        }
+    }
+
+    #[napi]
+    pub async unsafe fn wallet_change_pass(
+        &mut self,
+        path: String,
+        old_pass: String,
+        new_pass: String,
+    ) -> Result<bool> {
+        if path.trim().is_empty() {
+            return Err(napi_err("WalletPathInvalid", "wallet path vazio"));
+        }
+
+        if self.store.is_some() {
+            return Err(napi_err(
+                "WalletAlreadyOpen",
+                "feche a wallet atual antes de trocar a senha (walletClose)",
+            ));
+        }
+
+        let wallet_db_path = std::path::Path::new(&path);
+        if !wallet_db_path.exists() {
+            return Err(napi_err(
+                "WalletNotFound",
+                format!("wallet db não encontrada ({})", path),
+            ));
+        }
+
+        let config_uri = format!("sqlite://{}", path);
+        let sidecar_path = sidecar_path_for(&path);
+
+        let sc_old = if std::path::Path::new(&sidecar_path).exists() {
+            Some(read_sidecar(&sidecar_path)?)
+        } else {
+            None
+        };
+
+        // 1) Deriva chave antiga (sidecar ou legacy) e abre store
+        let (raw_key_old, _opened_with_legacy) = if let Some(sc) = &sc_old {
+            (derive_raw_key_from_sidecar(&old_pass, sc)?, false)
+        } else {
+            (derive_raw_key_legacy(&old_pass, 128), true)
+        };
+
+        let mut store = match Store::open(
+            &config_uri,
+            Some(StoreKeyMethod::RawKey),
+            PassKey::from(raw_key_old),
+            None,
+        )
+        .await
+        {
+            Ok(s) => s,
+            Err(e) => {
+                let emsg = e.to_string();
+
+                if sc_old.is_none() {
+                    return Err(napi_err(
+                        "KdfParamsMissing",
+                        format!(
+                            "sidecar ausente ({}). Para wallets criadas nesta versão, o sidecar é obrigatório.",
+                            sidecar_path
+                        ),
+                    ));
+                }
+
+                if is_wallet_auth_error(&emsg) {
+                    return Err(napi_err(
+                        "WalletAuthFailed",
+                        "Senha atual incorreta (falha na decifragem da chave da wallet).",
+                    ));
+                }
+
+                return Err(napi_err("WalletOpenFailed", emsg));
+            }
+        };
+
+        // 2) Deriva chave nova (novo sidecar Argon2id)
+        let (sc_new, salt_new) = default_argon2_sidecar();
+        let raw_key_new = derive_raw_key_argon2id(
+            &new_pass,
+            &salt_new,
+            sc_new.m_cost_kib.unwrap_or(65536),
+            sc_new.t_cost.unwrap_or(3),
+            sc_new.p_cost.unwrap_or(1),
+        )?;
+
+        // 3) Rekey no store (troca wrapping key)
+        store
+            .rekey(StoreKeyMethod::RawKey, PassKey::from(raw_key_new))
+            .await
+            .map_err(|e| napi_err("WalletRekeyFailed", e.to_string()))?;
+
+        // 4) Persistir sidecar novo (após rekey ter dado certo)
+        write_sidecar(&sidecar_path, &sc_new)?;
+
+        // best-effort close
+        let _ = store.close().await;
+
+        Ok(true)
+    }
 }
