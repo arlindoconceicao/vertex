@@ -2,6 +2,8 @@ import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+import UserSearch from "@/components/UserSearch";
+
 export default async function DashboardPage() {
   const session = await auth();
 
@@ -89,6 +91,12 @@ export default async function DashboardPage() {
             </svg>
             Emitir Credencial
         </Link>
+        </div>
+
+        {/* ── Busca de usuários para emissão ── */}
+        <div className="mb-10">
+          <p className="text-sm text-gray-400 mb-3">Buscar usuário para emitir credencial</p>
+          <UserSearch />
         </div>
 
         {/* ── Grid de duas colunas ── */}
