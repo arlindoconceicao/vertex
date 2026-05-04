@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import UserSearch from "@/components/UserSearch";
+import CredentialTabs from "@/components/dashboard/CredentialTabs";
+import {
+  getIssuedCredentials,
+  getReceivedCredentials,
+} from "@/services/credentialService";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -10,14 +15,21 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
   if (!session.user.cpf) redirect("/completar-cadastro");
 
+  // Busca paralela — não bloqueia uma enquanto a outra carrega
+  const [issuedResult, receivedResult] = await Promise.all([
+    getIssuedCredentials(session.user.id),
+    getReceivedCredentials(session.user.id),
+  ]);
+
+  const issued = issuedResult.success ? issuedResult.data : [];
+  const received = receivedResult.success ? receivedResult.data : [];
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
 
-      {/* ── Navbar ── */}
+      {/* Navbar */}
       <header className="border-b border-gray-800 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -64,7 +76,7 @@ export default async function DashboardPage() {
         {/* Saudação */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">
-            Olá, {session.user.name?.split(" ")[0]} 👋
+            Olá, {session.user.name?.split(" ")[0]}!
           </h1>
           <p className="text-gray-400 text-sm mt-1">
             Gerencie suas credenciais verificáveis
@@ -99,87 +111,12 @@ export default async function DashboardPage() {
           <UserSearch />
         </div>
 
-        {/* ── Grid de duas colunas ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* ── Coluna Issuer ── */}
-          <section className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-
-            {/* Cabeçalho da seção */}
-            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                <h2 className="font-semibold text-white text-sm">O que estou criando</h2>
-              </div>
-              <span className="text-xs text-gray-500 bg-gray-800 px-2.5 py-1 rounded-full">
-                Issuer
-              </span>
-            </div>
-
-            {/* Sub-seção: Schemas */}
-            <div className="px-6 py-4 border-b border-gray-800/60">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-                Meus Schemas
-              </h3>
-              <EmptyState
-                icon="document"
-                message="Nenhum schema criado ainda."
-                action={{ label: "Criar primeiro schema", href: "/schemas/novo" }}
-              />
-            </div>
-
-            {/* Sub-seção: Credenciais emitidas */}
-            <div className="px-6 py-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-                Credenciais Emitidas
-              </h3>
-              <EmptyState
-                icon="send"
-                message="Nenhuma credencial emitida ainda."
-                action={{ label: "Emitir credencial", href: "/credenciais/emitir" }}
-              />
-            </div>
-
-          </section>
-
-          {/* ── Coluna Holder ── */}
-          <section className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-
-            {/* Cabeçalho da seção */}
-            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h2 className="font-semibold text-white text-sm">O que estou recebendo</h2>
-              </div>
-              <span className="text-xs text-gray-500 bg-gray-800 px-2.5 py-1 rounded-full">
-                Holder
-              </span>
-            </div>
-
-            {/* Sub-seção: Ofertas pendentes */}
-            <div className="px-6 py-4 border-b border-gray-800/60">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-                Ofertas Pendentes
-              </h3>
-              <EmptyState
-                icon="inbox"
-                message="Nenhuma oferta pendente."
-              />
-            </div>
-
-            {/* Sub-seção: Credenciais recebidas */}
-            <div className="px-6 py-4">
-              <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-                Credenciais Recebidas
-              </h3>
-              <EmptyState
-                icon="badge"
-                message="Nenhuma credencial recebida ainda."
-              />
-            </div>
-
-          </section>
-
+        {/* Abas de credenciais */}
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-6">
+            Credenciais
+          </h2>
+          <CredentialTabs issued={issued} received={received} />
         </div>
       </main>
 
