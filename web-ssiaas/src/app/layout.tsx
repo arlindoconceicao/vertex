@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Vertex Web SSIaaS",
-  description: "Plataforma de Credenciais Verificáveis - UNIFESP",
+  description: "Verifiable Credentials Platform - UNIFESP",
 };
 
 export default function RootLayout({

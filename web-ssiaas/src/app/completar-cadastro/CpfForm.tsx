@@ -114,7 +114,7 @@ export default function CpfForm() {
             Salvando...
           </span>
         ) : (
-          "Confirmar e acessar a plataforma"
+          "Confirm and access the platform"
         )}
       </button>
     </form>

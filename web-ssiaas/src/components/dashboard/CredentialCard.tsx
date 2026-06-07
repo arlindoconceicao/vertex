@@ -18,7 +18,7 @@ export default function CredentialCard({ credential, perspective }: Props) {
     perspective === "received" ? credential.issuer : credential.holder;
 
   const counterpartLabel =
-    perspective === "received" ? "Emitida por" : "Emitida para";
+    perspective === "received" ? "Issued by" : "Issued for";
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4 hover:border-gray-700 transition-colors">
@@ -64,7 +64,7 @@ export default function CredentialCard({ credential, perspective }: Props) {
             {new Date(credential.expiresAt).toLocaleDateString("pt-BR")}
           </span>
         ) : (
-          <span className="text-gray-600">Sem expiração</span>
+          <span className="text-gray-600">No expiration</span>
         )}
       </div>
 

@@ -32,10 +32,10 @@ export default async function CompletarCadastroPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Complete seu cadastro
+            Complete Your Registration
           </h1>
           <p className="text-gray-400 mt-2 text-sm">
-            Precisamos do seu CPF para emitir e receber credenciais verificáveis.
+            We need your CPF to issue and receive verifiable credentials.
           </p>
         </div>
 
@@ -69,8 +69,8 @@ export default async function CompletarCadastroPage() {
 
         {/* Aviso de privacidade */}
         <p className="text-center text-gray-600 text-xs mt-6 leading-relaxed">
-          Seu CPF é armazenado de forma segura e utilizado exclusivamente
-          como identificador nas credenciais verificáveis da plataforma.
+          Your CPF is stored securely and used exclusively as an 
+          identifier in the verifiable credentials of the platform.
         </p>
 
       </div>

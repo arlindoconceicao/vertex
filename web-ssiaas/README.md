@@ -111,8 +111,8 @@ src/
 ├── app/
 │   ├── actions/          # Server Actions (lógica de negócio)
 │   ├── api/auth/         # Rota do Auth.js
-│   ├── completar-cadastro/
-│   ├── credenciais/
+│   ├── complete-registration/
+│   ├── credentials/
 │   ├── dashboard/
 │   ├── login/
 │   └── schemas/
@@ -130,7 +130,7 @@ prisma/
 
 ## Fluxo de Autenticação (Sprint 0)
 Usuário → /login → Google OIDC → Callback → Verifica CPF?
-├── Não → /completar-cadastro → Salva CPF → /dashboard
+├── Não → /complete-registration → Salva CPF → /dashboard
 └── Sim → /dashboard
 
 ---

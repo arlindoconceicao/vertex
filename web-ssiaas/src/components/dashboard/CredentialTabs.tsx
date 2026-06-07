@@ -61,7 +61,7 @@ export default function CredentialTabs({ issued, received }: Props) {
         <CredentialGrid
           credentials={received}
           perspective="received"
-          emptyMessage="Você ainda não recebeu nenhuma credencial."
+          emptyMessage="You haven't received any credentials yet."
         />
       )}
 
@@ -78,23 +78,23 @@ export default function CredentialTabs({ issued, received }: Props) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Criar Schema
+              Create Schema
             </Link>
             <Link
-              href="/credenciais/emitir"
+              href="/credentials/issue"
               className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors border border-gray-700"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
               </svg>
-              Emitir Credencial
+              Issue Credential
             </Link>
           </div>
 
           {/* Busca de destinatário */}
           <div>
             <p className="text-sm text-gray-400 mb-3">
-              Buscar usuário para emitir credencial
+              Search for a user to issue a credential
             </p>
             <UserSearch />
           </div>
@@ -102,12 +102,12 @@ export default function CredentialTabs({ issued, received }: Props) {
           {/* Credenciais já emitidas */}
           <div>
             <p className="text-sm text-gray-400 mb-4">
-              Histórico de emissões
+              Issue History
             </p>
             <CredentialGrid
               credentials={issued}
               perspective="issued"
-              emptyMessage="Você ainda não emitiu nenhuma credencial."
+              emptyMessage="You haven't issued any credentials yet."
             />
           </div>
 

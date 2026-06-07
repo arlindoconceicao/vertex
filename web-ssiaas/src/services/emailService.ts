@@ -47,25 +47,25 @@ function templateNewCredential({
           </div>
 
           <h1 style="font-size:20px; font-weight:700; margin:0 0 8px;">
-            Você recebeu uma nova credencial ✅
+            You have received a new credential. ✅
           </h1>
           <p style="color:#a3a3a3; font-size:14px; margin:0 0 24px;">
-            Olá, <strong style="color:#e5e5e5;">${name}</strong>!
-            <strong style="color:#e5e5e5;">${issuer}</strong> emitiu uma
-            <strong style="color:#e5e5e5;">${schemaName}</strong> para você
-            na plataforma Vertex SSIaaS.
+            Hello, <strong style="color:#e5e5e5;">${name}</strong>!
+            <strong style="color:#e5e5e5;">${issuer}</strong> has issued a
+            <strong style="color:#e5e5e5;">${schemaName}</strong> for you
+            on the Vertex SSIaaS platform.
           </p>
 
           
             href="${APP_URL}/dashboard"
             style="display:inline-block; background:#4f46e5; color:white; text-decoration:none; font-size:14px; font-weight:600; padding:12px 24px; border-radius:10px;"
           >
-            Ver minha credencial →
+            View my credential →
           </a>
 
           <hr style="border:none; border-top:1px solid #222; margin:32px 0;" />
           <p style="color:#525252; font-size:12px; margin:0;">
-            Vertex Web SSIaaS · UNIFESP · Pesquisa financiada pela FAPESP
+            Vertex Web SSIaaS · UNIFESP · Research funded by FAPESP
           </p>
 
         </div>
@@ -94,29 +94,28 @@ function templateInviteExternal({
           </div>
 
           <h1 style="font-size:20px; font-weight:700; margin:0 0 8px;">
-            Você foi convidado a receber uma credencial 🎓
+            You have been invited to receive a credential 🎓
           </h1>
           <p style="color:#a3a3a3; font-size:14px; margin:0 0 8px;">
-            <strong style="color:#e5e5e5;">${issuer}</strong> quer emitir uma
-            <strong style="color:#e5e5e5;">${schemaName}</strong> para
+            <strong style="color:#e5e5e5;">${issuer}</strong> wants to issue a
+            <strong style="color:#e5e5e5;">${schemaName}</strong> for
             <strong style="color:#e5e5e5;">${recipientEmail}</strong>.
           </p>
           <p style="color:#a3a3a3; font-size:14px; margin:0 0 24px;">
-            Para aceitar, cadastre-se gratuitamente na plataforma
-            Vertex SSIaaS usando este mesmo e-mail.
+            To accept, sign up for free on the Vertex SSIaaS platform using this email.
           </p>
 
           
             href="${registerUrl}"
             style="display:inline-block; background:#4f46e5; color:white; text-decoration:none; font-size:14px; font-weight:600; padding:12px 24px; border-radius:10px;"
           >
-            Cadastrar e aceitar credencial →
+            Register and accept credentials →
           </a>
 
           <hr style="border:none; border-top:1px solid #222; margin:32px 0;" />
           <p style="color:#525252; font-size:12px; margin:0;">
-            Vertex Web SSIaaS · UNIFESP · Pesquisa financiada pela FAPESP<br/>
-            Se você não esperava este e-mail, pode ignorá-lo com segurança.
+            Vertex Web SSIaaS · UNIFESP · Research funded by FAPESP<br/>
+            If you were not expecting this email, you can safely ignore it.
           </p>
 
         </div>
@@ -140,7 +139,7 @@ export async function notifyNewCredential(
     const { data, error } = await resend.emails.send({
       from: FROM,
       to: params.holderEmail,
-      subject: `Você recebeu uma nova credencial: ${params.schemaName}`,
+      subject: `You have received a new credential.: ${params.schemaName}`,
       html: templateNewCredential(params),
     });
 
@@ -154,7 +153,7 @@ export async function notifyNewCredential(
 
   } catch (err) {
     console.error("[emailService] notifyNewCredential exception:", err);
-    return { success: false, error: "Erro inesperado ao enviar e-mail." };
+    return { success: false, error: "Unexpected error while sending email." };
   }
 }
 
@@ -170,7 +169,7 @@ export async function inviteExternalUser(
     const { data, error } = await resend.emails.send({
       from: FROM,
       to: params.recipientEmail,
-      subject: `${params.issuerName ?? "Alguém"} quer te enviar uma credencial verificável`,
+      subject: `${params.issuerName ?? "Someone"} wants to send you a verifiable credential`,
       html: templateInviteExternal(params),
     });
 
@@ -184,6 +183,6 @@ export async function inviteExternalUser(
 
   } catch (err) {
     console.error("[emailService] inviteExternalUser exception:", err);
-    return { success: false, error: "Erro inesperado ao enviar e-mail." };
+    return { success: false, error: "Unexpected error while sending email." };
   }
 }

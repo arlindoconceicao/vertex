@@ -15,7 +15,7 @@ export async function updateCpf(
   // Garante que há uma sessão ativa e extrai o user ID
   const session = await auth();
   if (!session?.user?.id) {
-    return { success: false, error: "Sessão inválida. Faça login novamente." };
+    return { success: false, error: "Invalid session. Please log in again." };
   }
 
   // Extrai e limpa o CPF (remove pontos e traço)
@@ -24,7 +24,7 @@ export async function updateCpf(
 
   // Valida o CPF usando o algoritmo
   if (!cleanedCpf || !isValidCpf(cleanedCpf)) {
-    return { success: false, error: "CPF inválido. Verifique os dígitos e tente novamente." };
+    return { success: false, error: "Invalid CPF. Please check the digits and try again." };
   }
 
   // Atualiza o CPF do usuário no banco de dados
@@ -40,13 +40,13 @@ export async function updateCpf(
       "code" in error &&
       (error as { code: string }).code === "P2002"
     ) {
-      return { success: false, error: "Este CPF já está cadastrado." };
+      return { success: false, error: "This CPF is already registered." };
     }
-    return { success: false, error: "Erro ao salvar. Tente novamente." };
+    return { success: false, error: "Error saving. Please try again." };
   }
 
   // Revalida a página para refletir a atualização do CPF
-  revalidatePath("/completar-cadastro");
+  revalidatePath("/complete-registration");
 
   return { success: true };
 }

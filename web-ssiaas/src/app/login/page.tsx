@@ -32,17 +32,17 @@ export default async function LoginPage() {
             Vertex Web SSIaaS
           </h1>
           <p className="text-gray-400 mt-2 text-sm">
-            Plataforma de Credenciais Verificáveis
+            Verifiable Credentials Platform
           </p>
         </div>
 
         {/* Card de Login */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-1">
-            Acesse sua conta
+            Access your account
           </h2>
           <p className="text-gray-400 text-sm mb-8">
-            Use sua conta Google para entrar na plataforma.
+            Use your Google account to sign in to the platform.
           </p>
 
           {/* Server Action inline para o botão de login */}
@@ -75,14 +75,14 @@ export default async function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Continuar com Google
+              Continue with Google
             </button>
           </form>
         </div>
 
         {/* Rodapé */}
         <p className="text-center text-gray-600 text-xs mt-8">
-          Pesquisa financiada pela FAPESP - UNIFESP
+          Research funded by FAPESP - UNIFESP
         </p>
 
       </div>

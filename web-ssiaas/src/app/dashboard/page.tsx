@@ -10,7 +10,7 @@ import {
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!session.user.cpf) redirect("/completar-cadastro");
+  if (!session.user.cpf) redirect("/complete-registration");
 
   const [issuedResult, receivedResult] = await Promise.all([
     getIssuedCredentials(session.user.id),
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
             Olá, {session.user.name?.split(" ")[0]} 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Gerencie suas credenciais verificáveis
+            Manage your verifiable credentials.
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
       <footer className="border-t border-gray-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
           <span className="text-xs text-gray-600">Vertex Web SSIaaS · UNIFESP</span>
-          <span className="text-xs text-gray-600">Financiado pela FAPESP</span>
+          <span className="text-xs text-gray-600">Funded by FAPESP</span>
         </div>
       </footer>
 

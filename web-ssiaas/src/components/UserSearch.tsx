@@ -79,7 +79,7 @@ export default function UserSearch() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={user.image}
-                  alt={user.name ?? "Usuário"}
+                  alt={user.name ?? "User"}
                   className="w-8 h-8 rounded-full shrink-0"
                 />
               ) : (
@@ -91,7 +91,7 @@ export default function UserSearch() {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  {user.name ?? "Sem nome"}
+                  {user.name ?? "No name"}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
               </div>
@@ -101,10 +101,10 @@ export default function UserSearch() {
                 className="ml-auto text-xs text-indigo-400 hover:text-indigo-300 transition-colors shrink-0"
                 onClick={() => {
                   // TODO Sprint 1B: abrir modal de emissão de credencial
-                  alert(`Emitir para: ${user.email}`);
+                  alert(`Issue to: ${user.email}`);
                 }}
               >
-                Emitir →
+                Issue →
               </button>
             </div>
           ))}
@@ -114,7 +114,7 @@ export default function UserSearch() {
       {/* Sem resultados */}
       {!isPending && query.trim().length >= 2 && results.length === 0 && !error && (
         <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-6 text-center">
-          <p className="text-gray-500 text-sm">Nenhum usuário encontrado.</p>
+          <p className="text-gray-500 text-sm">No users found.</p>
         </div>
       )}
 

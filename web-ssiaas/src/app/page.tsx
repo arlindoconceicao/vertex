@@ -8,7 +8,7 @@ export default async function RootPage() {
   if (session?.user?.cpf) redirect("/dashboard");
 
   // Já logado sem CPF -> Completar cadastro
-  if (session?.user) redirect("/completar-cadastro");
+  if (session?.user) redirect("/complete-registration");
 
   // Não logado -> Login
   redirect("/login");
