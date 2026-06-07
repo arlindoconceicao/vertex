@@ -4,8 +4,36 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-//  url      = env("DATABASE_URL")
 }
+
+// Ciclo de vida de uma VC (baseado no W3C VC Status List)
+enum VCStatus {
+  PENDING   // Oferta enviada, aguardando aceite do Holder
+  ACTIVE    // Aceita e válida
+  REVOKED   // Revogada pelo Issuer
+}
+
+// Dois tipos de schema:
+// TEMPLATE  → schema fixo, serve como modelo base para outros issuers.
+//             Não pode ser editado, apenas copiado.
+// MUTABLE   → schema que o issuer pode "evoluir". Qualquer alteração
+//             gera um novo registro filho (ver parentId), preservando
+//             a versão anterior imutável no IPFS.
+enum SchemaType {
+  TEMPLATE
+  MUTABLE
+}
+
+// Onde o conteúdo está armazenado:
+// LOCAL → apenas no PostgreSQL (rascunho, uso interno)
+// IPFS  → publicado na rede IPFS, identificado pelo CID.
+//         Uma vez no IPFS, o conteúdo é imutável — qualquer
+//         alteração gera um novo CID e, portanto, um novo schema.
+enum StorageLocation {
+  LOCAL
+  IPFS
+}
+
 
 // Pode ser issuer E holder
 model User {
@@ -17,6 +45,10 @@ model User {
 
   // É opcional no banco porque o usuário preenche APÓS o primeiro login.
   cpf           String?   @unique
+
+  // DID (Decentralized Identifier) — identificador SSI do usuário.
+  // Formato esperado: "did:web:vertex.unifesp.br:users:<id>"
+  did           String?   @unique
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -43,10 +75,37 @@ model CredentialSchema {
   id          String   @id @default(cuid())
   name        String                          // Ex: "Diploma de Graduação"
   description String?
+  
+  // Versão semântica do schema: "1.0", "1.1", "2.0", etc.
+  // Incrementada manualmente pelo Issuer ao publicar uma nova versão.
   version     String   @default("1.0")
+
+  // Tipo do schema: TEMPLATE (fixo) ou MUTABLE (evoluível)
+  schemaType  SchemaType @default(MUTABLE)
+
+  // Onde este schema está armazenado
+  storageLocation StorageLocation @default(LOCAL)
+
+  // CID (Content Identifier) do IPFS.
+  // Preenchido apenas quando storageLocation = IPFS.
+  // Ex: "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"
+  ipfsCid     String?
 
   // O JSON que define os campos exigidos pela credencial.
   jsonSchema  Json
+
+  // VERSIONAMENTO
+  // Quando um schema MUTABLE é "editado", NÃO alteramos o registro
+  // existente (pois ele pode já estar publicado no IPFS e ser imutável).
+  // Em vez disso, criamos um novo schema filho com parentId apontando
+  // para este. Isso forma uma cadeia de versões auditável.
+  parentId    String?
+  parent      CredentialSchema?  @relation("SchemaVersioning", fields: [parentId], references: [id])
+  children    CredentialSchema[] @relation("SchemaVersioning")
+
+  // Flag para facilitar a query "me dê a versão mais recente deste schema".
+  // Quando um filho é criado, o pai tem isLatestVersion = false.
+  isLatestVersion Boolean @default(true)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -62,7 +121,7 @@ model CredentialSchema {
 }
 
 
-// A credencial em si — já preenchida e emitida para um Holder.
+// A credencial em si: já preenchida e emitida para um Holder.
 // Segue a estrutura W3C VC Data Model.
 model VerifiableCredential {
   id        String   @id @default(cuid())
@@ -72,9 +131,13 @@ model VerifiableCredential {
   vcPayload Json
 
   status    VCStatus @default(PENDING) // PENDING | ACTIVE | REVOKED
-
   issuedAt  DateTime @default(now())
   expiresAt DateTime?
+
+  // A credencial também pode ser publicada no IPFS após a emissão,
+  // tornando-a verificável por qualquer um com o CID.
+  ipfsCid         String? 
+  storageLocation StorageLocation @default(LOCAL)
 
   issuerId  String
   issuer    User     @relation("IssuerRelation", fields: [issuerId], references: [id])
@@ -86,14 +149,6 @@ model VerifiableCredential {
   schema    CredentialSchema @relation(fields: [schemaId], references: [id])
 
   @@map("verifiable_credentials")
-}
-
-
-// Ciclo de vida de uma VC (baseado no W3C VC Status List)
-enum VCStatus {
-  PENDING   // Oferta enviada, aguardando aceite do Holder
-  ACTIVE    // Aceita e válida
-  REVOKED   // Revogada pelo Issuer
 }
 
 
