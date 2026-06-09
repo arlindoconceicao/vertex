@@ -1,0 +1,11 @@
+{
+  "name": "@ssi-pq/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "cargo build && node scripts/prepare-node-addon.js",
+    "test": "cargo test && npm run build && find test-node -name '*.test.js' ! -name 'wallet-pdf-generic-real-files.test.js' -print0 | sort -z | xargs -0 node --test",
+    "test:real-pdfs": "npm run build && node --test test-node/core/wallet-pdf-generic-real-files.test.js"
+  }
+}

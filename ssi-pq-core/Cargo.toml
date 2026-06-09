@@ -1,0 +1,35 @@
+[package]
+name = "ssi-pq-core"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "ssi_pq_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aes-gcm = "0.10"
+argon2 = "0.5"
+base64 = "0.22"
+bs58 = "0.5"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+hex = "0.4"
+napi = { version = "3", features = ["serde-json"] }
+napi-derive = "3"
+getrandom = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha3 = "0.10"
+thiserror = "2"
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
+zeroize = { version = "1", features = ["derive"] }
+unicode-normalization = "0.1"
+
+# These are the post-quantum primitives selected for the project. The thin
+# wrappers will live behind the core API so Node never has to deal with raw
+# crate-specific types.
+libcrux-ml-kem = "0.0.9"
+libcrux-ml-dsa = "0.0.9"
+
+[build-dependencies]
+napi-build = "2"
