@@ -21,6 +21,8 @@ const core = require('../../npm/ssi_pq_core.node');
 const outputDir = path.join(__dirname, '..', '..', 'test-output', 'nested-labels-platform-flow');
 fs.mkdirSync(outputDir, { recursive: true });
 
+// Esta função serve para decodificar uma string codificada em Base58BTC no formato Multibase, convertendo-a de volta para uma matriz de bytes brutos (um Buffer no Node.js).
+// Esse tipo de codificação é extremamente comum em sistemas descentralizados, como IPFS (para gerar CIDs), identificadores descentralizados (DIDs) e ecossistemas de criptomoedas (como o Bitcoin).
 function decodeBase58Btc(str) {
   if (str[0] !== 'z') throw new Error('Not base58btc multibase');
   const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -41,6 +43,8 @@ function decodeBase58Btc(str) {
   return Buffer.concat([Buffer.alloc(leadingZeros), buf]);
 }
 
+// Esta função converte um texto em uma string hexadecimal contínua, filtrando os caracteres para garantir que apenas aqueles compatíveis com um subconjunto seguro do padrão WinAnsi (basicamente ASCII e Latin-1) sejam mantidos.
+// Qualquer caractere fora desse padrão (como emojis ou caracteres de outros alfabetos) é substituído por um ponto de interrogação (?).
 function winAnsiHex(text) {
   return [...text.normalize('NFC')]
     .map((char) => {

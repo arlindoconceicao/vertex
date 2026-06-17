@@ -10,6 +10,9 @@
  */
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const test = require('node:test');
 
 const core = require('../../npm/ssi_pq_core.node');
@@ -24,6 +27,36 @@ test('canonical JSON sorts object keys recursively', () => {
 
 test('canonical JSON keeps array order', () => {
   assert.equal(core.canonicalJson('[{"b":2,"a":1},3]'), '[{"a":1,"b":2},3]');
+});
+
+test('canonical JSON follows RFC 8785 primitive serialization samples', () => {
+  const input = JSON.stringify({
+    numbers: [333333333.33333329, 1e30, 4.5, 2e-3, 1e-27],
+    string: "\u20ac$\u000f\nA'B\"\\\\\"/",
+    literals: [null, true, false]
+  });
+
+  assert.equal(
+    core.canonicalJson(input),
+    "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"€$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}"
+  );
+});
+
+test('canonical JSON sorts object keys with RFC 8785 UTF-16 ordering', () => {
+  const input = '{"€":"Euro Sign","\\r":"Carriage Return","דּ":"Hebrew Letter Dalet With Dagesh","1":"One","😀":"Emoji: Grinning Face","":"Control","ö":"Latin Small Letter O With Diaeresis"}';
+
+  assert.equal(
+    core.canonicalJson(input),
+    '{"\\r":"Carriage Return","1":"One","":"Control","ö":"Latin Small Letter O With Diaeresis","€":"Euro Sign","😀":"Emoji: Grinning Face","דּ":"Hebrew Letter Dalet With Dagesh"}'
+  );
+});
+
+test('canonical JSON can be generated directly from a JSON file', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssi-pq-core-jcs-'));
+  const file = path.join(dir, 'sample.json');
+  fs.writeFileSync(file, '{ "z": 1, "a": { "b": 2, "a": 1 } }\n', 'utf8');
+
+  assert.equal(core.canonicalJsonFile(file), '{"a":{"a":1,"b":2},"z":1}');
 });
 
 test('SHA3-256 matches the empty-string test vector', () => {
@@ -84,4 +117,8 @@ test('supported profiles include every planned ML-DSA and ML-KEM size', () => {
 
 test('invalid JSON becomes a JavaScript error', () => {
   assert.throws(() => core.canonicalJson('{"a":'), /invalid JSON/);
+});
+
+test('duplicate JSON object property names are rejected for JCS input', () => {
+  assert.throws(() => core.canonicalJson('{"a":1,"a":2}'), /duplicate JSON property name: a/);
 });

@@ -10,6 +10,10 @@ pub enum SsiError {
     #[error("invalid JSON: {0}")]
     InvalidJson(#[from] serde_json::Error),
 
+    /// Um arquivo solicitado pelo core não pôde ser lido.
+    #[error("file operation failed: {0}")]
+    Io(#[from] std::io::Error),
+
     /// A string base64url recebida não pode ser decodificada.
     #[error("invalid base64url value: {0}")]
     InvalidBase64Url(#[from] base64::DecodeError),

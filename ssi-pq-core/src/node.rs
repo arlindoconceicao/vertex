@@ -106,6 +106,12 @@ pub fn canonical_json_for_node(json: String) -> napi::Result<String> {
     canonical_json::canonical_json_string_from_str(&json).map_err(to_napi_error)
 }
 
+/// Retorna a representação canônica RFC 8785/JCS de um arquivo JSON UTF-8.
+#[napi(js_name = "canonicalJsonFile")]
+pub fn canonical_json_file_for_node(path: String) -> napi::Result<String> {
+    canonical_json::canonical_json_string_from_file(path).map_err(to_napi_error)
+}
+
 /// Calcula o SHA3-256 de um JSON canônico e retorna o resultado em base64url.
 ///
 /// A entrada pode ter chaves em qualquer ordem, pois a canonicalização ocorre

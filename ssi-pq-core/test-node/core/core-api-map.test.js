@@ -72,7 +72,7 @@ function minimalPdfBase() {
   );
 }
 
-test('Mapa prático: todas as 40 funções públicas do core', () => {
+test('Mapa prático: funções públicas do core', () => {
   const runId = crypto.randomUUID();
   const createdAt = '2026-05-27T00:00:00Z';
   const issuedAt = '2026-05-28T00:00:00Z';
@@ -81,7 +81,12 @@ test('Mapa prático: todas as 40 funções públicas do core', () => {
   const canonical = core.canonicalJson('{"z":2,"a":{"b":2,"a":1}}');
   assert.equal(canonical, '{"a":{"a":1,"b":2},"z":2}');
 
-  // 02. canonicalJsonHashBase64url: calcula hash do JSON canônico em base64url.
+  // 02. canonicalJsonFile: transforma um arquivo JSON UTF-8 em forma canônica RFC 8785/JCS.
+  const canonicalJsonPath = path.join(outputDir, `${runId}-canonical.json`);
+  fs.writeFileSync(canonicalJsonPath, '{ "z": 2, "a": { "b": 2, "a": 1 } }\n', 'utf8');
+  assert.equal(core.canonicalJsonFile(canonicalJsonPath), canonical);
+
+  // 03. canonicalJsonHashBase64url: calcula hash do JSON canônico em base64url.
   const canonicalHash = core.canonicalJsonHashBase64url('{"b":2,"a":1}');
   assert.equal(canonicalHash, core.canonicalJsonHashBase64url('{"a":1,"b":2}'));
   assert.equal(typeof canonicalHash, 'string');
