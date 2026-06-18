@@ -13,109 +13,81 @@ enum VCStatus {
   REVOKED   // Revogada pelo Issuer
 }
 
-// Dois tipos de schema:
-// TEMPLATE  → schema fixo, serve como modelo base para outros issuers.
-//             Não pode ser editado, apenas copiado.
-// MUTABLE   → schema que o issuer pode "evoluir". Qualquer alteração
-//             gera um novo registro filho (ver parentId), preservando
-//             a versão anterior imutável no IPFS.
-enum SchemaType {
-  TEMPLATE
-  MUTABLE
+// Visibilidade de um schema:
+// PRIVATE → visível apenas para o criador (padrão de nascimento)
+// PUBLIC  → o criador optou por torná-lo um template para a comunidade
+enum SchemaVisibility {
+  PRIVATE
+  PUBLIC
 }
 
-// Onde o conteúdo está armazenado:
-// LOCAL → apenas no PostgreSQL (rascunho, uso interno)
-// IPFS  → publicado na rede IPFS, identificado pelo CID.
-//         Uma vez no IPFS, o conteúdo é imutável — qualquer
-//         alteração gera um novo CID e, portanto, um novo schema.
+// Onde o conteúdo do schema está armazenado.
+// Usado apenas por CredentialSchema — credenciais NUNCA vão para o IPFS.
 enum StorageLocation {
   LOCAL
   IPFS
 }
 
 
-// Pode ser issuer E holder
 model User {
-  id            String    @id @default(cuid())  // ID interno da plataforma
+  id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
 
-  // É opcional no banco porque o usuário preenche APÓS o primeiro login.
+  // Opcional — preenchido apenas após o primeiro login
   cpf           String?   @unique
 
-  // DID (Decentralized Identifier) — identificador SSI do usuário.
-  // Formato esperado: "did:web:vertex.unifesp.br:users:<id>"
+  // DID (Decentralized Identifier) do usuário no padrão SSI
   did           String?   @unique
+
+  // Chave pública (multibase) associada à DID, usada para
+  // verificar assinaturas e montar o DID Document (W3C)
+  didPublicKey  String?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Schemas que este usuário CRIOU (papel de Issuer)
-  schemasCreated CredentialSchema[]
-
-  // Credenciais que este usuário EMITIU para outros (papel de Issuer)
-  credentialsIssued VerifiableCredential[] @relation("IssuerRelation")
-
-  // Credenciais que este usuário RECEBEU (papel de Holder)
+  schemasCreated      CredentialSchema[]
+  credentialsIssued   VerifiableCredential[] @relation("IssuerRelation")
   credentialsReceived VerifiableCredential[] @relation("HolderRelation")
-
-  // Necessário pelo @auth/prisma-adapter (Auth.js gerencia isso)
-  accounts Account[]
-  sessions Session[]
+  accounts            Account[]
+  sessions            Session[]
 
   @@map("users")
 }
 
 
-// Define a "estrutura" de uma credencial (como um formulário em branco).
+// Define a "estrutura" de uma credencial.
 model CredentialSchema {
   id          String   @id @default(cuid())
-  name        String                          // Ex: "Diploma de Graduação"
+  name        String
   description String?
-  
-  // Versão semântica do schema: "1.0", "1.1", "2.0", etc.
-  // Incrementada manualmente pelo Issuer ao publicar uma nova versão.
+
+  // Versão simples — sem cadeia de parentId/children
   version     String   @default("1.0")
 
-  // Tipo do schema: TEMPLATE (fixo) ou MUTABLE (evoluível)
-  schemaType  SchemaType @default(MUTABLE)
+  // PRIVATE por padrão; o criador pode torná-lo PUBLIC depois
+  visibility  SchemaVisibility @default(PRIVATE)
 
   // Onde este schema está armazenado
   storageLocation StorageLocation @default(LOCAL)
 
-  // CID (Content Identifier) do IPFS.
-  // Preenchido apenas quando storageLocation = IPFS.
-  // Ex: "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"
+  // CID do IPFS — sem @unique, pois conteúdos idênticos geram o mesmo hash
   ipfsCid     String?
 
-  // O JSON que define os campos exigidos pela credencial.
+  // Marca o momento em que o schema foi publicado no IPFS
+  publishedAt DateTime?
+
+  // Estrutura JSON que define os campos exigidos pela credencial
   jsonSchema  Json
-
-  // VERSIONAMENTO
-  // Quando um schema MUTABLE é "editado", NÃO alteramos o registro
-  // existente (pois ele pode já estar publicado no IPFS e ser imutável).
-  // Em vez disso, criamos um novo schema filho com parentId apontando
-  // para este. Isso forma uma cadeia de versões auditável.
-  parentId    String?
-  parent      CredentialSchema?  @relation("SchemaVersioning", fields: [parentId], references: [id])
-  children    CredentialSchema[] @relation("SchemaVersioning")
-
-  // Flag para facilitar a query "me dê a versão mais recente deste schema".
-  // Quando um filho é criado, o pai tem isLatestVersion = false.
-  isLatestVersion Boolean @default(true)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Quem criou este schema (o Issuer)
   creatorId   String
   creator     User     @relation(fields: [creatorId], references: [id])
-
-  // Credenciais emitidas a partir deste schema
-  credentials VerifiableCredential[]
 
   @@map("credential_schemas")
 }
@@ -126,27 +98,20 @@ model CredentialSchema {
 model VerifiableCredential {
   id        String   @id @default(cuid())
 
-  // O payload completo da VC no formato W3C/JSON-LD
-  // Ficará aqui: @context, type, issuer, credentialSubject, proof, etc.
+  // Payload W3C/JSON-LD completo:
+  // @context, type, issuer, issuanceDate, credentialSubject,
+  // credentialSchema (referência interna ao schema) e proof
   vcPayload Json
 
-  status    VCStatus @default(PENDING) // PENDING | ACTIVE | REVOKED
+  status    VCStatus @default(PENDING)
   issuedAt  DateTime @default(now())
   expiresAt DateTime?
-
-  // A credencial também pode ser publicada no IPFS após a emissão,
-  // tornando-a verificável por qualquer um com o CID.
-  ipfsCid         String? 
-  storageLocation StorageLocation @default(LOCAL)
 
   issuerId  String
   issuer    User     @relation("IssuerRelation", fields: [issuerId], references: [id])
 
   holderId  String
   holder    User     @relation("HolderRelation", fields: [holderId], references: [id])
-
-  schemaId  String
-  schema    CredentialSchema @relation(fields: [schemaId], references: [id])
 
   @@map("verifiable_credentials")
 }
@@ -172,6 +137,7 @@ model Account {
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
+
 
 model Session {
   id           String   @id @default(cuid())
