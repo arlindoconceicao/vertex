@@ -1,6 +1,110 @@
+// src/app/api/credentials/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { VCStatus, Prisma } from "@prisma/client";
+
+// ============================================================
+// GET /api/credentials
+// Lista credenciais do usuário logado, filtrando por papel e status.
+// O campo schemaSnapshot é extraído de dentro do vcPayload
+// em memória, pois não há relação no banco (desacoplamento).
+// ============================================================
+export async function GET(request: NextRequest) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const role = searchParams.get("role");
+  const statusParam = searchParams.get("status");
+
+  // Valida o parâmetro role — aceita apenas "issued" e "received"
+  if (role !== null && role !== "issued" && role !== "received") {
+    return NextResponse.json(
+      { error: "Invalid role: must be 'issued' or 'received'" },
+      { status: 400 }
+    );
+  }
+
+  // Valida o parâmetro status contra o enum do Prisma
+  if (
+    statusParam !== null &&
+    !Object.values(VCStatus).includes(statusParam as VCStatus)
+  ) {
+    return NextResponse.json(
+      { error: "Invalid status value", allowed: Object.values(VCStatus) },
+      { status: 400 }
+    );
+  }
+
+  const status = statusParam as VCStatus | null;
+
+  // Monta o filtro de papel. Se nenhum role for informado,
+  // retornamos todas onde o usuário é issuer OU holder.
+  let roleFilter: Prisma.VerifiableCredentialWhereInput;
+
+  if (role === "issued") {
+    roleFilter = { issuerId: session.user.id };
+  } else if (role === "received") {
+    roleFilter = { holderId: session.user.id };
+  } else {
+    roleFilter = {
+      OR: [
+        { issuerId: session.user.id },
+        { holderId: session.user.id },
+      ],
+    };
+  }
+
+  const where: Prisma.VerifiableCredentialWhereInput = {
+    ...roleFilter,
+    ...(status ? { status } : {}),
+  };
+
+  try {
+    const credentials = await prisma.verifiableCredential.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        issuedAt: true,
+        expiresAt: true,
+        vcPayload: true,
+        issuer: { select: { id: true, name: true, email: true } },
+        holder: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { issuedAt: "desc" },
+    });
+
+    // Mapeia para o formato do contrato, extraindo schemaSnapshot
+    // de dentro do vcPayload em vez de fazer JOIN no banco.
+    const response = credentials.map((vc) => {
+      const payload = vc.vcPayload as Record<string, unknown>;
+      const schemaSnapshot = payload.credentialSchema ?? null;
+
+      return {
+        id: vc.id,
+        status: vc.status,
+        issuedAt: vc.issuedAt.toISOString(),
+        expiresAt: vc.expiresAt?.toISOString() ?? null,
+        issuer: vc.issuer,
+        holder: vc.holder,
+        schemaSnapshot,
+      };
+    });
+
+    return NextResponse.json(response, { status: 200 });
+  } catch (error) {
+    console.error("[GET /api/credentials] Unexpected error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 
 // POST /api/credentials
 // Inicia a emissão de uma Credencial Verificável.
@@ -34,7 +138,6 @@ export async function POST(request: NextRequest) {
     credentialSubject?: unknown;
   };
 
-  // ── Validação dos campos obrigatórios ──────────────────────
   if (typeof schemaId !== "string" || schemaId.trim().length === 0) {
     return NextResponse.json(
       { error: "Missing or invalid field: schemaId" },
@@ -60,7 +163,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Validação opcional de expiresAt — se informado, deve ser uma data futura.
   let parsedExpiresAt: Date | null = null;
 
   if (expiresAt !== undefined) {
@@ -83,7 +185,6 @@ export async function POST(request: NextRequest) {
     parsedExpiresAt = date;
   }
 
-  // ── Busca do Schema ────────────────────────────────────────
   const schema = await prisma.credentialSchema.findUnique({
     where: { id: schemaId },
     select: { id: true, name: true, version: true },
@@ -93,8 +194,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Schema not found" }, { status: 404 });
   }
 
-  // ── Busca do Issuer (usuário logado) ───────────────────────
-  // Precisamos da DID para compor o campo "issuer" do payload W3C.
   const issuer = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { id: true, did: true, name: true },
@@ -111,7 +210,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── Busca do Holder ────────────────────────────────────────
   const holder = await prisma.user.findUnique({
     where: { email: holderEmail.trim() },
     select: { id: true, did: true },
@@ -124,7 +222,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Proteção contra auto-emissão — o issuer não pode emitir para si mesmo.
   if (holder.id === session.user.id) {
     return NextResponse.json(
       { error: "Cannot issue a credential to yourself" },
@@ -132,15 +229,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── Montagem do Payload W3C/JSON-LD ────────────────────────
-  // Segue estritamente o formato documentado no api-architecture.md.
-  // O "credentialSchema" dentro do payload é um snapshot —
-  // não há JOIN no banco para credenciais, conforme a decisão
-  // de desacoplamento feita na última refatoração.
   const issuanceDate = new Date().toISOString();
 
-  // O "type" secundário é derivado do nome do schema em PascalCase,
-  // removendo espaços e caracteres especiais.
   const credentialTypeName = schema.name
     .replace(/[^a-zA-Z0-9\s]/g, "")
     .split(/\s+/)
@@ -161,17 +251,11 @@ export async function POST(request: NextRequest) {
       version: schema.version,
     },
     credentialSubject: {
-      // Se o holder já tiver uma DID registrada, usamos ela.
-      // Caso contrário, usamos um identificador interno da plataforma.
       id: holder.did ?? `urn:vertex:users:${holder.id}`,
       ...(credentialSubject as Record<string, unknown>),
     },
   };
 
-  // ── Persistência no banco ──────────────────────────────────
-  // Hack do MVP: salvamos o payload não-assinado diretamente na
-  // tabela VerifiableCredential com status PENDING.
-  // O id gerado serve como signingRequestId para o Mobile Signer.
   try {
     const credential = await prisma.verifiableCredential.create({
       data: {
@@ -184,9 +268,6 @@ export async function POST(request: NextRequest) {
       select: { id: true },
     });
 
-    // Retorno 202 — o processo começou mas não terminou.
-    // A credencial só será finalizada quando o Mobile Signer
-    // chamar POST /api/signer/callback com a assinatura.
     return NextResponse.json(
       {
         signingRequestId: credential.id,
