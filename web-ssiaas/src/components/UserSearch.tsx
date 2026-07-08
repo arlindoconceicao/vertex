@@ -4,22 +4,30 @@ import { useState, useTransition, useCallback } from "react";
 import { searchUsers, type UserSearchResult } from "@/app/actions/search-users";
 
 export default function UserSearch() {
-  const [query, setQuery] = useState("");
+  const [cpf, setCpf] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const handleSearch = useCallback((value: string) => {
-    setQuery(value);
+  // Só dispara a busca quando atinge 11 dígitos.
+  const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+
+    const masked = digits
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+
+    setCpf(masked);
     setError(null);
 
-    if (value.trim().length < 2) {
+    if (digits.length < 11) {
       setResults([]);
       return;
     }
 
     startTransition(async () => {
-      const result = await searchUsers(value);
+      const result = await searchUsers(digits);
       if (result.success) {
         setResults(result.users);
       } else {
@@ -32,7 +40,7 @@ export default function UserSearch() {
   return (
     <div className="relative w-full">
 
-      {/* Input */}
+      {/* Input com máscara de CPF */}
       <div className="relative">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
@@ -45,9 +53,10 @@ export default function UserSearch() {
         </svg>
         <input
           type="text"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Buscar usuário por nome ou e-mail..."
+          inputMode="numeric"
+          value={cpf}
+          onChange={handleCpfChange}
+          placeholder="Search by CPF: 000.000.000-00"
           className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         />
         {isPending && (
@@ -67,7 +76,7 @@ export default function UserSearch() {
         <p className="text-red-400 text-xs mt-2 px-1">{error}</p>
       )}
 
-      {/* Resultados */}
+      {/* Resultado encontrado */}
       {results.length > 0 && (
         <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
           {results.map((user) => (
@@ -94,13 +103,16 @@ export default function UserSearch() {
                   {user.name ?? "No name"}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                {/* Exibe o CPF mascarado para confirmação visual */}
+                <p className="text-xs text-gray-500">
+                  CPF: {user.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
+                </p>
               </div>
 
-              {/* Placeholder para o botão de emitir — Sprint futura */}
               <button
                 className="ml-auto text-xs text-indigo-400 hover:text-indigo-300 transition-colors shrink-0"
                 onClick={() => {
-                  // TODO Sprint 1B: abrir modal de emissão de credencial
+                  // TODO: navegar para /credentials/issue?holder=user.id
                   alert(`Issue to: ${user.email}`);
                 }}
               >
@@ -111,12 +123,17 @@ export default function UserSearch() {
         </div>
       )}
 
-      {/* Sem resultados */}
-      {!isPending && query.trim().length >= 2 && results.length === 0 && !error && (
-        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-6 text-center">
-          <p className="text-gray-500 text-sm">No users found.</p>
-        </div>
-      )}
+      {/* CPF completo mas sem resultados */}
+      {!isPending &&
+        cpf.replace(/\D/g, "").length === 11 &&
+        results.length === 0 &&
+        !error && (
+          <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-6 text-center">
+            <p className="text-gray-500 text-sm">
+              No user found with this CPF.
+            </p>
+          </div>
+        )}
 
     </div>
   );
