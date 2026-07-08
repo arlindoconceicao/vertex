@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { issueCredential } from "@/app/actions/credential-actions";
 
@@ -29,16 +29,22 @@ export default function IssueCredentialForm({ schemas }: Props) {
   // O schema selecionado atualmente
   const selectedSchema = schemas.find((s) => s.id === selectedSchemaId);
 
-  // Quando troca o schema, reseta os valores dos campos
-  useEffect(() => {
-    if (selectedSchema) {
-      const initial: Record<string, string> = {};
-      for (const field of selectedSchema.fields) {
+  function handleSchemaChange(schemaId: string) {
+    setSelectedSchemaId(schemaId);
+    setError(null);
+
+    // Reseta os valores dos campos quando troca de schema
+    const schema = schemas.find((s) => s.id === schemaId);
+    if (schema) {
+        const initial: Record<string, string> = {};
+        for (const field of schema.fields) {
         initial[field.name] = "";
-      }
-      setFieldValues(initial);
+        }
+        setFieldValues(initial);
+    } else {
+        setFieldValues({});
     }
-  }, [selectedSchemaId, selectedSchema]);
+    }
 
   function handleSubmit() {
     setError(null);
@@ -123,7 +129,7 @@ export default function IssueCredentialForm({ schemas }: Props) {
         ) : (
           <select
             value={selectedSchemaId}
-            onChange={(e) => setSelectedSchemaId(e.target.value)}
+            onChange={(e) => handleSchemaChange(e.target.value)}
             className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
           >
             <option value="">Select a schema...</option>
