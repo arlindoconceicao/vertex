@@ -68,12 +68,12 @@ export default function CredentialCard({ credential, perspective }: Props) {
 
       {/* Datas */}
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>
+        <span suppressHydrationWarning>
           Issued on{" "}
           {new Date(credential.issuedAt).toLocaleDateString("en-US")}
         </span>
         {credential.expiresAt ? (
-          <span>
+          <span suppressHydrationWarning>
             Expires on{" "}
             {new Date(credential.expiresAt).toLocaleDateString("en-US")}
           </span>
