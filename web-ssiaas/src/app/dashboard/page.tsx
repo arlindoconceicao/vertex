@@ -1,24 +1,113 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import type { DashboardCredential, CredentialStats } from "@/lib/types";
 import CredentialTabs from "@/components/dashboard/CredentialTabs";
-import {
-  getIssuedCredentials,
-  getReceivedCredentials,
-} from "@/services/credentialService";
+import StatsWidgets from "@/components/dashboard/StatsWidgets";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (!session.user.cpf) redirect("/complete-registration");
 
-  const [issuedResult, receivedResult] = await Promise.all([
-    getIssuedCredentials(session.user.id),
-    getReceivedCredentials(session.user.id),
-  ]);
+  // Busca paralela: credenciais emitidas, recebidas e métricas,
+  // tudo de uma vez para não bloquear a renderização.
+  const [issuedRaw, receivedRaw, issuedGroups, receivedGroups] =
+    await Promise.all([
+      prisma.verifiableCredential.findMany({
+        where: { issuerId: session.user.id },
+        select: {
+          id: true,
+          status: true,
+          issuedAt: true,
+          expiresAt: true,
+          vcPayload: true,
+          issuer: { select: { id: true, name: true, email: true } },
+          holder: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { issuedAt: "desc" },
+      }),
+      prisma.verifiableCredential.findMany({
+        where: { holderId: session.user.id },
+        select: {
+          id: true,
+          status: true,
+          issuedAt: true,
+          expiresAt: true,
+          vcPayload: true,
+          issuer: { select: { id: true, name: true, email: true } },
+          holder: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { issuedAt: "desc" },
+      }),
+      prisma.verifiableCredential.groupBy({
+        by: ["status"],
+        where: { issuerId: session.user.id },
+        _count: { _all: true },
+      }),
+      prisma.verifiableCredential.groupBy({
+        by: ["status"],
+        where: { holderId: session.user.id },
+        _count: { _all: true },
+      }),
+    ]);
 
-  const issued   = issuedResult.success   ? issuedResult.data   : [];
-  const received = receivedResult.success ? receivedResult.data : [];
+  function mapCredentials(
+    rawList: typeof issuedRaw
+  ): DashboardCredential[] {
+    return rawList.map((vc) => {
+      const payload = vc.vcPayload as Record<string, unknown>;
+      const schema = payload.credentialSchema as {
+        id: string;
+        name: string;
+        version: string;
+      } | undefined;
+
+      // Extrai o tipo específico da credencial (ex: "GraduationDiploma")
+      // filtrando "VerifiableCredential" do array de types.
+      const types = (payload.type as string[]) ?? [];
+      const credentialType =
+        types.find((t) => t !== "VerifiableCredential") ?? "Credential";
+
+      return {
+        id: vc.id,
+        status: vc.status,
+        issuedAt: vc.issuedAt.toISOString(),
+        expiresAt: vc.expiresAt?.toISOString() ?? null,
+        issuer: vc.issuer,
+        holder: vc.holder,
+        schemaSnapshot: schema ?? null,
+        credentialType,
+      };
+    });
+  }
+
+  const issued = mapCredentials(issuedRaw);
+  const received = mapCredentials(receivedRaw);
+
+  const emptyBreakdown = { PENDING: 0, ACTIVE: 0, REVOKED: 0 };
+
+  const issuedByStatus = { ...emptyBreakdown };
+  let issuedCount = 0;
+  for (const g of issuedGroups) {
+    issuedByStatus[g.status] = g._count._all;
+    issuedCount += g._count._all;
+  }
+
+  const receivedByStatus = { ...emptyBreakdown };
+  let receivedCount = 0;
+  for (const g of receivedGroups) {
+    receivedByStatus[g.status] = g._count._all;
+    receivedCount += g._count._all;
+  }
+
+  const stats: CredentialStats = {
+    issuedCount,
+    receivedCount,
+    issuedByStatus,
+    receivedByStatus,
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -26,8 +115,6 @@ export default async function DashboardPage() {
       {/* ── Navbar ── */}
       <header className="border-b border-gray-800 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -37,14 +124,13 @@ export default async function DashboardPage() {
             <span className="font-semibold tracking-tight">Vertex SSIaaS</span>
           </div>
 
-          {/* Usuário + Logout */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2">
               {session.user.image && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={session.user.image}
-                  alt="Foto"
+                  alt="Profile"
                   className="w-8 h-8 rounded-full"
                 />
               )}
@@ -60,11 +146,10 @@ export default async function DashboardPage() {
                 type="submit"
                 className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
-                Sair
+                Log out
               </button>
             </form>
           </div>
-
         </div>
       </header>
 
@@ -74,14 +159,17 @@ export default async function DashboardPage() {
         {/* Saudação */}
         <div>
           <h1 className="text-2xl font-bold">
-            Olá, {session.user.name?.split(" ")[0]} 👋
+            Hello, {session.user.name?.split(" ")[0]} 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">
             Manage your verifiable credentials.
           </p>
         </div>
 
-        {/* Abas — toda a lógica condicional vive aqui */}
+        {/* Widgets de métricas */}
+        <StatsWidgets stats={stats} />
+
+        {/* Abas de credenciais */}
         <CredentialTabs issued={issued} received={received} />
 
       </main>
