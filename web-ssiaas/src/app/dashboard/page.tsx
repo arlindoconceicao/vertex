@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import type { DashboardCredential, CredentialStats } from "@/lib/types";
 import CredentialTabs from "@/components/dashboard/CredentialTabs";
 import StatsWidgets from "@/components/dashboard/StatsWidgets";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -136,6 +137,14 @@ export default async function DashboardPage() {
               )}
               <span className="text-sm text-gray-300">{session.user.name}</span>
             </div>
+
+            <Link
+              href="/settings"
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Settings
+            </Link>
+
             <form
               action={async () => {
                 "use server";
