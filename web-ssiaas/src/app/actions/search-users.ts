@@ -9,6 +9,7 @@ export type UserSearchResult = {
   name: string | null;
   email: string | null;
   image: string | null;
+  cpf: string | null;
 };
 
 type SearchUsersResult =
@@ -16,39 +17,33 @@ type SearchUsersResult =
   | { success: false; error: string };
 
 export async function searchUsers(
-  query: string
+  cpf: string
 ): Promise<SearchUsersResult> {
   const session = await auth();
   if (!session?.user?.id) {
-    return { success: false, error: "Sessão inválida." };
+    return { success: false, error: "Unauthorized." };
   }
 
-  // Ignora buscas muito curtas para evitar queries desnecessárias
-  if (!query || query.trim().length < 2) {
+  const cleaned = cpf.replace(/\D/g, "");
+
+  // Exige exatamente 11 dígitos para disparar a busca
+  if (cleaned.length !== 11) {
     return { success: true, users: [] };
   }
 
-  const users = await prisma.user.findMany({
+  const user = await prisma.user.findFirst({
     where: {
-      AND: [
-        // Nunca retorna o próprio usuário logado
-        { id: { not: session.user.id } },
-        {
-          OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { email: { contains: query, mode: "insensitive" } },
-          ],
-        },
-      ],
+      cpf: cleaned,
+      id: { not: session.user.id },
     },
     select: {
       id: true,
       name: true,
       email: true,
       image: true,
+      cpf: true,
     },
-    take: 8, // Limite de resultados
   });
 
-  return { success: true, users };
+  return { success: true, users: user ? [user] : [] };
 }

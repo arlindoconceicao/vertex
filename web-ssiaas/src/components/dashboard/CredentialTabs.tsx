@@ -1,25 +1,24 @@
-// src/components/dashboard/CredentialTabs.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import type { VerifiableCredential } from "@/services/credentialService";
+import type { DashboardCredential } from "@/lib/types";
 import CredentialCard from "./CredentialCard";
 import UserSearch from "@/components/UserSearch";
 
 type Tab = "received" | "issued";
 
 type Props = {
-  issued: VerifiableCredential[];
-  received: VerifiableCredential[];
+  issued: DashboardCredential[];
+  received: DashboardCredential[];
 };
 
 export default function CredentialTabs({ issued, received }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("received");
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "received", label: "Credenciais Recebidas", count: received.length },
-    { id: "issued",  label: "Credenciais Emitidas",  count: issued.length  },
+    { id: "received", label: "Received Credentials", count: received.length },
+    { id: "issued",   label: "Issued Credentials",   count: issued.length  },
   ];
 
   return (
@@ -72,7 +71,7 @@ export default function CredentialTabs({ issued, received }: Props) {
           {/* Ações do Issuer */}
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/schemas/novo"
+              href="/schemas/new"
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -91,7 +90,7 @@ export default function CredentialTabs({ issued, received }: Props) {
             </Link>
           </div>
 
-          {/* Busca de destinatário */}
+          {/* Busca por CPF */}
           <div>
             <p className="text-sm text-gray-400 mb-3">
               Search for a user to issue a credential
@@ -99,11 +98,9 @@ export default function CredentialTabs({ issued, received }: Props) {
             <UserSearch />
           </div>
 
-          {/* Credenciais já emitidas */}
+          {/* Histórico de emissões */}
           <div>
-            <p className="text-sm text-gray-400 mb-4">
-              Issue History
-            </p>
+            <p className="text-sm text-gray-400 mb-4">Issue History</p>
             <CredentialGrid
               credentials={issued}
               perspective="issued"
@@ -118,9 +115,8 @@ export default function CredentialTabs({ issued, received }: Props) {
 }
 
 
-
 type CredentialGridProps = {
-  credentials: VerifiableCredential[];
+  credentials: DashboardCredential[];
   perspective: "issued" | "received";
   emptyMessage: string;
 };
