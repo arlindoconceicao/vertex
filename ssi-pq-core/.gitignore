@@ -1,0 +1,5 @@
+/target
+/npm/ssi_pq_core.node
+/test-output/
+/packages/react-native/lib-test/
+/packages/react-native/node_modules/

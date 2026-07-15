@@ -1,0 +1,63 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+plugins {
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.android'
+}
+
+apply plugin: 'com.facebook.react'
+
+def safeExtGet = { prop, fallback ->
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+react {
+  jsRootDir = file('../src')
+  libraryName = 'SsiPqSpec'
+  codegenJavaPackageName = 'com.ssipq.reactnative'
+}
+
+android {
+  namespace 'com.ssipq.reactnative'
+  compileSdkVersion safeExtGet('compileSdkVersion', 36)
+
+  defaultConfig {
+    minSdkVersion safeExtGet('minSdkVersion', 24)
+    targetSdkVersion safeExtGet('targetSdkVersion', 36)
+    consumerProguardFiles 'consumer-rules.pro'
+
+    ndk {
+      abiFilters 'arm64-v8a', 'x86_64'
+    }
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs += [
+        'src/main/java',
+        "$buildDir/generated/source/codegen/java",
+      ]
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
+  }
+
+  kotlinOptions {
+    jvmTarget = '17'
+  }
+
+  packagingOptions {
+    jniLibs {
+      useLegacyPackaging false
+    }
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  implementation 'net.java.dev.jna:jna:5.14.0@aar'
+}

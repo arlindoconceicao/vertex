@@ -1,0 +1,45 @@
+07-01 13:50:59.186  3233  3247 I TestRunner: started: encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp(com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest)
+07-01 13:50:59.196  3233  3247 D nativeloader: Load /data/app/~~pLEMPx06dmSrqPVWm4MobQ==/com.ssipq.mobiletest-_krsaht4nd0BTzlf1QnOdg==/base.apk!/lib/x86_64/libjnidispatch.so using ns clns-7 from class loader (caller=/data/app/~~pLEMPx06dmSrqPVWm4MobQ==/com.ssipq.mobiletest-_krsaht4nd0BTzlf1QnOdg==/base.apk): ok
+07-01 13:50:59.220   599   703 I RoleService: Granting default roles...
+07-01 13:50:59.224   599  2113 W Role    : Default holder doesn't have required signing certificate: com.google.android.retaildemo:6547c73dee150c103980bfdffe55cc9a011d785dd694a5f99afd8205bcaf1f80
+07-01 13:50:59.224   599  2113 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms.supervision, role: android.app.role.SYSTEM_SUPERVISION
+07-01 13:50:59.226   599  2113 W Role    : Default holder doesn't have required signing certificate: com.google.android.apps.work.clouddpc:23962F4B43B9857638EA66F4D419518EAE282491ACDA4B94707BD59003C45E58
+07-01 13:50:59.239   599  2113 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.WALLET
+07-01 13:50:59.242   599  2113 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.devicelockcontroller, role: android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER
+07-01 13:50:59.250  1576  1693 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292217
+07-01 13:50:59.251  1536  2617 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@c0c1fdb
+07-01 13:50:59.252  1576  2225 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292218
+07-01 13:50:59.257  1576  2228 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f649/lottie.json
+07-01 13:50:59.258  1576  2228 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f649/lottie.json)
+07-01 13:50:59.259  1576  1693 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f64a/lottie.json
+07-01 13:50:59.260  1576  1693 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f64a/lottie.json)
+07-01 13:50:59.267  1536  2617 D TrafficStats: tagSocket(114) with statsTag=0x8004901, statsUid=10143
+07-01 13:50:59.281  1576  2228 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292219
+07-01 13:50:59.283  1576  2225 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f31f/lottie.json
+07-01 13:50:59.283  1576  2225 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f31f/lottie.json)
+07-01 13:50:59.286  1576  1693 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292220
+07-01 13:50:59.287  1576  2228 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/2728/lottie.json
+07-01 13:50:59.287  1576  2228 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/2728/lottie.json)
+07-01 13:50:59.316  1576  2225 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292221
+07-01 13:50:59.316  1576  2228 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292222
+07-01 13:50:59.319  1576  1693 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/26a1/lottie.json
+07-01 13:50:59.319  1576  1693 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/26a1/lottie.json)
+07-01 13:50:59.319  1576  2225 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4a5/lottie.json
+07-01 13:50:59.319  1576  2225 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4a5/lottie.json)
+07-01 13:50:59.391  1536  2617 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@9f8e408
+07-01 13:50:59.392  1576  2225 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292224
+07-01 13:50:59.392  1576  1693 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292223
+07-01 13:50:59.395  1576  2233 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4af/lottie.json
+07-01 13:50:59.395  1576  2233 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4af/lottie.json)
+07-01 13:50:59.396  1576  2228 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f525/lottie.json
+07-01 13:50:59.396  1576  2228 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f525/lottie.json)
+07-01 13:50:59.435  1576  2233 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292226
+07-01 13:50:59.439  1576  2228 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292225
+07-01 13:50:59.440  1576  1693 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/lottie.json
+07-01 13:50:59.440  1576  1693 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/lottie.json)
+07-01 13:50:59.440  1576  2233 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f38a/lottie.json
+07-01 13:50:59.441  1576  2233 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/1f38a/lottie.json)
+07-01 13:50:59.553  1576  2233 E MDD     : DownloadProgressMonitor: Can't find file group for uri: android://com.google.android.apps.messaging/files/datadownload/shared/public/datadownloadfile_1782840292228
+07-01 13:50:59.557  1576  2228 D dasx    : Starting download: https://fonts.gstatic.com/s/e/notoemoji/16.0/2764_fe0f/lottie.json
+07-01 13:50:59.557  1576  2228 V dasx    : Is http uri, downloading (uri: https://fonts.gstatic.com/s/e/notoemoji/16.0/2764_fe0f/lottie.json)
+07-01 13:50:59.587  3233  3247 I TestRunner: finished: encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp(com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest)

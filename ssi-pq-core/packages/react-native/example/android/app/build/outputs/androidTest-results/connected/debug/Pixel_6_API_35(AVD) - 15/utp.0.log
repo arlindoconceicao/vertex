@@ -1,0 +1,43 @@
+INFORMAÇÕES: Constructing runner from config.
+INFORMAÇÕES: Configuring Android Instrumentation driver: android_instrumentation_runtime {
+  instrumentation_info {
+    app_package: "com.ssipq.mobiletest"
+    test_package: "com.ssipq.mobiletest.test"
+    test_runner_class: "androidx.test.runner.AndroidJUnitRunner"
+  }
+  instrumentation_args {
+    args_map {
+      key: "additionalTestOutputDir"
+      value: "/sdcard/Android/media/com.ssipq.mobiletest/additional_test_output"
+    }
+    args_map {
+      key: "class"
+      value: "com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest"
+    }
+  }
+}
+am_instrument_timeout: 31536000
+
+INFORMAÇÕES: Configuring AndroidTestApkInstallerPlugin: apks_to_install {
+  apk_paths: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/apk/debug/app-debug.apk"
+  install_options {
+  }
+  uninstall_after_test: true
+}
+apks_to_install {
+  apk_paths: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+  install_options {
+  }
+  uninstall_after_test: true
+}
+
+INFORMAÇÕES: No installables found in test fixture. Nothing to install.
+INFORMAÇÕES: Installing [/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/apk/debug/app-debug.apk] on device emulator-5554.
+INFORMAÇÕES: Installing [/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk] on device emulator-5554.
+INFORMAÇÕES: Start logcat streaming.
+INFORMAÇÕES: Running Android Instrumentation driver.
+INFORMAÇÕES: Copying files from device to host: /sdcard/Android/media/com.ssipq.mobiletest/additional_test_output to /home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/Pixel_6_API_35(AVD) - 15
+INFORMAÇÕES: Stop logcat streaming.
+INFORMAÇÕES: Uninstalling com.ssipq.mobiletest for device emulator-5554.
+INFORMAÇÕES: Uninstalling com.ssipq.mobiletest.test for device emulator-5554.
+INFORMAÇÕES: Execute com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest.encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp: PASSED

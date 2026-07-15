@@ -1,0 +1,6 @@
+com.ssipq.mobiletest.test.app-tracing-1.1.0-0 /home/yugi/.gradle/caches/9.5.1/transforms/55f17693850962b1f7330df58797e13c/transformed/tracing-1.1.0/res
+com.ssipq.mobiletest.test.app-core-1.6.1-1 /home/yugi/.gradle/caches/9.5.1/transforms/dfc43529b5a3201dec3d5e69f9f16603/transformed/core-1.6.1/res
+com.ssipq.mobiletest.test.app-androidTest-2 /home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/generated/res/resValues/androidTest/debug
+com.ssipq.mobiletest.test.app-mergeDebugAndroidTestResources-3 /home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.ssipq.mobiletest.test.app-mergeDebugAndroidTestResources-4 /home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.ssipq.mobiletest.test.app-debugAndroidTest-5 /home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources

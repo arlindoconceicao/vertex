@@ -1,0 +1,3 @@
+-keep class uniffi.ssi_pq_mobile_ffi.** { *; }
+-keep class com.sun.jna.** { *; }
+-dontwarn com.sun.jna.**

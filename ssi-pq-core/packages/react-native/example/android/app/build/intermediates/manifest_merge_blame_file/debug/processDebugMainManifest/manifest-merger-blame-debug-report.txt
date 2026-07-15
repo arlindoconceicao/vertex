@@ -1,0 +1,18 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.ssipq.mobiletest"
+4    android:versionCode="1"
+5    android:versionName="0.1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <application
+11-->/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/src/main/AndroidManifest.xml:2:3-59
+12        android:debuggable="true"
+13        android:extractNativeLibs="false"
+14        android:label="SSI-PQ Android Flow Test" />
+14-->/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/src/main/AndroidManifest.xml:2:16-56
+15
+16</manifest>

@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "noEmit": false,
+    "outDir": "lib-test",
+    "rootDir": "."
+  },
+  "include": ["src/serialization.ts", "src/types.ts", "test/**/*.ts"]
+}

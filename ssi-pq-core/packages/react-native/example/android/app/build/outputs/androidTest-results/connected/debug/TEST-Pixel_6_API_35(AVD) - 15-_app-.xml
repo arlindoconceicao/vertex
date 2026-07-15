@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest" tests="1" failures="0" errors="0" skipped="0" time="0.767" timestamp="2026-07-01T16:51:00" hostname="localhost">
+  <properties>
+    <property name="device" value="Pixel_6_API_35(AVD) - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp" classname="com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest" time="0.347" />
+</testsuite>

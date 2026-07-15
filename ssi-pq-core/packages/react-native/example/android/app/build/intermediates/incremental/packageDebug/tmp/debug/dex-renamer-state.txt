@@ -1,0 +1,10 @@
+#Tue Jun 30 12:04:06 BRT 2026
+base.0=/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
+base.1=/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
+base.2=/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/intermediates/dex/debug/mergeProjectDexDebug/3/classes.dex
+path.0=classes.dex
+path.1=0/classes.dex
+path.2=3/classes.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
+renamed.2=classes3.dex

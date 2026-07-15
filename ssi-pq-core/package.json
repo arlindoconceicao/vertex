@@ -1,0 +1,20 @@
+{
+  "name": "@ssi-pq/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "cargo build -p ssi-pq-node && node scripts/prepare-node-addon.js",
+    "build:wasm": "wasm-pack build crates/ssi-pq-wasm --target web --release --out-dir ../../packages/web/pkg",
+    "build:wasm:test": "wasm-pack build crates/ssi-pq-wasm --target nodejs --release --out-dir ../../packages/wasm-node/pkg",
+    "test": "cargo test -p ssi-pq-core && npm run build && find test-node -name '*.test.js' ! -name 'wallet-pdf-generic-real-files.test.js' -print0 | sort -z | xargs -0 node --test",
+    "test:wasm": "npm run build && npm run build:wasm:test && node --test test-wasm/*.test.js",
+    "test:real-pdfs": "npm run build && node --test test-node/core/wallet-pdf-generic-real-files.test.js",
+    "vectors:generate:node": "npm run build && node scripts/generate-test-vectors-node.js",
+    "vectors:verify:node": "npm run build && node scripts/verify-test-vectors-node.js",
+    "vectors:verify:wasm": "npm run build:wasm:test && node scripts/verify-test-vectors-wasm.js",
+    "security:audit": "node scripts/security-audit.js",
+    "ci:linux": "cargo test --workspace && npm test && npm run test:wasm && npm run vectors:generate:node && npm run vectors:verify:node && npm run vectors:verify:wasm && npm run security:audit",
+    "ci:react-native": "npm run typecheck --prefix packages/react-native && npm test --prefix packages/react-native"
+  }
+}

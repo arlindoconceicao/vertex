@@ -1,0 +1,2 @@
+com.ssipq.mobiletest
+string jna_library_appname

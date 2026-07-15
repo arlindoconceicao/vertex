@@ -1,0 +1,28 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.ssipq.mobiletest.test.app-mergeDebugAndroidTestResources-3:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/home/yugi/.gradle/caches/9.5.1/transforms/dfc43529b5a3201dec3d5e69f9f16603/transformed/core-1.6.1/res/values-v18/values.xml",
+                    "from": {
+                        "startLines": "4,12",
+                        "startColumns": "0,0",
+                        "startOffsets": "146,562",
+                        "endLines": "11,19",
+                        "endColumns": "8,8",
+                        "endOffsets": "561,975"
+                    },
+                    "to": {
+                        "startLines": "2,10",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,475",
+                        "endLines": "9,17",
+                        "endColumns": "8,8",
+                        "endOffsets": "470,888"
+                    }
+                }
+            ]
+        }
+    ]
+}

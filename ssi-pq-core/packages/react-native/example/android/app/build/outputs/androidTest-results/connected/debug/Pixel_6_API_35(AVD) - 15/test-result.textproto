@@ -1,0 +1,77 @@
+# proto-message: google.testing.platform.proto.api.core.TestSuiteResult
+# 2026-07-01T16:51:00.456511862Z:
+test_suite_meta_data {
+  scheduled_test_case_count: 1
+  device {
+    id: "emulator-5554"
+    friendly_name: "primary"
+  }
+}
+test_status: PASSED
+test_result {
+  test_case {
+    test_class: "SsiPqAndroidNestedLabelsEncryptedPdfFlowTest"
+    test_package: "com.ssipq.mobiletest"
+    test_method: "encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp"
+    start_time {
+      seconds: 1782924659
+      nanos: 595000000
+    }
+    end_time {
+      seconds: 1782924659
+      nanos: 985000000
+    }
+    device {
+      id: "emulator-5554"
+      friendly_name: "primary"
+    }
+  }
+  test_status: PASSED
+  output_artifact {
+    label {
+      label: "logcat"
+      namespace: "android"
+    }
+    source_path {
+      path: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/androidTest-results/connected/debug/Pixel_6_API_35(AVD) - 15/logcat-com.ssipq.mobiletest.SsiPqAndroidNestedLabelsEncryptedPdfFlowTest-encryptedPdfWithNestedSchemaAndPortugueseLabelsRunsInsideAndroidApp.txt"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/androidTest-results/connected/debug/Pixel_6_API_35(AVD) - 15/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/androidTest-results/connected/debug/Pixel_6_API_35(AVD) - 15/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/androidTest-results/connected/debug/Pixel_6_API_35(AVD) - 15/cpuinfo"
+    }
+  }
+}
+output_artifact {
+  label {
+    label: "test-results.log"
+    namespace: "com.google.testing.platform.runtime.android.driver.AndroidInstrumentationDriver"
+  }
+  source_path {
+    path: "/home/yugi/programacao/ssi-pq-core/packages/react-native/example/android/app/build/outputs/androidTest-results/connected/debug/Pixel_6_API_35(AVD) - 15/testlog/test-results.log"
+  }
+  type: TEST_DATA
+  mime_type: "text/plain"
+}

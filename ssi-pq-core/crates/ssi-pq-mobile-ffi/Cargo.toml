@@ -1,0 +1,16 @@
+[package]
+name = "ssi-pq-mobile-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ssi_pq_mobile_ffi"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+ssi-pq-core = { path = "../ssi-pq-core", default-features = false, features = ["wallet-core"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+uniffi = { workspace = true, features = ["cli"] }
