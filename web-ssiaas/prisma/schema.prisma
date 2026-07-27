@@ -28,6 +28,14 @@ enum StorageLocation {
   IPFS
 }
 
+// Status de um desafio de pareamento de DID
+enum DidPairingStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
 
 model User {
   id            String    @id @default(cuid())
@@ -42,9 +50,20 @@ model User {
   // DID (Decentralized Identifier) do usuário no padrão SSI
   did           String?   @unique
 
-  // Chave pública (multibase) associada à DID, usada para
+  // [DEPRECATED] — Usar didDocument. A chave ML-DSA pode ser extraída de lá.
+  // Chave pública ML-DSA (multibase) associada à DID, usada para
   // verificar assinaturas e montar o DID Document (W3C)
   didPublicKey  String?
+
+  // Chave pública ML-KEM (multibase) associada à DID, usada para
+  // cifragem e encapsulamento de segredos pós-quânticos
+  didMlkemKey   String?
+
+  // Documento DID completo emitido pelo wallet/signer, já contendo
+  // as chaves ML-DSA/ML-KEM e demais metadados necessários.
+  didDocument   Json?
+  // Timestamp de quando o pareamento foi concluído com sucesso.
+  didPairedAt   DateTime?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -52,6 +71,7 @@ model User {
   schemasCreated      CredentialSchema[]
   credentialsIssued   VerifiableCredential[] @relation("IssuerRelation")
   credentialsReceived VerifiableCredential[] @relation("HolderRelation")
+  didPairingChallenges DidPairingChallenge[]
   accounts            Account[]
   sessions            Session[]
 
@@ -116,6 +136,27 @@ model VerifiableCredential {
   @@map("verifiable_credentials")
 }
 
+
+// Desafio para parear a conta de um usuário com um DID gerado em um
+// aplicativo assinador externo (ex: app móvel).
+model DidPairingChallenge {
+  id        String   @id @default(cuid())
+  userId    String
+  cpf       String
+  email     String
+  pairingId String   @unique
+  nonce     String
+  status    DidPairingStatus @default(PENDING)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([expiresAt])
+  @@map("did_pairing_challenges")
+}
 
 // MODELS ABAIXO: Gerados automaticamente pelo @auth/prisma-adapter
 model Account {

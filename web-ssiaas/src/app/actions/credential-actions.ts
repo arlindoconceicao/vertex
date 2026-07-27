@@ -61,7 +61,7 @@ export async function issueCredential(
   }
 
   if (holder.id === session.user.id) {
-    return { success: false, error: "You cannot issue a credential to yourself." };
+    // return { success: false, error: "You cannot issue a credential to yourself." };
   }
 
   // Valida expiresAt se informado

@@ -55,12 +55,18 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const safeIso = (dateVal: Date | string | null | undefined) => {
+      if (!dateVal) return null;
+      const d = new Date(dateVal);
+      return !isNaN(d.getTime()) ? d.toISOString() : null;
+    };
+
     return NextResponse.json(
       {
         id: credential.id,
         status: credential.status,
-        issuedAt: credential.issuedAt.toISOString(),
-        expiresAt: credential.expiresAt?.toISOString() ?? null,
+        issuedAt: safeIso(credential.issuedAt) ?? new Date().toISOString(),
+        expiresAt: safeIso(credential.expiresAt),
         vcPayload: credential.vcPayload,
       },
       { status: 200 }

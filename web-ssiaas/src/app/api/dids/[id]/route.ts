@@ -27,40 +27,40 @@ export async function GET(
     where: { id },
     select: {
       did: true,
+      didDocument: true,
       didPublicKey: true,
     },
   });
 
   // Retornamos 404 em duas situações: usuário não existe,
-  // ou o usuário existe mas não registrou DID/chave pública.
+  // ou o usuário existe mas não registrou DID/documento público.
   // Não diferenciamos os casos propositalmente — sem vazamento
   // de informação sobre quais IDs existem na plataforma.
-  if (!user || !user.did || !user.didPublicKey) {
+  if (!user || !user.did) {
     return NextResponse.json(
       { error: "DID not found" },
       { status: 404 }
     );
   }
 
-  // Monta o DID Document seguindo estritamente a especificação W3C
-  // e o contrato do docs/api-architecture.md.
-  // A chave de verificação recebe o sufixo "#key-1" por convenção —
-  // suportamos apenas uma chave por DID nesta fase do MVP.
-  const keyId = `${user.did}#key-1`;
+  const storedDidDocument = user.didDocument;
 
-  const didDocument = {
-    "@context": ["https://www.w3.org/ns/did/v1"],
-    id: user.did,
-    verificationMethod: [
-      {
-        id: keyId,
-        type: "Ed25519VerificationKey2020",
-        controller: user.did,
-        publicKeyMultibase: user.didPublicKey,
-      },
-    ],
-    authentication: [keyId],
-  };
+  const didDocument =
+    storedDidDocument && typeof storedDidDocument === "object"
+      ? storedDidDocument
+      : {
+          "@context": ["https://www.w3.org/ns/did/v1"],
+          id: user.did,
+          verificationMethod: [
+            {
+              id: `${user.did}#key-1`,
+              type: "Ed25519VerificationKey2020",
+              controller: user.did,
+              publicKeyMultibase: user.didPublicKey,
+            },
+          ],
+          authentication: [`${user.did}#key-1`],
+        };
 
   // O content-type ideal seria "application/did+ld+json" conforme
   // a spec W3C, mas usamos JSON padrão para simplicidade do MVP.

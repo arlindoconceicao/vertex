@@ -1,0 +1,23 @@
+1) Comando para resetar a chave pública de uma dada pessoa
+
+    node lib/reset-did.js [email do usuário]
+
+2) Comando para simular o aplicativo mobile entregando o paylod assinado:
+
+    node lib/complete-pairing.js 'PAYLOAD'
+
+    OBS: o paylod deve ser copiado da plataforma
+
+3) node --test lib/did-pairing-flow.test.js
+
+* Script de Simulação do Aplicativo Móvel: Conclusão do Pareamento DID
+ *
+ * Este script simula a ação do aplicativo móvel ao receber o desafio da web.
+ * Ele gera as chaves pós-quânticas (ML-DSA-65 e ML-KEM-768), assina a mensagem
+ * do desafio e envia a requisição HTTP POST para o endpoint da plataforma.
+ *
+ * Uso:
+ *   node lib/complete-pairing.js '<JSON_PAYLOAD_COPIADO_DA_WEB>'
+ * ou
+ *   node lib/complete-pairing.js <pairingId> <nonce> [endpoint] [userId] [email]
+ */

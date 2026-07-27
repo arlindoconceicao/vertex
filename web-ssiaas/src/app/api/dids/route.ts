@@ -20,29 +20,61 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { did, publicKey } = body as {
+  const { did, publicKey, didDocument } = body as {
     did?: unknown;
     publicKey?: unknown;
+    didDocument?: unknown;
   };
 
-  // Validação dos dois campos obrigatórios
-  if (typeof did !== "string" || did.trim().length === 0) {
+  let normalizedDid: string | null = null;
+  let normalizedDidDocument: Record<string, unknown> | null = null;
+
+  if (didDocument && typeof didDocument === "object" && didDocument !== null) {
+    normalizedDidDocument = didDocument as Record<string, unknown>;
+    const rawDid = normalizedDidDocument.id;
+
+    if (typeof rawDid === "string" && rawDid.trim().length > 0) {
+      normalizedDid = rawDid.trim();
+    }
+  }
+
+  if (!normalizedDid && typeof did === "string" && did.trim().length > 0) {
+    normalizedDid = did.trim();
+  }
+
+  if (!normalizedDid || !normalizedDid.startsWith("did:")) {
     return NextResponse.json(
       { error: "Missing or invalid field: did" },
       { status: 400 }
     );
   }
 
-  if (typeof publicKey !== "string" || publicKey.trim().length === 0) {
-    return NextResponse.json(
-      { error: "Missing or invalid field: publicKey" },
-      { status: 400 }
-    );
+  if (!normalizedDidDocument) {
+    if (typeof publicKey !== "string" || publicKey.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Missing or invalid field: publicKey" },
+        { status: 400 }
+      );
+    }
+
+    normalizedDidDocument = {
+      "@context": ["https://www.w3.org/ns/did/v1"],
+      id: normalizedDid,
+      verificationMethod: [
+        {
+          id: `${normalizedDid}#key-1`,
+          type: "Ed25519VerificationKey2020",
+          controller: normalizedDid,
+          publicKeyMultibase: publicKey.trim(),
+        },
+      ],
+      authentication: [`${normalizedDid}#key-1`],
+    };
   }
 
   // Validação de formato básico — DIDs devem começar com "did:"
   // conforme a especificação W3C DID Core (https://www.w3.org/TR/did-core/)
-  if (!did.startsWith("did:")) {
+  if (!normalizedDid.startsWith("did:")) {
     return NextResponse.json(
       { error: "Invalid DID format: must start with 'did:'" },
       { status: 400 }
@@ -71,8 +103,9 @@ export async function POST(request: NextRequest) {
     const updated = await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        did: did.trim(),
-        didPublicKey: publicKey.trim(),
+        did: normalizedDid,
+        didPublicKey: typeof publicKey === "string" ? publicKey.trim() : null,
+        didDocument: normalizedDidDocument as any,
       },
       select: {
         id: true,

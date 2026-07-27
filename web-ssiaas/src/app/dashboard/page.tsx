@@ -54,6 +54,12 @@ export default async function DashboardPage() {
       }),
     ]);
 
+  function safeIsoString(dateVal: Date | string | null | undefined): string | null {
+    if (!dateVal) return null;
+    const d = new Date(dateVal);
+    return !isNaN(d.getTime()) ? d.toISOString() : null;
+  }
+
   function mapCredentials(
     rawList: typeof issuedRaw
   ): DashboardCredential[] {
@@ -74,8 +80,8 @@ export default async function DashboardPage() {
       return {
         id: vc.id,
         status: vc.status,
-        issuedAt: vc.issuedAt.toISOString(),
-        expiresAt: vc.expiresAt?.toISOString() ?? null,
+        issuedAt: safeIsoString(vc.issuedAt) ?? new Date().toISOString(),
+        expiresAt: safeIsoString(vc.expiresAt),
         issuer: vc.issuer,
         holder: vc.holder,
         schemaSnapshot: schema ?? null,

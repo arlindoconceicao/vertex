@@ -484,10 +484,101 @@ credential to them. Excludes the logged-in user from the result.
 
 ---
 
-## 5. DIDs
+## 5. DIDs & Post-Quantum DID Pairings
 
-Manages the registration and resolution of Decentralized Identifiers,
-following the W3C DID Core specification.
+Manages the registration, mobile pairing challenge flow, and resolution of Post-Quantum Decentralized Identifiers (ML-DSA-65 and ML-KEM-768), following the W3C DID Core specification.
+
+---
+
+### `POST /api/v1/did-pairings`
+
+Generates a new DID pairing challenge for the logged-in user. Returns a 128-bit unguessable `pairingId`, cryptographic `nonce`, 10-minute expiration timestamp, and full endpoint URL.
+
+**Response `200`**
+```json
+{
+  "id": "cuid...",
+  "pairingId": "77f94d457ff86eb328099868c6150671",
+  "nonce": "vMhxz_qF6AKhdZHhwN8NnfmELdaGDB91CzlwM-wm174",
+  "expiresAt": "2026-07-27T17:14:29.811Z",
+  "userId": "cms3asx8m0000f4xk1mcli8ko",
+  "email": "teste@gmail.com",
+  "endpoint": "http://localhost:3000/api/v1/did-pairings/77f94d457ff86eb328099868c6150671/complete"
+}
+```
+
+---
+
+### `POST /api/v1/did-pairings/:pairingId/complete`
+
+Receives the signed challenge payload from the Mobile Signer App (or CLI simulation script). Validates:
+- Challenge status (`PENDING`) and expiration date
+- Nonce matching
+- Google account email (`email`) and user ID (`userId`) matching
+- Post-quantum ML-DSA-65 signature proof verification over canonical challenge JSON
+- Saves the post-quantum DID, `didPublicKey` (ML-DSA-65), `didMlkemKey` (ML-KEM-768), and `didDocument` atomically into PostgreSQL.
+
+**Request Body**
+```json
+{
+  "pairingId": "77f94d457ff86eb328099868c6150671",
+  "nonce": "vMhxz_qF6AKhdZHhwN8NnfmELdaGDB91CzlwM-wm174",
+  "expiresAt": "2026-07-27T17:14:29.811Z",
+  "userId": "cms3asx8m0000f4xk1mcli8ko",
+  "email": "teste@gmail.com",
+  "did": "did:ssipq:zFpb7WX2S2M5GCL4NYufwkcY9dw6yVfiDhTx699hzLJaj",
+  "mlDsaPublicKey": "z...",
+  "mlKemPublicKey": "z...",
+  "didDocument": { ... },
+  "proof": {
+    "type": "ML-DSA-65",
+    "created": "2026-07-27T17:00:00.000Z",
+    "verificationMethod": "did:ssipq:z...#mldsa-1",
+    "proofValue": "..."
+  }
+}
+```
+
+**Response `200`**
+```json
+{
+  "paired": true,
+  "did": "did:ssipq:zFpb7WX2S2M5GCL4NYufwkcY9dw6yVfiDhTx699hzLJaj",
+  "status": "ACTIVE",
+  "pairedAt": "2026-07-27T17:14:13.390Z"
+}
+```
+
+---
+
+### CLI Testing & Simulation Commands
+
+Para testar, simular o aplicativo móvel ou resetar o pareamento durante o desenvolvimento, utilize os scripts disponíveis na pasta `lib/`:
+
+#### 1) Resetar a Chave Pública e DID de um Usuário
+Remove a DID, DID Document, chave ML-DSA, chave ML-KEM e desafios anteriores do usuário para permitir novos testes:
+```bash
+node lib/reset-did.js [email do usuário]
+```
+*Exemplo:* `node lib/reset-did.js teste@gmail.com`
+
+#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado
+Simula a ação do aplicativo móvel ao receber o desafio da web. Ele gera as chaves pós-quânticas (`ML-DSA-65` e `ML-KEM-768`), assina o desafio em formato canônico e envia a requisição HTTP POST para a plataforma:
+```bash
+node lib/complete-pairing.js 'PAYLOAD'
+```
+> **OBS:** O payload JSON deve ser copiado diretamente da plataforma web (botão *"Copy Full Payload (JSON)"* na tela `http://localhost:3000/settings`).
+
+*Uso alternativo via argumentos posicionais:*
+```bash
+node lib/complete-pairing.js <pairingId> <nonce> [endpoint] [userId] [email]
+```
+
+#### 3) Executar a Suíte de Testes Automatizada do Pareamento DID
+Executa os testes unitários e de integração do fluxo de pareamento pós-quântico:
+```bash
+node --test lib/did-pairing-flow.test.js
+```
 
 ---
 

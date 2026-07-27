@@ -12,14 +12,19 @@ type ActionResult =
 // Chamada uma única vez. Após o registro, a DID é imutável
 export async function registerDid(
   did: string,
-  publicKey: string
+  publicKey: string,
+  didDocument?: Record<string, unknown>
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, error: "Unauthorized." };
   }
 
-  if (!did.trim() || !publicKey.trim()) {
+  if (!did.trim()) {
+    return { success: false, error: "DID is required." };
+  }
+
+  if (!didDocument && !publicKey.trim()) {
     return { success: false, error: "Both DID and public key are required." };
   }
 
@@ -43,7 +48,20 @@ export async function registerDid(
       where: { id: session.user.id },
       data: {
         did: did.trim(),
-        didPublicKey: publicKey.trim(),
+        didPublicKey: publicKey.trim() || null,
+        didDocument: (didDocument ?? {
+          "@context": ["https://www.w3.org/ns/did/v1"],
+          id: did.trim(),
+          verificationMethod: [
+            {
+              id: `${did.trim()}#key-1`,
+              type: "Ed25519VerificationKey2020",
+              controller: did.trim(),
+              publicKeyMultibase: publicKey.trim(),
+            },
+          ],
+          authentication: [`${did.trim()}#key-1`],
+        }) as any,
       },
     });
 

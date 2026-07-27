@@ -85,11 +85,17 @@ export async function GET(request: NextRequest) {
       const payload = vc.vcPayload as Record<string, unknown>;
       const schemaSnapshot = payload.credentialSchema ?? null;
 
+      const safeIso = (dateVal: Date | string | null | undefined) => {
+        if (!dateVal) return null;
+        const d = new Date(dateVal);
+        return !isNaN(d.getTime()) ? d.toISOString() : null;
+      };
+
       return {
         id: vc.id,
         status: vc.status,
-        issuedAt: vc.issuedAt.toISOString(),
-        expiresAt: vc.expiresAt?.toISOString() ?? null,
+        issuedAt: safeIso(vc.issuedAt) ?? new Date().toISOString(),
+        expiresAt: safeIso(vc.expiresAt),
         issuer: vc.issuer,
         holder: vc.holder,
         schemaSnapshot,

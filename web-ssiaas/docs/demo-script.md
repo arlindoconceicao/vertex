@@ -22,6 +22,27 @@ Complete every item below **before** opening the browser.
 | 6 | Migrations applied | `npx prisma migrate deploy` | `All migrations applied` |
 | 7 | Dev server running | `npm run dev` | `Ready on http://localhost:3000` |
 
+### Local Troubleshooting
+
+If `docker start vertex-postgres` appears in older notes or PR exports,
+use `docker start vertex_postgres` instead. The underscore name matches
+`docker-compose.yml`.
+
+If `npx prisma migrate deploy` fails with `P3009` in a local demo
+database, Prisma has found a previously failed migration in the Docker
+volume. If you do not need to preserve local demo data, reset the local
+database and reapply all migrations:
+
+```bash
+docker start vertex_postgres
+npx prisma migrate reset
+npx prisma generate
+npm run dev
+```
+
+Keep the terminal running after `npm run dev`; pressing `Ctrl+C` stops
+the Next.js server.
+
 ### Users Setup (Two Actors Required)
 
 The SSI triangle requires at least two people. You will play both roles:
@@ -62,20 +83,47 @@ Act 4: Acceptance        Act 5: Verification
 └──────────────────┘     └──────────────────┘
 ```
 
-### Act 1 — Identity Registration (Settings Page)
+### Act 1 — Post-Quantum Identity Registration & Mobile Pairing (Settings Page)
 
 **Context:** "Before anyone can issue credentials in the
-SSI model, they need a Decentralized Identifier — a DID. This is the
-cryptographic identity that replaces centralized usernames."
+SSI model, they need a Decentralized Identifier — a Post-Quantum DID with ML-DSA-65 and ML-KEM-768 keys. This is the cryptographic identity that replaces centralized usernames."
 
 1. Log in as **User A** (Issuer).
-2. Navigate to **Settings**.
-3. Show the profile section (email, masked CPF).
-4. Register a DID: `did:web:vertex.unifesp.br:users:<userId>`
-5. Enter a mock public key.
-6. Click **Register DID** → green success badge appears.
-7. Point out: "This DID is now stored in our database and can be resolved
-   by anyone via our DID resolver endpoint."
+2. Navigate to **Settings** (`http://localhost:3000/settings`).
+3. Show the profile section (User ID, Email, masked CPF).
+4. Click **Start App Pairing** → QR Code, Pairing Endpoint URL, Pairing ID, and Nonce appear.
+5. Click **Copy Full Payload (JSON)**.
+6. Open terminal and run the Mobile App simulation script:
+   ```bash
+   node lib/complete-pairing.js '<JSON_PAYLOAD_COPIADO>'
+   ```
+7. Point out: "The terminal script generates real ML-DSA-65 and ML-KEM-768 keypairs using `ssi_pq_core.node`, signs the challenge, and posts to the platform. Within 3 seconds, the browser auto-refreshes to show the Account Paired state."
+
+---
+
+### Useful CLI Commands for DID Pairing Testing & Demos
+
+#### 1) Resetar a Chave Pública de uma Dada Pessoa
+Para limpar a DID e as chaves pós-quânticas de um usuário e reiniciar o pareamento:
+```bash
+node lib/reset-did.js [email do usuário]
+```
+*Exemplo:* `node lib/reset-did.js teste@gmail.com`
+
+#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado
+Para simular a resposta do aplicativo móvel enviando a DID e as chaves pós-quânticas assinadas:
+```bash
+node lib/complete-pairing.js 'PAYLOAD'
+```
+> **OBS:** O payload JSON deve ser copiado diretamente da plataforma na tela `/settings`.
+
+#### 3) Executar a Suíte de Testes do Pareamento
+Para validar a integridade do fluxo de desafio e verificação criptográfica:
+```bash
+node --test lib/did-pairing-flow.test.js
+```
+
+---
 
 ### Act 2 — Schema Creation (Schemas Module)
 
