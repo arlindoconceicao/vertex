@@ -110,14 +110,20 @@ node lib/reset-did.js [email do usuário]
 ```
 *Exemplo:* `node lib/reset-did.js teste@gmail.com`
 
-#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado
+#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado (Válido)
 Para simular a resposta do aplicativo móvel enviando a DID e as chaves pós-quânticas assinadas:
 ```bash
 node lib/complete-pairing.js 'PAYLOAD'
 ```
 > **OBS:** O payload JSON deve ser copiado diretamente da plataforma na tela `/settings`.
 
-#### 3) Executar a Suíte de Testes do Pareamento
+#### 3) Simular Ataque de Assinatura Adulterada / Forjada (Rejeição HTTP 400)
+Para simular um ataque alterando propositalmente os bytes da assinatura ML-DSA-65 e comprovar que a plataforma rejeita:
+```bash
+node lib/complete-pairing-forged.js 'PAYLOAD'
+```
+
+#### 4) Executar a Suíte de Testes do Pareamento
 Para validar a integridade do fluxo de desafio e verificação criptográfica:
 ```bash
 node --test lib/did-pairing-flow.test.js

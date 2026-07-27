@@ -562,19 +562,20 @@ node lib/reset-did.js [email do usuário]
 ```
 *Exemplo:* `node lib/reset-did.js teste@gmail.com`
 
-#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado
+#### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado (Válido)
 Simula a ação do aplicativo móvel ao receber o desafio da web. Ele gera as chaves pós-quânticas (`ML-DSA-65` e `ML-KEM-768`), assina o desafio em formato canônico e envia a requisição HTTP POST para a plataforma:
 ```bash
 node lib/complete-pairing.js 'PAYLOAD'
 ```
 > **OBS:** O payload JSON deve ser copiado diretamente da plataforma web (botão *"Copy Full Payload (JSON)"* na tela `http://localhost:3000/settings`).
 
-*Uso alternativo via argumentos posicionais:*
+#### 3) Simular um Ataque de Assinatura Forjada / Adulterada (Rejeição HTTP 400)
+Simula um ataque de personificação alterando propositalmente os bytes da assinatura pós-quântica ML-DSA-65 para verificar a rejeição de segurança pela plataforma:
 ```bash
-node lib/complete-pairing.js <pairingId> <nonce> [endpoint] [userId] [email]
+node lib/complete-pairing-forged.js 'PAYLOAD'
 ```
 
-#### 3) Executar a Suíte de Testes Automatizada do Pareamento DID
+#### 4) Executar a Suíte de Testes Automatizada do Pareamento DID
 Executa os testes unitários e de integração do fluxo de pareamento pós-quântico:
 ```bash
 node --test lib/did-pairing-flow.test.js
