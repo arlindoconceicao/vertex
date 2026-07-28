@@ -4,16 +4,17 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { updateCpf } from "@/app/actions/update-cpf";
+import { useTranslation } from "@/locales/LanguageContext";
 
 export default function CpfForm() {
   const { update } = useSession();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [cpf, setCpf] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 
   function handleCpfChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
     const masked = digits
@@ -35,8 +36,6 @@ export default function CpfForm() {
       return;
     }
 
-    // Força o Auth.js a re-buscar a sessão do banco com o CPF atualizado.
-    // Sem isso, o middleware ainda veria cpf: null e bloquearia o acesso.
     await update();
 
     router.push("/dashboard");
@@ -50,7 +49,7 @@ export default function CpfForm() {
           htmlFor="cpf"
           className="block text-sm font-medium text-gray-300 mb-2"
         >
-          CPF
+          {t("auth.cpfLabel")}
         </label>
         <input
           id="cpf"
@@ -65,7 +64,6 @@ export default function CpfForm() {
         />
       </div>
 
-      {/* Mensagem de erro da Server Action */}
       {error && (
         <div className="flex items-center gap-2 bg-red-950 border border-red-800 text-red-300 text-sm rounded-xl px-4 py-3">
           <svg
@@ -111,10 +109,10 @@ export default function CpfForm() {
                 d="M4 12a8 8 0 018-8v8z"
               />
             </svg>
-            Salvando...
+            {t("auth.submitting")}
           </span>
         ) : (
-          "Confirm and access the platform"
+          t("auth.completeButton")
         )}
       </button>
     </form>

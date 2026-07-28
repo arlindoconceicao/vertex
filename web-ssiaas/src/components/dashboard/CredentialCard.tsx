@@ -1,28 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import type { DashboardCredential } from "@/lib/types";
+import { useTranslation } from "@/locales/LanguageContext";
 
 type Props = {
   credential: DashboardCredential;
   perspective: "issued" | "received";
 };
 
-const statusConfig = {
-  ACTIVE:  { label: "Active",  classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  PENDING: { label: "Pending", classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  REVOKED: { label: "Revoked", classes: "bg-red-500/10 text-red-400 border-red-500/20" },
-} as const;
-
 export default function CredentialCard({ credential, perspective }: Props) {
-  const { label, classes } = statusConfig[credential.status];
+  const { t, locale } = useTranslation();
 
-  // Determina quem exibir como "a outra parte" da credencial.
-  // Se estou na aba de recebidas, mostro o emissor.
-  // Se estou na aba de emitidas, mostro o destinatário.
+  const statusMap = {
+    ACTIVE: { label: t("dashboard.card.statusActive"), classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+    PENDING: { label: t("dashboard.card.statusPending"), classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+    REVOKED: { label: t("dashboard.card.statusRevoked"), classes: "bg-red-500/10 text-red-400 border-red-500/20" },
+  } as const;
+
+  const statusInfo = statusMap[credential.status] || {
+    label: credential.status,
+    classes: "bg-gray-800 text-gray-400 border-gray-700",
+  };
+
   const counterpart =
     perspective === "received" ? credential.issuer : credential.holder;
 
   const counterpartLabel =
-    perspective === "received" ? "Issued by" : "Issued to";
+    perspective === "received" ? t("dashboard.card.issuedBy") : t("dashboard.card.issuedTo");
+
+  const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
 
   return (
     <Link
@@ -45,9 +52,9 @@ export default function CredentialCard({ credential, perspective }: Props) {
           </p>
         </div>
         <span
-          className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full border ${classes}`}
+          className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full border ${statusInfo.classes}`}
         >
-          {label}
+          {statusInfo.label}
         </span>
       </div>
 
@@ -69,16 +76,18 @@ export default function CredentialCard({ credential, perspective }: Props) {
       {/* Datas */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span suppressHydrationWarning>
-          Issued on{" "}
-          {new Date(credential.issuedAt).toLocaleDateString("en-US")}
+          {t("dashboard.card.issuedOn", {
+            date: new Date(credential.issuedAt).toLocaleDateString(dateLocale),
+          })}
         </span>
         {credential.expiresAt ? (
           <span suppressHydrationWarning>
-            Expires on{" "}
-            {new Date(credential.expiresAt).toLocaleDateString("en-US")}
+            {t("dashboard.card.expiresOn", {
+              date: new Date(credential.expiresAt).toLocaleDateString(dateLocale),
+            })}
           </span>
         ) : (
-          <span className="text-gray-600">No expiration</span>
+          <span className="text-gray-600">{t("dashboard.card.noExpiration")}</span>
         )}
       </div>
     </Link>

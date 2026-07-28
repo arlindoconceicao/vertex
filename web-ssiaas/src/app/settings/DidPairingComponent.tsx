@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { useTranslation } from "@/locales/LanguageContext";
 
 type Props = {
   userId: string;
@@ -29,6 +30,7 @@ export default function DidPairingComponent({
   initialPairedAt,
 }: Props) {
   const router = useRouter();
+  const { t, locale } = useTranslation();
   const [isPending, startTransition] = useTransition();
 
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
@@ -69,14 +71,21 @@ export default function DidPairingComponent({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.details || data.error || "Failed to initiate pairing.");
+        // Translate error message key if available or use fallback
+        const errKey = data.error === "User registration not complete"
+          ? "errors.cpfRequired"
+          : data.error === "DID already paired"
+          ? "errors.didAlreadyPaired"
+          : "errors.pairingFailed";
+
+        setError(data.details || t(errKey) || t("errors.pairingFailed"));
         return;
       }
 
       setChallenge(data);
     } catch (err) {
       console.error("Error requesting pairing challenge:", err);
-      setError("Connection error communicating with server.");
+      setError(t("errors.connectionError"));
     }
   }
 
@@ -127,13 +136,13 @@ export default function DidPairingComponent({
             />
           </svg>
           <span className="text-sm font-medium">
-            Account Paired with Mobile Signer App
+            {t("didPairing.pairedTitle")}
           </span>
         </div>
 
         <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-            Decentralized Identifier (DID)
+            {t("didPairing.didLabel")}
           </p>
           <p className="text-sm text-indigo-400 font-mono break-all select-all">
             {initialDid}
@@ -143,7 +152,7 @@ export default function DidPairingComponent({
         {initialPublicKey && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-              Signing Public Key (ML-DSA-65)
+              {t("didPairing.dsaKeyLabel")}
             </p>
             <p className="text-sm text-gray-300 font-mono break-all select-all">
               {initialPublicKey}
@@ -154,7 +163,7 @@ export default function DidPairingComponent({
         {initialMlkemKey && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-              Encryption Public Key (ML-KEM-768)
+              {t("didPairing.mlkemKeyLabel")}
             </p>
             <p className="text-sm text-amber-300/90 font-mono break-all select-all">
               {initialMlkemKey}
@@ -164,12 +173,15 @@ export default function DidPairingComponent({
 
         {initialPairedAt && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center text-xs">
-            <span className="text-gray-400">Paired At</span>
+            <span className="text-gray-400">{t("didPairing.pairedAt")}</span>
             <span className="text-gray-300 font-mono">
-              {new Date(initialPairedAt).toLocaleString("en-US", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
+              {new Date(initialPairedAt).toLocaleString(
+                locale === "pt" ? "pt-BR" : "en-US",
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }
+              )}
             </span>
           </div>
         )}
@@ -188,9 +200,7 @@ export default function DidPairingComponent({
       {!challenge ? (
         <div className="space-y-4">
           <p className="text-sm text-gray-400 leading-relaxed">
-            Your decentralized identity (DID) and post-quantum keys are securely
-            generated and stored in your mobile app. Initiate pairing to connect
-            the app to your web account.
+            {t("didPairing.unpairedIntro")}
           </p>
 
           <button
@@ -211,7 +221,7 @@ export default function DidPairingComponent({
                 d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
               />
             </svg>
-            Start App Pairing
+            {t("didPairing.startButton")}
           </button>
         </div>
       ) : (
@@ -220,18 +230,16 @@ export default function DidPairingComponent({
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
               <span className="text-sm font-semibold text-amber-400">
-                Awaiting Mobile App Connection...
+                {t("didPairing.awaitingTitle")}
               </span>
             </div>
             <span className="text-xs text-gray-500 font-mono">
-              Expires in 10 min
+              {t("didPairing.expiresIn")}
             </span>
           </div>
 
-          <p className="text-xs text-gray-400">
-            Open the mobile signer app (authenticated with Google account{" "}
-            <strong className="text-gray-200">{userEmail}</strong>), scan the QR
-            Code or copy the pairing payload below to complete key binding.
+          <p className="text-xs text-gray-400 leading-relaxed">
+            {t("didPairing.instructions", { email: userEmail })}
           </p>
 
           {/* QR Code and Payload container */}
@@ -248,7 +256,7 @@ export default function DidPairingComponent({
             <div className="flex-1 w-full space-y-3 min-w-0">
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-                  PAIRING ENDPOINT URL
+                  {t("didPairing.endpointUrlLabel")}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-xs text-indigo-400 font-mono truncate bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 flex-1 select-all">
@@ -259,14 +267,14 @@ export default function DidPairingComponent({
                     onClick={handleCopyEndpoint}
                     className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-2 rounded-lg border border-gray-700 transition-colors flex-shrink-0 cursor-pointer"
                   >
-                    {copiedEndpoint ? "Copied!" : "Copy URL"}
+                    {copiedEndpoint ? t("common.copied") : t("didPairing.copyUrlButton")}
                   </button>
                 </div>
               </div>
 
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-                  PAIRING ID
+                  {t("didPairing.pairingIdLabel")}
                 </p>
                 <p className="text-xs text-gray-300 font-mono break-all mt-0.5 select-all">
                   {challenge.pairingId}
@@ -275,7 +283,7 @@ export default function DidPairingComponent({
 
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-                  NONCE
+                  {t("didPairing.nonceLabel")}
                 </p>
                 <p className="text-xs text-gray-400 font-mono break-all mt-0.5 select-all">
                   {challenge.nonce}
@@ -303,16 +311,16 @@ export default function DidPairingComponent({
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              {copiedPayload ? "Payload Copied!" : "Copy Full Payload (JSON)"}
+              {copiedPayload ? t("didPairing.payloadCopiedButton") : t("didPairing.copyPayloadButton")}
             </button>
 
             <button
               type="button"
               onClick={handleStartPairing}
               className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-xs font-medium py-3 px-4 rounded-xl border border-gray-700 transition-colors cursor-pointer"
-              title="Restart Challenge"
+              title={t("didPairing.restartButton")}
             >
-              Restart
+              {t("didPairing.restartButton")}
             </button>
           </div>
         </div>

@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSchema, type SchemaField } from "@/app/actions/schema-actions";
+import { useTranslation } from "@/locales/LanguageContext";
 
-// Tipos de campo disponíveis para as credenciais
 const FIELD_TYPES = ["string", "number", "boolean", "date"] as const;
 
 export default function SchemaForm() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [isPending, startTransition] = useTransition();
 
   const [name, setName] = useState("");
@@ -18,7 +19,6 @@ export default function SchemaForm() {
   ]);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Gerenciamento dos campos dinâmicos ──────────────────────
   function addField() {
     setFields([...fields, { name: "", type: "string", required: false }]);
   }
@@ -32,7 +32,6 @@ export default function SchemaForm() {
     setFields(fields.map((f, i) => (i === index ? { ...f, ...patch } : f)));
   }
 
-  // ── Submit ──────────────────────────────────────────────────
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
@@ -47,7 +46,6 @@ export default function SchemaForm() {
 
   return (
     <div className="space-y-8">
-
       {/* Erro global */}
       {error && (
         <div className="bg-red-950 border border-red-800 text-red-300 text-sm rounded-xl px-4 py-3">
@@ -59,26 +57,26 @@ export default function SchemaForm() {
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-            Schema Name
+            {t("schemas.schemaName")}
           </label>
           <input
             id="name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Graduation Diploma"
+            placeholder={t("schemas.schemaNamePlaceholder")}
             className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
           />
         </div>
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
-            Description
+            {t("schemas.description")}
           </label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Briefly describe what this credential certifies..."
+            placeholder={t("schemas.descriptionPlaceholder")}
             rows={3}
             className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
           />
@@ -89,7 +87,7 @@ export default function SchemaForm() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-gray-300">
-            Credential Fields
+            {t("schemas.credentialFields")}
           </h3>
           <button
             type="button"
@@ -99,7 +97,7 @@ export default function SchemaForm() {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Add Field
+            {t("schemas.addField")}
           </button>
         </div>
 
@@ -114,7 +112,7 @@ export default function SchemaForm() {
                 type="text"
                 value={field.name}
                 onChange={(e) => updateField(index, { name: e.target.value })}
-                placeholder="Field name"
+                placeholder={t("schemas.fieldName")}
                 className="flex-1 bg-transparent text-white placeholder-gray-500 text-sm focus:outline-none"
               />
 
@@ -126,9 +124,9 @@ export default function SchemaForm() {
                 }
                 className="bg-gray-700 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 border-none focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
-                {FIELD_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {FIELD_TYPES.map((ft) => (
+                  <option key={ft} value={ft}>
+                    {ft}
                   </option>
                 ))}
               </select>
@@ -141,7 +139,7 @@ export default function SchemaForm() {
                   onChange={(e) => updateField(index, { required: e.target.checked })}
                   className="rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500 cursor-pointer"
                 />
-                <span className="text-xs text-gray-400">Required</span>
+                <span className="text-xs text-gray-400">{t("schemas.fieldRequired")}</span>
               </label>
 
               {/* Remover */}
@@ -163,7 +161,7 @@ export default function SchemaForm() {
 
       {/* Preview do JSON gerado */}
       <div>
-        <p className="text-xs text-gray-500 mb-2">JSON Schema Preview</p>
+        <p className="text-xs text-gray-500 mb-2">{t("schemas.jsonPreview")}</p>
         <pre className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-gray-400 overflow-x-auto">
           {JSON.stringify({ fields }, null, 2)}
         </pre>
@@ -176,7 +174,7 @@ export default function SchemaForm() {
         disabled={isPending}
         className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
       >
-        {isPending ? "Creating..." : "Create Schema"}
+        {isPending ? t("schemas.creating") : t("schemas.savePublish")}
       </button>
     </div>
   );

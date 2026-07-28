@@ -1,36 +1,38 @@
+"use client";
+
 import type { CredentialStats } from "@/lib/types";
+import { useTranslation } from "@/locales/LanguageContext";
 
 type Props = {
   stats: CredentialStats;
 };
 
-// Painéis numéricos do Dashboard — recebe dados do Server Component (que consultou o banco via Prisma).
 export default function StatsWidgets({ stats }: Props) {
+  const { t } = useTranslation();
+
   const widgets = [
     {
-      label: "Received",
+      label: t("dashboard.stats.received"),
       value: stats.receivedCount,
-      detail: `${stats.receivedByStatus.ACTIVE} active`,
+      detail: `${stats.receivedByStatus.ACTIVE} ${t("dashboard.stats.active")}`,
       color: "emerald",
     },
     {
-      label: "Issued",
+      label: t("dashboard.stats.issued"),
       value: stats.issuedCount,
-      detail: `${stats.issuedByStatus.PENDING} pending`,
+      detail: `${stats.issuedByStatus.PENDING} ${t("dashboard.stats.pending")}`,
       color: "indigo",
     },
     {
-      label: "Pending Approval",
-      value:
-        stats.receivedByStatus.PENDING + stats.issuedByStatus.PENDING,
-      detail: "awaiting action",
+      label: t("dashboard.stats.pendingApproval"),
+      value: stats.receivedByStatus.PENDING + stats.issuedByStatus.PENDING,
+      detail: t("dashboard.stats.awaitingAction"),
       color: "yellow",
     },
     {
-      label: "Revoked",
-      value:
-        stats.receivedByStatus.REVOKED + stats.issuedByStatus.REVOKED,
-      detail: "total",
+      label: t("dashboard.stats.revoked"),
+      value: stats.receivedByStatus.REVOKED + stats.issuedByStatus.REVOKED,
+      detail: t("dashboard.stats.total"),
       color: "red",
     },
   ];

@@ -2,14 +2,17 @@
 
 import { useState, useTransition, useCallback } from "react";
 import { searchUsers, type UserSearchResult } from "@/app/actions/search-users";
+import { useTranslation } from "@/locales/LanguageContext";
+import Link from "next/link";
 
 export default function UserSearch() {
+  const { t } = useTranslation();
   const [cpf, setCpf] = useState("");
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Só dispara a busca quando atinge 11 dígitos.
+  // Dispara a busca quando atinge 11 dígitos.
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
 
@@ -39,7 +42,6 @@ export default function UserSearch() {
 
   return (
     <div className="relative w-full">
-
       {/* Input com máscara de CPF */}
       <div className="relative">
         <svg
@@ -49,14 +51,18 @@ export default function UserSearch() {
           stroke="currentColor"
           strokeWidth={2}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
         </svg>
         <input
           type="text"
           inputMode="numeric"
           value={cpf}
           onChange={handleCpfChange}
-          placeholder="Search by CPF: 000.000.000-00"
+          placeholder={t("dashboard.tabs.searchUserPlaceholder")}
           className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         />
         {isPending && (
@@ -65,16 +71,25 @@ export default function UserSearch() {
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"
+            />
           </svg>
         )}
       </div>
 
       {/* Erro */}
-      {error && (
-        <p className="text-red-400 text-xs mt-2 px-1">{error}</p>
-      )}
+      {error && <p className="text-red-400 text-xs mt-2 px-1">{error}</p>}
 
       {/* Resultado encontrado */}
       {results.length > 0 && (
@@ -103,21 +118,17 @@ export default function UserSearch() {
                   {user.name ?? "No name"}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                {/* Exibe o CPF mascarado para confirmação visual */}
                 <p className="text-xs text-gray-500">
                   CPF: {user.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                 </p>
               </div>
 
-              <button
-                className="ml-auto text-xs text-indigo-400 hover:text-indigo-300 transition-colors shrink-0"
-                onClick={() => {
-                  // TODO: navegar para /credentials/issue?holder=user.id
-                  alert(`Issue to: ${user.email}`);
-                }}
+              <Link
+                href={`/credentials/issue?holder=${encodeURIComponent(user.email || "")}`}
+                className="ml-auto text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors shrink-0 bg-indigo-950/80 border border-indigo-800 px-3 py-1.5 rounded-lg"
               >
-                Issue →
-              </button>
+                {t("dashboard.tabs.issueCredential")} →
+              </Link>
             </div>
           ))}
         </div>
@@ -129,12 +140,9 @@ export default function UserSearch() {
         results.length === 0 &&
         !error && (
           <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-6 text-center">
-            <p className="text-gray-500 text-sm">
-              No user found with this CPF.
-            </p>
+            <p className="text-gray-500 text-sm">{t("common.userNotFound")}</p>
           </div>
         )}
-
     </div>
   );
 }

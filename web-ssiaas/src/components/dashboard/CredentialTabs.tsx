@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { DashboardCredential } from "@/lib/types";
 import CredentialCard from "./CredentialCard";
 import UserSearch from "@/components/UserSearch";
+import { useTranslation } from "@/locales/LanguageContext";
 
 type Tab = "received" | "issued";
 
@@ -14,11 +15,12 @@ type Props = {
 };
 
 export default function CredentialTabs({ issued, received }: Props) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("received");
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "received", label: "Received Credentials", count: received.length },
-    { id: "issued",   label: "Issued Credentials",   count: issued.length  },
+    { id: "received", label: t("dashboard.tabs.receivedCredentials"), count: received.length },
+    { id: "issued",   label: t("dashboard.tabs.issuedCredentials"),   count: issued.length  },
   ];
 
   return (
@@ -60,7 +62,7 @@ export default function CredentialTabs({ issued, received }: Props) {
         <CredentialGrid
           credentials={received}
           perspective="received"
-          emptyMessage="You haven't received any credentials yet."
+          emptyMessage={t("dashboard.tabs.emptyReceived")}
         />
       )}
 
@@ -71,13 +73,22 @@ export default function CredentialTabs({ issued, received }: Props) {
           {/* Ações do Issuer */}
           <div className="flex flex-wrap gap-3">
             <Link
+              href="/schemas"
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors border border-gray-700"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              {t("dashboard.tabs.viewSchemas")}
+            </Link>
+            <Link
               href="/schemas/new"
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Create Schema
+              {t("dashboard.tabs.createSchema")}
             </Link>
             <Link
               href="/credentials/issue"
@@ -86,25 +97,25 @@ export default function CredentialTabs({ issued, received }: Props) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
               </svg>
-              Issue Credential
+              {t("dashboard.tabs.issueCredential")}
             </Link>
           </div>
 
           {/* Busca por CPF */}
           <div>
             <p className="text-sm text-gray-400 mb-3">
-              Search for a user to issue a credential
+              {t("dashboard.tabs.searchUserTitle")}
             </p>
             <UserSearch />
           </div>
 
           {/* Histórico de emissões */}
           <div>
-            <p className="text-sm text-gray-400 mb-4">Issue History</p>
+            <p className="text-sm text-gray-400 mb-4">{t("dashboard.tabs.issueHistory")}</p>
             <CredentialGrid
               credentials={issued}
               perspective="issued"
-              emptyMessage="You haven't issued any credentials yet."
+              emptyMessage={t("dashboard.tabs.emptyIssued")}
             />
           </div>
 

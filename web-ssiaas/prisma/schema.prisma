@@ -65,6 +65,9 @@ model User {
   // Timestamp de quando o pareamento foi concluído com sucesso.
   didPairedAt   DateTime?
 
+  // Idioma preferido do usuário ("en", "pt", etc.)
+  language      String    @default("en")
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

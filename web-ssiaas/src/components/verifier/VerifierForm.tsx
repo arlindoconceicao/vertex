@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslation } from "@/locales/LanguageContext";
 
 type VerifyResult = {
   valid: boolean;
@@ -8,6 +9,7 @@ type VerifyResult = {
 };
 
 export default function VerifierForm() {
+  const { t } = useTranslation();
   const [isPending, startTransition] = useTransition();
   const [jsonInput, setJsonInput] = useState("");
   const [result, setResult] = useState<VerifyResult | null>(null);
@@ -17,7 +19,6 @@ export default function VerifierForm() {
     setResult(null);
     setParseError(null);
 
-    // Valida que o input é JSON válido antes de enviar
     let parsed: unknown;
     try {
       parsed = JSON.parse(jsonInput);
@@ -42,12 +43,11 @@ export default function VerifierForm() {
           setParseError(data.error ?? "Verification failed.");
         }
       } catch {
-        setParseError("Network error. Please try again.");
+        setParseError(t("errors.connectionError"));
       }
     });
   }
 
-  // Limpa tudo e recomeça
   function handleReset() {
     setJsonInput("");
     setResult(null);
@@ -56,11 +56,10 @@ export default function VerifierForm() {
 
   return (
     <div className="space-y-6">
-
       {/* Input de JSON */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Paste the Verifiable Credential (JSON)
+          {t("verify.pastePayload")}
         </label>
         <textarea
           value={jsonInput}
@@ -98,10 +97,7 @@ export default function VerifierForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <p className="text-lg font-bold text-emerald-400">Valid Credential</p>
-                  <p className="text-sm text-emerald-500/70">
-                    All structural checks passed.
-                  </p>
+                  <p className="text-lg font-bold text-emerald-400">{t("verify.valid")}</p>
                 </div>
               </>
             ) : (
@@ -110,16 +106,12 @@ export default function VerifierForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
                 <div>
-                  <p className="text-lg font-bold text-red-400">Invalid Credential</p>
-                  <p className="text-sm text-red-500/70">
-                    {result.errors.length} issue{result.errors.length !== 1 ? "s" : ""} found.
-                  </p>
+                  <p className="text-lg font-bold text-red-400">{t("verify.invalid")}</p>
                 </div>
               </>
             )}
           </div>
 
-          {/* Lista de erros detalhados */}
           {result.errors.length > 0 && (
             <div className="space-y-2 mt-4">
               {result.errors.map((err, i) => (
@@ -146,7 +138,7 @@ export default function VerifierForm() {
           disabled={isPending || !jsonInput.trim()}
           className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
         >
-          {isPending ? "Verifying..." : "Verify Credential"}
+          {isPending ? t("verify.verifying") : t("verify.verifyButton")}
         </button>
         {(result || parseError) && (
           <button
@@ -154,11 +146,10 @@ export default function VerifierForm() {
             onClick={handleReset}
             className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-xl transition-colors border border-gray-700 cursor-pointer"
           >
-            Clear
+            {t("common.cancel")}
           </button>
         )}
       </div>
-
     </div>
   );
 }

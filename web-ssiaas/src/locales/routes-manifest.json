@@ -1,0 +1,71 @@
+{
+  "$schema": "Manifest of application routes covered by i18n translations",
+  "coveredRoutes": [
+    {
+      "route": "/",
+      "file": "src/app/page.tsx",
+      "description": "Rota raiz de entrada (redirecionamento automático baseado na sessão)",
+      "namespace": "auth"
+    },
+    {
+      "route": "/dashboard",
+      "file": "src/app/dashboard/page.tsx",
+      "description": "Painel de controle principal com estatísticas e lista de credenciais",
+      "namespace": "dashboard"
+    },
+    {
+      "route": "/settings",
+      "file": "src/app/settings/page.tsx",
+      "description": "Página de configurações (Perfil, Pareamento DID e Seletor de Idioma)",
+      "namespace": "settings"
+    },
+    {
+      "route": "/schemas",
+      "file": "src/app/schemas/page.tsx",
+      "description": "Listagem de esquemas de credenciais públicos e próprios",
+      "namespace": "schemas"
+    },
+    {
+      "route": "/schemas/new",
+      "file": "src/app/schemas/new/page.tsx",
+      "description": "Formulário de criação e publicação de novos esquemas",
+      "namespace": "schemas"
+    },
+    {
+      "route": "/schemas/[id]",
+      "file": "src/app/schemas/[id]/page.tsx",
+      "description": "Visualização e detalhes de um esquema específico",
+      "namespace": "schemas"
+    },
+    {
+      "route": "/credentials/issue",
+      "file": "src/app/credentials/issue/page.tsx",
+      "description": "Formulário de emissão de credenciais para um titular",
+      "namespace": "credentials"
+    },
+    {
+      "route": "/credentials/[id]",
+      "file": "src/app/credentials/[id]/page.tsx",
+      "description": "Inspeção e detalhes de uma credencial emitida ou recebida",
+      "namespace": "credentials"
+    },
+    {
+      "route": "/verify",
+      "file": "src/app/verify/page.tsx",
+      "description": "Ferramenta pública de verificação de credenciais W3C",
+      "namespace": "verify"
+    },
+    {
+      "route": "/login",
+      "file": "src/app/login/page.tsx",
+      "description": "Tela de login de acesso à plataforma",
+      "namespace": "auth"
+    },
+    {
+      "route": "/complete-registration",
+      "file": "src/app/complete-registration/page.tsx",
+      "description": "Tela de conclusão de cadastro (informar CPF)",
+      "namespace": "auth"
+    }
+  ]
+}
