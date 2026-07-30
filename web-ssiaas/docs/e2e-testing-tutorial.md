@@ -149,5 +149,5 @@ Este script anula a data de download, informando à UI que ela "ainda não foi b
 node lib/reset-download-status.js "ID_DA_CREDENCIAL"
 
 # Resetar todas as credenciais de um emissor de uma vez:
-node lib/reset-download-status.js "yugi386.2014@gmail.com"
+node lib/reset-download-status.js "teste@gmail.com"
 ```
