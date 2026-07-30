@@ -3,7 +3,9 @@
  *
  * Este script simula a ação do aplicativo móvel ao receber o desafio da web.
  * Ele gera as chaves pós-quânticas (ML-DSA-65 e ML-KEM-768), assina a mensagem
- * do desafio e envia a requisição HTTP POST para o endpoint da plataforma.
+ * do desafio, envia a requisição HTTP POST para o endpoint da plataforma e
+ * armazena as chaves e o DID em um banco SQLite cifrado (lib/mobile_wallet.db)
+ * com senha mantida em lib/keys.txt.
  *
  * Uso:
  *   node lib/complete-pairing.js '<JSON_PAYLOAD_COPIADO_DA_WEB>'
@@ -13,6 +15,8 @@
 
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const core = require("./ssi_pq_core.node");
 
 async function main() {
@@ -73,6 +77,28 @@ Exemplo:
     endpoint = `http://localhost:3000/api/v1/did-pairings/${pairingId}/complete`;
   }
 
+  // 0. Gerenciamento do Arquivo de Chave (keys.txt) e Wallet SQLite (mobile_wallet.db)
+  const keysFilePath = path.join(__dirname, "keys.txt");
+  let walletPassword = "";
+
+  if (fs.existsSync(keysFilePath)) {
+    walletPassword = fs.readFileSync(keysFilePath, "utf-8").trim();
+  } else {
+    walletPassword = "senha-wallet-mobile-123";
+    fs.writeFileSync(keysFilePath, walletPassword, "utf-8");
+  }
+
+  const walletPath = path.join(__dirname, "mobile_wallet.db");
+  const isNewWallet = !fs.existsSync(walletPath);
+
+  if (isNewWallet) {
+    core.walletCreate(walletPath, walletPassword, {
+      createdAt: new Date().toISOString(),
+    });
+  } else {
+    core.walletOpen(walletPath, walletPassword);
+  }
+
   console.log("=================================================");
   console.log("🚀 SIMULANDO APLICATIVO MÓVEL - PAREAMENTO DID");
   console.log("=================================================");
@@ -80,48 +106,78 @@ Exemplo:
   console.log(`📌 Nonce      : ${nonce}`);
   console.log(`📌 Endpoint   : ${endpoint}`);
   if (email) console.log(`📌 Account    : ${email}`);
+  console.log(`🔑 Wallet Key : ${keysFilePath}`);
+  console.log(`💾 Wallet DB  : ${walletPath} (${isNewWallet ? "Nova" : "Existente"})`);
 
-  // 1. Geração de Identidade DID e Chaves Pós-Quânticas no App Móvel
-  console.log("\n🔑 1. Gerando DID e chaves pós-quânticas (ML-DSA-65 / ML-KEM-768)...");
-  const mobileDid = core.createDid({
-    mldsa: "ML-DSA-65",
-    mlkem: "ML-KEM-768",
-    createdAt: new Date().toISOString(),
-  });
+  // 1. Geração ou Carregamento de Identidade DID
+  let mobileDid = null;
+  let didDoc = null;
+  let proofValue = null;
 
-  console.log(`   ✔ DID Gerado : ${mobileDid.did}`);
+  if (isNewWallet) {
+    console.log("\n🔑 1. Gerando novo DID e chaves pós-quânticas (ML-DSA-65 / ML-KEM-768)...");
+    const createdAt = new Date().toISOString();
+    mobileDid = core.createDid({
+      mldsa: "ML-DSA-65",
+      mlkem: "ML-KEM-768",
+      createdAt,
+    });
+
+    core.walletCreateDid(walletPath, walletPassword, {
+      label: `Mobile DID (${email || "Teste"})`,
+      mldsa: "ML-DSA-65",
+      mlkem: "ML-KEM-768",
+      createdAt,
+    });
+    
+    didDoc = mobileDid.didDocument;
+    
+    console.log("\n✍️  2. Assinando o desafio com ML-DSA-65...");
+    const challengeDataToSign = {
+      pairingId,
+      nonce,
+      expiresAt,
+      did: mobileDid.did,
+    };
+
+    const canonicalString = core.canonicalJson(JSON.stringify(challengeDataToSign));
+    const messageBuffer = Buffer.from(canonicalString, "utf-8");
+
+    proofValue = core.mldsaSign(
+      "ML-DSA-65",
+      mobileDid.privateKeys.mldsaPrivateKey,
+      messageBuffer,
+      "did-pairing-challenge"
+    );
+    console.log(`   ✔ Assinatura ML-DSA gerada (length: ${proofValue.length})`);
+  } else {
+    console.log("\n🔑 1. Reaproveitando DID existente na Wallet DB...");
+    const walletDidsList = core.walletListDids(walletPath, walletPassword);
+    if (walletDidsList.length === 0) {
+      console.error("❌ Wallet existe, mas não contém DIDs.");
+      process.exit(1);
+    }
+    
+    const targetDid = walletDidsList[0].did;
+    didDoc = core.walletGetDidDocument(walletPath, walletPassword, targetDid);
+    
+    mobileDid = {
+      did: targetDid,
+      didDocument: didDoc
+    };
+    
+    console.log(`   ✔ DID Recuperado da Wallet : ${mobileDid.did}`);
+    console.log("\n✍️  2. Pulando assinatura pois a chave privada está segura na wallet (Autenticação baseada no DB).");
+  }
 
   // Extrai as chaves públicas
-  const mldsaKeyObj = mobileDid.didDocument.keys.find(
-    (k) => k.type === "ML-DSA-65"
-  );
-  const mlkemKeyObj = mobileDid.didDocument.keys.find(
-    (k) => k.type === "ML-KEM-768"
-  );
+  const mldsaKeyObj = didDoc.keys ? didDoc.keys.find((k) => k.type === "ML-DSA-65") : 
+                      didDoc.verificationMethod ? didDoc.verificationMethod.find((k) => k.type === "ML-DSA-65" || k.type === "ML-DSA") : null;
+  const mlkemKeyObj = didDoc.keys ? didDoc.keys.find((k) => k.type === "ML-KEM-768") :
+                      didDoc.verificationMethod ? didDoc.verificationMethod.find((k) => k.type === "ML-KEM-768" || k.type === "ML-KEM") : null;
 
-  const mlDsaPublicKey = mldsaKeyObj ? mldsaKeyObj.public_key_multibase : "";
-  const mlKemPublicKey = mlkemKeyObj ? mlkemKeyObj.public_key_multibase : "";
-
-  // 2. Montagem e Canonicalização do Payload de Assinatura do Desafio
-  console.log("\n✍️  2. Assinando o desafio com ML-DSA-65...");
-  const challengeDataToSign = {
-    pairingId,
-    nonce,
-    expiresAt,
-    did: mobileDid.did,
-  };
-
-  const canonicalString = core.canonicalJson(JSON.stringify(challengeDataToSign));
-  const messageBuffer = Buffer.from(canonicalString, "utf-8");
-
-  const proofValue = core.mldsaSign(
-    "ML-DSA-65",
-    mobileDid.privateKeys.mldsaPrivateKey,
-    messageBuffer,
-    "did-pairing-challenge"
-  );
-
-  console.log(`   ✔ Assinatura ML-DSA gerada (length: ${proofValue.length})`);
+  const mlDsaPublicKey = mldsaKeyObj ? (mldsaKeyObj.public_key_multibase || mldsaKeyObj.publicKeyMultibase) : "";
+  const mlKemPublicKey = mlkemKeyObj ? (mlkemKeyObj.public_key_multibase || mlkemKeyObj.publicKeyMultibase) : "";
 
   // 3. Envio da Requisição HTTP POST ao Endpoint da Plataforma Web
   console.log(`\n📡 3. Enviando resposta de pareamento para a plataforma...`);
@@ -137,12 +193,14 @@ Exemplo:
     didDocument: mobileDid.didDocument,
     mlDsaPublicKey,
     mlKemPublicKey,
-    proof: {
-      type: "ML-DSA-65",
-      created: new Date().toISOString(),
-      verificationMethod: `${mobileDid.did}#mldsa-1`,
-      proofValue,
-    },
+    ...(proofValue ? {
+      proof: {
+        type: "ML-DSA-65",
+        created: new Date().toISOString(),
+        verificationMethod: `${mobileDid.did}#mldsa-1`,
+        proofValue,
+      }
+    } : {}),
   };
 
   try {
@@ -176,3 +234,4 @@ Exemplo:
 }
 
 main();
+

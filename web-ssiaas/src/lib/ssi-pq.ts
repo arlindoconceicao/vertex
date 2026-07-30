@@ -41,6 +41,10 @@ export interface SsiPqCore {
       mlkemPrivateKey: string;
     };
   };
+  verifySignedCredential(signedCredential: object, issuerDidDocument: object): boolean;
+  issuerIdentifierBase64(didDocument: object): string;
+  extractCredentialManifestFromPdf(pdfBuffer: Buffer): any;
+  verifySignedCredentialPdf(pdfBuffer: Buffer, issuerDidDocument: object): { valid: boolean; issuerIdentifier?: string };
 }
 
 /**

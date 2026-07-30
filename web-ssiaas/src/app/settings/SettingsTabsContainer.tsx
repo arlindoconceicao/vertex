@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "@/locales/LanguageContext";
 import DidPairingComponent from "./DidPairingComponent";
 import LanguageSettingsTab from "./LanguageSettingsTab";
+import RetentionSettingsComponent from "./RetentionSettingsComponent";
 
 type Props = {
   user: {
@@ -14,6 +15,8 @@ type Props = {
     didPublicKey: string | null;
     didMlkemKey: string | null;
     didPairedAt: string | null;
+    issuerIdentifier?: string | null;
+    pdfRetentionDays: number;
   };
 };
 
@@ -130,8 +133,11 @@ export default function SettingsTabsContainer({ user }: Props) {
               initialPublicKey={user.didPublicKey}
               initialMlkemKey={user.didMlkemKey}
               initialPairedAt={user.didPairedAt}
+              initialIssuerIdentifier={user.issuerIdentifier}
             />
           </div>
+
+          <RetentionSettingsComponent initialDays={user.pdfRetentionDays} />
         </div>
       ) : (
         <LanguageSettingsTab />

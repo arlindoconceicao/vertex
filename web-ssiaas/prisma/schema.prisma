@@ -68,6 +68,10 @@ model User {
   // Idioma preferido do usuário ("en", "pt", etc.)
   language      String    @default("en")
 
+  // Quantidade de dias que a plataforma deve reter o PDF após assinatura
+  // configurado pelo emissor (1 a 15)
+  pdfRetentionDays Int    @default(7)
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -121,14 +125,23 @@ model CredentialSchema {
 model VerifiableCredential {
   id        String   @id @default(cuid())
 
-  // Payload W3C/JSON-LD completo:
-  // @context, type, issuer, issuanceDate, credentialSubject,
-  // credentialSchema (referência interna ao schema) e proof
+  // Payload W3C/JSON-LD completo (usado enquanto PENDING).
+  // Após assinatura, é substituído pelos metadados da credencial.
   vcPayload Json
+
+  // Metadados extraídos e mantidos permanentemente
+  metadata  Json?
+
+  // Arquivo PDF cifrado armazenado após o callback
+  pdfFile   Bytes?
+
+  // Hash SHA-256 do arquivo original decifrado
+  pdfHash   String?
 
   status    VCStatus @default(PENDING)
   issuedAt  DateTime @default(now())
   expiresAt DateTime?
+  pdfDownloadedAt DateTime?
 
   issuerId  String
   issuer    User     @relation("IssuerRelation", fields: [issuerId], references: [id])

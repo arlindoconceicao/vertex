@@ -97,7 +97,7 @@ SSI model, they need a Decentralized Identifier — a Post-Quantum DID with ML-D
    ```bash
    node lib/complete-pairing.js '<JSON_PAYLOAD_COPIADO>'
    ```
-7. Point out: "The terminal script generates real ML-DSA-65 and ML-KEM-768 keypairs using `ssi_pq_core.node`, signs the challenge, and posts to the platform. Within 3 seconds, the browser auto-refreshes to show the Account Paired state."
+7. Point out: "The terminal script generates real ML-DSA-65 and ML-KEM-768 keypairs using `ssi_pq_core.node`, signs the challenge, posts to the platform, and automatically persists the encrypted wallet database to `lib/mobile_wallet.db` (with password saved in `lib/keys.txt`). Within 3 seconds, the browser auto-refreshes to show the Account Paired state."
 
 ---
 
@@ -111,11 +111,11 @@ node lib/reset-did.js [email do usuário]
 *Exemplo:* `node lib/reset-did.js teste@gmail.com`
 
 #### 2) Simular o Aplicativo Mobile Entregando o Payload Assinado (Válido)
-Para simular a resposta do aplicativo móvel enviando a DID e as chaves pós-quânticas assinadas:
+Para simular a resposta do aplicativo móvel enviando a DID e as chaves pós-quânticas assinadas, além de criar/atualizar a wallet SQLite cifrada (`lib/mobile_wallet.db`) e salvar a chave em `lib/keys.txt`:
 ```bash
 node lib/complete-pairing.js 'PAYLOAD'
 ```
-> **OBS:** O payload JSON deve ser copiado diretamente da plataforma na tela `/settings`.
+> **OBS:** O payload JSON deve ser copiado diretamente da plataforma na tela `/settings`. As chaves privadas ficam salvas no SQLite para suportar simulações posteriores do aplicativo.
 
 #### 3) Simular Ataque de Assinatura Adulterada / Forjada (Rejeição HTTP 400)
 Para simular um ataque alterando propositalmente os bytes da assinatura ML-DSA-65 e comprovar que a plataforma rejeita:

@@ -1,123 +1,147 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSsiPqCore } from "@/lib/ssi-pq";
 
 // POST /api/verifier/verify
 // Verifica uma Credencial Verificável assinada.
-//
-// Endpoint público — não exige Auth.js. Qualquer parte externa
-// pode submeter um payload para verificação, pois esse é o
-// propósito do papel de Verifier no triângulo SSI.
-//
-// Nesta versão do MVP, sem bibliotecas criptográficas pesadas,
-// realizamos uma validação estrutural simulada:
-//   1. Verifica se o payload contém os campos W3C obrigatórios
-//   2. Verifica se existe o campo "proof"
-//   3. Verifica se a credencial não está expirada
-//
-// TODO Sprint futura:
-//   - Resolver a DID do issuer via GET /api/dids/:id
-//   - Buscar a chave pública do DID Document
-//   - Validar a assinatura criptográfica com Ed25519
+// Endpoint público — não exige Auth.js.
 export async function POST(request: NextRequest) {
-  let body: unknown;
+  const contentType = request.headers.get("content-type") || "";
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const { vcPayload } = body as { vcPayload?: unknown };
-
-  if (
-    typeof vcPayload !== "object" ||
-    vcPayload === null ||
-    Array.isArray(vcPayload)
-  ) {
-    return NextResponse.json(
-      { error: "Missing or invalid field: vcPayload" },
-      { status: 400 }
-    );
-  }
-
-  const payload = vcPayload as Record<string, unknown>;
-  const errors: string[] = [];
-
-  // ── Verificação 1: Campos W3C obrigatórios ─────────────────
-  // Conforme a especificação W3C Verifiable Credentials Data Model,
-  // estes campos são obrigatórios em qualquer VC válida.
-  const requiredFields = [
-    "@context",
-    "type",
-    "issuer",
-    "issuanceDate",
-    "credentialSubject",
-  ];
-
-  for (const field of requiredFields) {
-    if (!(field in payload)) {
-      errors.push(`Missing required W3C field: '${field}'`);
-    }
-  }
-
-  // Valida que @context contém o contexto base do W3C
-  if (Array.isArray(payload["@context"])) {
-    const baseContext = "https://www.w3.org/2018/credentials/v1";
-    if (!payload["@context"].includes(baseContext)) {
-      errors.push(
-        `Invalid @context: must include '${baseContext}'`
-      );
-    }
-  }
-
-  // Valida que type contém "VerifiableCredential"
-  if (Array.isArray(payload.type)) {
-    if (!payload.type.includes("VerifiableCredential")) {
-      errors.push("Invalid type: must include 'VerifiableCredential'");
-    }
-  }
-
-  // ── Verificação 2: Campo proof ─────────────────────────────
-  // O proof é onde a assinatura criptográfica vive.
-  // Sem ele, a credencial não tem valor de verificação.
-  if (!payload.proof || typeof payload.proof !== "object") {
-    errors.push("Missing or invalid 'proof' field: credential is unsigned");
-  } else {
-    const proof = payload.proof as Record<string, unknown>;
-
-    // Subcampos mínimos esperados dentro do proof
-    if (typeof proof.type !== "string") {
-      errors.push("Missing 'proof.type': must specify the signature algorithm");
+  // 1. Verificação via PDF Upload
+  if (contentType.includes("multipart/form-data")) {
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
     }
 
-    if (typeof proof.proofValue !== "string") {
-      errors.push("Missing 'proof.proofValue': must contain the signature");
+    const file = formData.get("file") as File;
+    if (!file) {
+      return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
 
-    if (typeof proof.verificationMethod !== "string") {
-      errors.push(
-        "Missing 'proof.verificationMethod': must reference the signer's key"
-      );
+    let buffer;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } catch {
+      return NextResponse.json({ error: "Failed to read file" }, { status: 500 });
     }
 
-    // TODO Sprint futura: resolver a DID em proof.verificationMethod,
-    // buscar a chave pública e verificar a assinatura real com Ed25519.
-    // Por enquanto, se os campos existem, consideramos a assinatura
-    // "estruturalmente presente" (mas não criptograficamente validada).
+    const core = getSsiPqCore();
+    let manifest;
+    try {
+      manifest = core.extractCredentialManifestFromPdf(buffer);
+    } catch (e) {
+      console.error("PDF Extraction Error:", e);
+      return NextResponse.json({ error: `Invalid PDF or no SSI manifest found. Details: ${(e as Error).message}` }, { status: 400 });
+    }
+
+    const issuerDid = manifest?.signed_credential?.credential?.issuer_did;
+    if (!issuerDid) {
+      return NextResponse.json({ error: `No issuer DID found in credential. Manifest JSON: ${JSON.stringify(manifest, null, 2)}` }, { status: 400 });
+    }
+
+    const issuer = await prisma.user.findUnique({
+      where: { did: issuerDid },
+      select: { didDocument: true }
+    });
+
+    if (!issuer || !issuer.didDocument) {
+      return NextResponse.json({ valid: false, errors: ["Issuer DID not registered in platform."] }, { status: 200 });
+    }
+
+    let verification;
+    try {
+      verification = core.verifySignedCredentialPdf(buffer, issuer.didDocument as object);
+    } catch (e) {
+      return NextResponse.json({ valid: false, errors: ["Verification failed cryptographically."] }, { status: 200 });
+    }
+
+    if (!verification || !verification.valid) {
+      return NextResponse.json({ valid: false, errors: ["A assinatura do PDF não é válida ou foi adulterada."] }, { status: 200 });
+    }
+
+    // Se houver schemaId no manifest, buscamos a estrutura
+    let schemaStructure = null;
+    const schemaId = manifest.signed_credential?.credential?.schema_id;
+    if (schemaId) {
+      const schema = await prisma.credentialSchema.findUnique({
+        where: { id: schemaId },
+        select: { jsonSchema: true }
+      });
+      if (schema) {
+        schemaStructure = schema.jsonSchema;
+      }
+    }
+
+    // Remove attribute_hashes pois são informações técnicas de baixo nível
+    const metadataToReturn = JSON.parse(JSON.stringify(manifest.signed_credential.credential));
+    if (metadataToReturn.subject?.attribute_hashes) {
+      delete metadataToReturn.subject.attribute_hashes;
+    }
+    
+    // Retorna o manifesto completo (JSON embutido no PDF) para o usuário
+    return NextResponse.json({ 
+      valid: true, 
+      errors: [], 
+      metadata: {
+        ...metadataToReturn,
+        revealed_attributes: manifest.signed_credential.attribute_disclosures?.map((d: any) => ({
+          path: d.path,
+          value: d.value
+        }))
+      },
+      schemaStructure: schemaStructure
+    }, { status: 200 });
   }
 
-  // ── Verificação 3: Expiração ───────────────────────────────
-  if (typeof payload.expirationDate === "string") {
-    const expiration = new Date(payload.expirationDate);
-
-    if (isNaN(expiration.getTime())) {
-      errors.push("Invalid 'expirationDate': not a valid ISO 8601 date");
-    } else if (expiration <= new Date()) {
-      errors.push("Credential has expired");
+  // 2. Verificação via Hash (Proof of Existence)
+  if (contentType.includes("application/json")) {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const { pdfHash } = body as { pdfHash?: string };
+
+    if (pdfHash && typeof pdfHash === "string") {
+      const credential = await prisma.verifiableCredential.findFirst({
+        where: { pdfHash },
+      });
+
+      if (!credential) {
+        return NextResponse.json({ valid: false, errors: ["Nenhuma credencial encontrada para este hash de PDF."] }, { status: 200 });
+      }
+
+      const metadata = credential.metadata || credential.vcPayload || {};
+      let schemaStructure = null;
+
+      const schemaId = (metadata as any).schemaId || (metadata as any).credentialSubject?.credentialSchema?.id;
+      if (schemaId) {
+        const schema = await prisma.credentialSchema.findUnique({
+          where: { id: schemaId },
+          select: { jsonSchema: true }
+        });
+        if (schema) {
+          schemaStructure = schema.jsonSchema;
+        }
+      }
+
+      return NextResponse.json({ 
+        valid: true, 
+        errors: [], 
+        metadata: metadata,
+        schemaStructure: schemaStructure
+      }, { status: 200 });
+    }
+
+    return NextResponse.json({ error: "Missing pdfHash" }, { status: 400 });
   }
 
-  // ── Resultado ──────────────────────────────────────────────
-  const valid = errors.length === 0;
-
-  return NextResponse.json({ valid, errors }, { status: 200 });
+  return NextResponse.json({ error: "Unsupported Content-Type" }, { status: 415 });
 }

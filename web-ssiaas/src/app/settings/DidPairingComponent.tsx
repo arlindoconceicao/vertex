@@ -12,6 +12,7 @@ type Props = {
   initialPublicKey: string | null;
   initialMlkemKey: string | null;
   initialPairedAt: string | null;
+  initialIssuerIdentifier?: string | null;
 };
 
 interface ChallengeData {
@@ -28,6 +29,7 @@ export default function DidPairingComponent({
   initialPublicKey,
   initialMlkemKey,
   initialPairedAt,
+  initialIssuerIdentifier,
 }: Props) {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -148,6 +150,17 @@ export default function DidPairingComponent({
             {initialDid}
           </p>
         </div>
+
+        {initialIssuerIdentifier && (
+          <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+              Identificador do Emissor
+            </p>
+            <p className="text-sm text-emerald-400 font-mono break-all select-all">
+              {initialIssuerIdentifier}
+            </p>
+          </div>
+        )}
 
         {initialPublicKey && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">

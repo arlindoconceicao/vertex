@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSsiPqCore, decodeBase58Btc } from "@/lib/ssi-pq";
+import { getSsiPqCore } from "@/lib/ssi-pq";
 
-// GET /api/signer/requests/pending
-// Consumido pelo App Mobile Signer via polling.
-// Retorna todas as VCs com status PENDING aguardando assinatura do emissor.
-//
+// GET /api/signer/credentials/available
+// Retorna as VCs com status ACTIVE que possuem pdfFile e aguardam download pelo Holder
 // Autenticação: M2M via Prova de Posse (Desafio Assinado ML-DSA)
 export async function GET(request: Request) {
   const authCredentialBase64 = request.headers.get("x-signer-auth-credential");
@@ -25,11 +23,11 @@ export async function GET(request: Request) {
        return NextResponse.json({ error: "Invalid credential structure" }, { status: 401 });
     }
 
-    const signerDid = authCredential.credential.issuer_did;
+    const holderDid = authCredential.credential.issuer_did;
 
-    // 2. Buscar o usuário pelo DID para obter o DID Document
+    // Buscar o usuário pelo DID para obter o DID Document
     const user = await prisma.user.findUnique({
-      where: { did: signerDid },
+      where: { did: holderDid },
       select: { didDocument: true },
     });
 
@@ -37,7 +35,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Signer DID not found or has no didDocument" }, { status: 401 });
     }
 
-    // 3. Verificar a Assinatura da Credencial Pós-Quântica
+    // Verificar a Assinatura da Credencial Pós-Quântica
     const core = getSsiPqCore();
     
     let isValid = false;
@@ -51,12 +49,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid cryptographic credential signature" }, { status: 401 });
     }
 
-    // 4. Validar os dados de tempo e ação do desafio na credencial
+    // Validar os dados de tempo e ação do desafio na credencial
     const disclosures = authCredential.attribute_disclosures || [];
     const timestampDisclosure = disclosures.find((d: any) => d.path === 'subject.timestamp');
     const actionDisclosure = disclosures.find((d: any) => d.path === 'subject.action');
 
-    if (!timestampDisclosure || !actionDisclosure || actionDisclosure.value !== 'pending_requests_auth') {
+    if (!timestampDisclosure || !actionDisclosure || actionDisclosure.value !== 'available_credentials_auth') {
        return NextResponse.json({ error: "Invalid auth credential payload" }, { status: 401 });
     }
 
@@ -68,50 +66,38 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid or expired timestamp" }, { status: 401 });
     }
 
-    // 4. Buscar apenas as credenciais em que o signer é o Emissor (Issuer)
-    const pendingCredentials = await prisma.verifiableCredential.findMany({
+    // Buscar as credenciais ACTIVE e que têm pdfFile para este Holder
+    const availableCredentials = await prisma.verifiableCredential.findMany({
       where: { 
-        status: "PENDING",
-        issuer: { did: signerDid }
+        status: "ACTIVE",
+        holder: { did: holderDid },
+        pdfFile: { not: null }
       },
       select: {
         id: true,
         issuedAt: true,
-        vcPayload: true,
+        pdfDownloadedAt: true,
         issuer: {
           select: { did: true, name: true },
-        },
-        holder: {
-          select: { did: true },
         },
       },
       orderBy: { issuedAt: "asc" },
     });
 
-    // Mapeia para o formato exato do contrato em api-architecture.md.
-    const response = pendingCredentials.map((vc) => {
-      const payload = (vc.vcPayload && typeof vc.vcPayload === "object") ? JSON.parse(JSON.stringify(vc.vcPayload)) : {};
-      if (vc.issuer?.did) {
-        payload.issuer = vc.issuer.did;
-      }
-      if (vc.holder?.did && payload.credentialSubject && typeof payload.credentialSubject === "object") {
-        payload.credentialSubject.id = vc.holder.did;
-      }
-      return {
-        requestId: vc.id,
+    const response = availableCredentials.map((vc) => ({
+        credentialId: vc.id,
         createdAt: vc.issuedAt.toISOString(),
+        pdfDownloadedAt: vc.pdfDownloadedAt ? vc.pdfDownloadedAt.toISOString() : null,
         issuer: {
           did: vc.issuer.did,
           name: vc.issuer.name,
-        },
-        unsignedPayload: payload,
-      };
-    });
+        }
+    }));
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error(
-      "[GET /api/signer/requests/pending] Unexpected error:",
+      "[GET /api/signer/credentials/available] Unexpected error:",
       error
     );
     return NextResponse.json(

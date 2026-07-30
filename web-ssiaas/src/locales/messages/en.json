@@ -5,6 +5,11 @@
     "flag": "🇺🇸"
   },
   "common": {
+    "cpfLabel": "CPF:",
+    "select": "Select...",
+    "trueVal": "True",
+    "falseVal": "False",
+    "profileAlt": "Profile",
     "appName": "Vertex SSIaaS",
     "dashboard": "Dashboard",
     "settings": "Settings",
@@ -86,6 +91,8 @@
     }
   },
   "schemas": {
+    "v": "v",
+    "ipfs": "IPFS",
     "title": "Schemas",
     "newTitle": "New Schema",
     "newSubtitle": "Your credential templates and public community schemas.",
@@ -126,6 +133,14 @@
     "required": "required"
   },
   "credentials": {
+    "credentialSummary": "Credential Summary",
+    "originalPdfHash": "Original PDF SHA-256 Hash",
+    "signatureDate": "Signature Date",
+    "downloadEncryptedPdf": "Download Encrypted PDF",
+    "pdfReadDisclaimer": "The file can only be read by your identity App (via ML-KEM private key).",
+    "provisional": "(Provisional)",
+    "rawServerMetadata": "Raw Server Metadata",
+    "idLabel": "(ID: ",
     "title": "Issue Credential",
     "subtitle": "Select a schema and fill in the fields to issue a W3C Verifiable Credential to a holder.",
     "selectSchema": "Select Credential Schema",
@@ -156,9 +171,16 @@
     "revoking": "Revoking...",
     "accepting": "Accepting...",
     "status": "Status",
-    "payload": "VC JSON Payload"
+    "payload": "VC JSON Payload",
+    "dataWipedDisclaimer": "The credential attributes have been deleted from the platform to protect the recipient's privacy. The file was successfully downloaded."
   },
   "verify": {
+    "jsonPayloadTab": "JSON Payload (W3C)",
+    "pdfHashTab": "PDF Hash (Proof of Existence)",
+    "proofOfExistenceMetadata": "Proof of Existence (Metadata)",
+    "pastePdfHash": "Paste the original PDF Hash (SHA-256)",
+    "pdfHashPlaceholder": "e.g. 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "noCredentialFoundForHash": "No credential found for this PDF hash.",
     "title": "Credential Verifier",
     "subtitle": "Verify the authenticity and integrity of W3C Verifiable Credentials.",
     "pastePayload": "Paste VC JSON Payload",
@@ -167,7 +189,11 @@
     "valid": "Valid Credential Signature",
     "invalid": "Invalid Credential Signature",
     "issuerDid": "Issuer DID",
-    "holderDid": "Holder DID"
+    "holderDid": "Holder DID",
+    "schemaStructure": "Schema Structure",
+    "pdfUploadTab": "PDF Upload",
+    "uploadPdfLabel": "Select the unencrypted PDF file for verification",
+    "pdfPrivacyWarning": "Verification via PDF momentarily exposes data for cryptographic validation (SSI), but the platform does not store any information and discards the file immediately after processing."
   },
   "auth": {
     "signInTitle": "Sign in to Vertex SSIaaS",
@@ -180,6 +206,12 @@
     "cpfInvalid": "Invalid CPF format or length."
   },
   "settings": {
+    "retention": {
+      "title": "PDF Retention",
+      "description": "Configure how many days the platform will keep the encrypted PDF available for download by the recipient (between 1 and 15 days). After this period, the file will be permanently deleted, leaving only metadata.",
+      "days": "days"
+    },
+    "issuerIdentifier": "Issuer Identifier",
     "title": "Settings",
     "subtitle": "Manage your identity, security, and application preferences.",
     "tabs": {
@@ -240,5 +272,10 @@
     "schemaRequired": "Please select a schema.",
     "holderRequired": "Please specify a holder email.",
     "issueFailed": "Failed to issue credential."
+  },
+  "captcha": {
+    "question": "Security Check: How much is {{a}} + {{b}}?",
+    "placeholder": "Your answer...",
+    "solved": "Challenge solved!"
   }
 }

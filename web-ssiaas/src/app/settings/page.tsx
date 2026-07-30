@@ -16,14 +16,42 @@ export default async function SettingsPage() {
     select: {
       id: true,
       did: true,
+      didDocument: true,
       didPublicKey: true,
       didMlkemKey: true,
       didPairedAt: true,
       cpf: true,
       email: true,
       language: true,
+      pdfRetentionDays: true,
     },
   });
+
+  let issuerIdentifier = null;
+  if (user?.did) {
+    const { getSsiPqCore } = await import("@/lib/ssi-pq");
+    const core = await getSsiPqCore();
+
+    const storedDidDocument = user.didDocument;
+    const didDocument =
+      storedDidDocument && typeof storedDidDocument === "object"
+        ? storedDidDocument
+        : {
+            "@context": ["https://www.w3.org/ns/did/v1"],
+            id: user.did,
+            verificationMethod: [
+              {
+                id: `${user.did}#key-1`,
+                type: "Ed25519VerificationKey2020",
+                controller: user.did,
+                publicKeyMultibase: user.didPublicKey,
+              },
+            ],
+            authentication: [`${user.did}#key-1`],
+          };
+
+    issuerIdentifier = core.issuerIdentifierBase64(didDocument);
+  }
 
   const formattedUser = {
     id: user?.id || "",
@@ -33,6 +61,8 @@ export default async function SettingsPage() {
     didPublicKey: user?.didPublicKey || null,
     didMlkemKey: user?.didMlkemKey || null,
     didPairedAt: user?.didPairedAt ? user.didPairedAt.toISOString() : null,
+    issuerIdentifier,
+    pdfRetentionDays: user?.pdfRetentionDays || 7,
   };
 
   return (

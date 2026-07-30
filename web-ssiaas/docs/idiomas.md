@@ -63,6 +63,11 @@ Disponibilizamos três comandos essenciais no `package.json`:
 * **Script:** `scripts/validate-i18n.ts --fix`
 * **Funcionamento:** Preenche automaticamente nos dicionários secundários as chaves faltantes copiando o texto padrão em inglês, facilitando o trabalho de tradução.
 
+### D. Auditoria de Strings Hardcoded (AST)
+* **Comando:** `npx tsx lib/check-i18n.ts`
+* **Script:** `lib/check-i18n.ts`
+* **Funcionamento:** Utiliza a biblioteca `ts-morph` para gerar a Árvore de Sintaxe Abstrata (AST) dos arquivos TypeScript (`.tsx`). Varre os diretórios `src/app/` e `src/components/` buscando por nós de texto JSX (`JsxText`) e atributos comuns (como `placeholder`, `title`, `alt`) que contenham textos legíveis hardcoded, ou seja, que não estão sendo passados pela função de tradução `t()`. Caso encontre textos suspeitos, o script exibirá o nome do arquivo, a linha exata e a string esquecida.
+
 ---
 
 ## 4. Fluxo de Trabalho: Como Adicionar uma Nova Tela no Projeto

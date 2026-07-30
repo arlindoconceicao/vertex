@@ -33,7 +33,7 @@ export default function CredentialCard({ credential, perspective }: Props) {
 
   return (
     <Link
-      href={`/credentials/${credential.id}`}
+      href={`/credentials/${credential.id}?view=${perspective}`}
       className="block bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4 hover:border-gray-700 transition-colors"
     >
       {/* Cabeçalho: tipo da credencial + status */}

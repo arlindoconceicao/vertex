@@ -2,38 +2,56 @@
 
 import { useState, useTransition } from "react";
 import { useTranslation } from "@/locales/LanguageContext";
+import MathCaptcha from "./MathCaptcha";
 
 type VerifyResult = {
   valid: boolean;
   errors: string[];
+  metadata?: unknown;
+  schemaStructure?: unknown;
 };
 
 export default function VerifierForm() {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<"pdf" | "hash">("pdf");
   const [isPending, startTransition] = useTransition();
-  const [jsonInput, setJsonInput] = useState("");
+  const [fileInput, setFileInput] = useState<File | null>(null);
+  const [hashInput, setHashInput] = useState("");
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [isCaptchaSolved, setIsCaptchaSolved] = useState(false);
+  const [captchaResetTrigger, setCaptchaResetTrigger] = useState(0);
 
   function handleVerify() {
     setResult(null);
     setParseError(null);
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(jsonInput);
-    } catch {
-      setParseError("Invalid JSON. Please check the syntax and try again.");
-      return;
-    }
-
     startTransition(async () => {
       try {
-        const response = await fetch("/api/verifier/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ vcPayload: parsed }),
-        });
+        let response;
+        if (mode === "pdf") {
+          if (!fileInput) {
+            setParseError("Please select a PDF file.");
+            return;
+          }
+          const formData = new FormData();
+          formData.append("file", fileInput);
+
+          response = await fetch("/api/verifier/verify", {
+            method: "POST",
+            body: formData,
+          });
+        } else {
+          if (!hashInput.trim()) {
+            setParseError("Please provide a valid PDF Hash.");
+            return;
+          }
+          response = await fetch("/api/verifier/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdfHash: hashInput.trim() }),
+          });
+        }
 
         const data = await response.json();
 
@@ -42,6 +60,10 @@ export default function VerifierForm() {
         } else {
           setParseError(data.error ?? "Verification failed.");
         }
+        
+        // Reset the captcha for the next verification
+        setIsCaptchaSolved(false);
+        setCaptchaResetTrigger(prev => prev + 1);
       } catch {
         setParseError(t("errors.connectionError"));
       }
@@ -49,29 +71,77 @@ export default function VerifierForm() {
   }
 
   function handleReset() {
-    setJsonInput("");
+    setFileInput(null);
+    setHashInput("");
     setResult(null);
     setParseError(null);
+    setIsCaptchaSolved(false);
+    setCaptchaResetTrigger(prev => prev + 1);
   }
 
   return (
     <div className="space-y-6">
-      {/* Input de JSON */}
+      {/* Abas para alternar os modos */}
+      <div className="flex bg-gray-800 rounded-lg p-1">
+        <button
+          onClick={() => { setMode("pdf"); handleReset(); }}
+          className={`flex-1 text-sm font-medium py-2 rounded-md transition-colors ${
+            mode === "pdf" ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          {t("verify.pdfUploadTab")}
+        </button>
+        <button
+          onClick={() => { setMode("hash"); handleReset(); }}
+          className={`flex-1 text-sm font-medium py-2 rounded-md transition-colors ${
+            mode === "hash" ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          {t("verify.pdfHashTab")}
+        </button>
+      </div>
+
+      {/* Input baseado no modo */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          {t("verify.pastePayload")}
+          {mode === "pdf" ? t("verify.uploadPdfLabel") : t("verify.pastePdfHash")}
         </label>
-        <textarea
-          value={jsonInput}
-          onChange={(e) => {
-            setJsonInput(e.target.value);
-            setResult(null);
-            setParseError(null);
-          }}
-          placeholder='{ "@context": [...], "type": [...], "issuer": "did:web:...", ... }'
-          rows={14}
-          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
-        />
+        {mode === "pdf" ? (
+          <div>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setFileInput(e.target.files[0]);
+                } else {
+                  setFileInput(null);
+                }
+                setResult(null);
+                setParseError(null);
+              }}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-900 file:text-indigo-300 hover:file:bg-indigo-800"
+            />
+            <p className="mt-2 text-xs text-gray-400 flex items-start gap-1.5 bg-gray-900/50 p-3 rounded-lg">
+              <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>{t("verify.pdfPrivacyWarning")}</span>
+            </p>
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={hashInput}
+            onChange={(e) => {
+              setHashInput(e.target.value);
+              setResult(null);
+              setParseError(null);
+            }}
+            placeholder={t("verify.pdfHashPlaceholder")}
+            className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          />
+        )}
       </div>
 
       {/* Erro de parse */}
@@ -122,20 +192,49 @@ export default function VerifierForm() {
                   <svg className="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  <p className="text-sm text-red-300">{err}</p>
+                  <p className="text-sm text-red-300">
+                    {err === "Nenhuma credencial encontrada para este hash de PDF." 
+                      ? t("verify.noCredentialFoundForHash") 
+                      : err}
+                  </p>
                 </div>
               ))}
             </div>
           )}
+
+          {result.valid && !!result.metadata && (
+             <div className="mt-6 border-t border-emerald-800/50 pt-4">
+               <h4 className="text-sm font-semibold text-emerald-300 mb-2">{t("verify.proofOfExistenceMetadata")}</h4>
+               <pre className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-emerald-400 overflow-x-auto whitespace-pre-wrap">
+                 {JSON.stringify(result.metadata, null, 2)}
+               </pre>
+             </div>
+          )}
+
+          {result.valid && !!result.schemaStructure && (
+             <div className="mt-4 pt-4">
+               <h4 className="text-sm font-semibold text-emerald-300 mb-2">{t("verify.schemaStructure")}</h4>
+               <pre className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-blue-400 overflow-x-auto whitespace-pre-wrap">
+                 {JSON.stringify(result.schemaStructure, null, 2)}
+               </pre>
+             </div>
+          )}
         </div>
       )}
+
+      {/* CAPTCHA */}
+      <MathCaptcha
+        onSuccess={() => setIsCaptchaSolved(true)}
+        onReset={() => setIsCaptchaSolved(false)}
+        resetTrigger={captchaResetTrigger}
+      />
 
       {/* Botões */}
       <div className="flex gap-3">
         <button
           type="button"
           onClick={handleVerify}
-          disabled={isPending || !jsonInput.trim()}
+          disabled={isPending || !isCaptchaSolved || (mode === "pdf" ? !fileInput : !hashInput.trim())}
           className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
         >
           {isPending ? t("verify.verifying") : t("verify.verifyButton")}
@@ -144,7 +243,7 @@ export default function VerifierForm() {
           <button
             type="button"
             onClick={handleReset}
-            className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-xl transition-colors border border-gray-700 cursor-pointer"
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 px-6 rounded-xl transition-colors cursor-pointer"
           >
             {t("common.cancel")}
           </button>

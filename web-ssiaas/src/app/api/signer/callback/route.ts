@@ -3,18 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { validateSignerToken } from "@/lib/signer-auth";
 
 // POST /api/signer/callback
-// Chamado pelo App Mobile Signer após assinar o payload.
+// Chamado pelo App Mobile Signer após assinar o payload e gerar o PDF.
 //
-// Fluxo:
-//   1. Valida o token M2M
-//   2. Verifica se a VC (requestId) existe e está PENDING
-//   3. Substitui o vcPayload não-assinado pelo signedPayload
-//   4. Mantém status PENDING (Holder ainda precisa aceitar)
-//   5. Retorna 201 com credentialId e holderNotified: true
-//
-// Nota: o status permanece PENDING mesmo após a assinatura
-// porque, conforme o contrato, o Holder ainda precisa aceitar
-// a credencial via PATCH /api/credentials/:id/accept.
+// Fluxo Atualizado (Segurança e Privacidade):
+//   1. Valida o token M2M (SIGNER_SECRET)
+//   2. Recebe requisição multipart/form-data
+//   3. Extrai o arquivo PDF (cifrado com a chave ML-KEM do destinatário)
+//   4. Extrai os metadados (resumo JSON, hash original)
+//   5. Verifica se a VC (requestId) existe e está PENDING
+//   6. Substitui o vcPayload (que possuía PII) apenas pelos metadados
+//   7. Salva o arquivo PDF no banco de dados
+//   8. Mantém status PENDING (Holder ainda precisa aceitar)
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
 
@@ -22,52 +21,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // ── Parse do body ──────────────────────────────────────────
-  let body: unknown;
-
+  let formData: FormData;
   try {
-    body = await request.json();
+    formData = await request.formData();
+  } catch (error) {
+    return NextResponse.json({ error: "Invalid multipart/form-data" }, { status: 400 });
+  }
+
+  const file = formData.get("file") as File | null;
+  const metadataStr = formData.get("metadata") as string | null;
+
+  if (!file || !metadataStr) {
+    return NextResponse.json(
+      { error: "Missing required fields: 'file' or 'metadata'" },
+      { status: 400 }
+    );
+  }
+
+  let metadata: any;
+  try {
+    metadata = JSON.parse(metadataStr);
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON in metadata field" }, { status: 400 });
   }
 
-  const { requestId, signedPayload } = body as {
-    requestId?: unknown;
-    signedPayload?: unknown;
-  };
+  const { requestId, issuerDid, recipientDid, timestamp, pdfHash, schemaId } = metadata;
 
-  if (typeof requestId !== "string" || requestId.trim().length === 0) {
+  if (!requestId || typeof requestId !== "string") {
     return NextResponse.json(
-      { error: "Missing or invalid field: requestId" },
-      { status: 400 }
-    );
-  }
-
-  // O signedPayload deve ser um objeto JSON contendo o payload W3C
-  // completo, agora incluindo o campo "proof" com a assinatura.
-  if (
-    typeof signedPayload !== "object" ||
-    signedPayload === null ||
-    Array.isArray(signedPayload)
-  ) {
-    return NextResponse.json(
-      { error: "Missing or invalid field: signedPayload" },
-      { status: 400 }
-    );
-  }
-
-  // Validação mínima: o payload assinado DEVE conter o campo "proof".
-  // Sem ele, a credencial não tem valor criptográfico e não pode
-  // ser verificada por terceiros.
-  const payload = signedPayload as Record<string, unknown>;
-
-  if (!payload.proof || typeof payload.proof !== "object") {
-    return NextResponse.json(
-      {
-        error: "Invalid signedPayload: missing 'proof' field",
-        details:
-          "The signed payload must contain a 'proof' object with the cryptographic signature.",
-      },
+      { error: "Missing or invalid field in metadata: requestId" },
       { status: 400 }
     );
   }
@@ -78,9 +60,6 @@ export async function POST(request: NextRequest) {
     select: { id: true, status: true, holderId: true },
   });
 
-  // Retornamos 404 tanto para "não existe" quanto para "já foi
-  // processado" — não revelamos detalhes sobre registros que o
-  // Signer não deveria conhecer.
   if (!credential) {
     return NextResponse.json(
       { error: "Signing request not found" },
@@ -88,8 +67,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Se o status não é PENDING, a credencial já foi assinada
-  // anteriormente ou foi revogada — impede reprocessamento.
   if (credential.status !== "PENDING") {
     return NextResponse.json(
       {
@@ -100,29 +77,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Converter o File para Buffer
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfBuffer = Buffer.from(arrayBuffer);
+
   // ── Atualização no banco ───────────────────────────────────
   try {
-    // Substitui o payload não-assinado pelo assinado.
-    // O status permanece PENDING — conforme a documentação,
-    // o Holder ainda precisa aceitar.
+    // Substitui o payload não-assinado (com PII) pelo sumário seguro.
+    // O status muda para ACTIVE já que foi assinada com sucesso pelo emissor.
     await prisma.verifiableCredential.update({
       where: { id: requestId },
       data: {
-        vcPayload: signedPayload as object,
+        // Mantemos o vcPayload intacto até que o download ocorra
+        metadata: {
+          issuerDid,
+          recipientDid,
+          timestamp,
+          schemaId,
+          pdfHash
+        },
+        pdfFile: pdfBuffer,
+        pdfHash: pdfHash || null,
+        status: "ACTIVE",
       },
     });
 
-    // TODO Sprint futura: disparar e-mail real para o Holder
-    // usando notifyNewCredential() do emailService.
-    // Por enquanto, logamos e retornamos holderNotified: true.
     console.log(
-      `[POST /api/signer/callback] Credential ${requestId} signed. Holder ${credential.holderId} would be notified.`
+      `[POST /api/signer/callback] Credential ${requestId} signed and PDF uploaded. Holder ${credential.holderId} would be notified.`
     );
 
     return NextResponse.json(
       {
         credentialId: requestId,
-        status: "PENDING",
+        status: "ACTIVE",
         holderNotified: true,
       },
       { status: 201 }

@@ -5,6 +5,11 @@
     "flag": "🇧🇷"
   },
   "common": {
+    "cpfLabel": "CPF:",
+    "select": "Select...",
+    "trueVal": "True",
+    "falseVal": "False",
+    "profileAlt": "Profile",
     "appName": "Vertex SSIaaS",
     "dashboard": "Painel",
     "settings": "Configurações",
@@ -86,6 +91,8 @@
     }
   },
   "schemas": {
+    "v": "v",
+    "ipfs": "IPFS",
     "title": "Esquemas",
     "newTitle": "Novo esquema",
     "newSubtitle": "Seus modelos de credenciais e esquemas públicos da comunidade.",
@@ -126,6 +133,14 @@
     "makePrivate": "Tornar Privado"
   },
   "credentials": {
+    "credentialSummary": "Resumo da Credencial",
+    "originalPdfHash": "Hash SHA-256 do PDF Original",
+    "signatureDate": "Data da Assinatura",
+    "downloadEncryptedPdf": "Baixar PDF Criptografado",
+    "pdfReadDisclaimer": "O arquivo só pode ser lido pelo App da sua identidade (via chave privada ML-KEM).",
+    "provisional": "(Provisório)",
+    "rawServerMetadata": "Metadados Brutos no Servidor",
+    "idLabel": "(ID: ",
     "title": "Emitir credencial",
     "subtitle": "Selecione um esquema e preencha os campos para emitir uma Credencial Verificável W3C para um titular.",
     "selectSchema": "Selecionar esquema de credencial",
@@ -156,9 +171,16 @@
     "revoking": "Revogando...",
     "accepting": "Aceitando...",
     "status": "Status",
-    "payload": "Payload JSON da VC"
+    "payload": "Payload JSON da VC",
+    "dataWipedDisclaimer": "Os atributos da credencial foram apagados da plataforma para proteger a privacidade do destinatário. O arquivo foi baixado com sucesso."
   },
   "verify": {
+    "jsonPayloadTab": "JSON Payload (W3C)",
+    "pdfHashTab": "PDF Hash (Proof of Existence)",
+    "proofOfExistenceMetadata": "Proof of Existence (Metadados)",
+    "pastePdfHash": "Cole o Hash (SHA-256) do PDF Original",
+    "pdfHashPlaceholder": "ex: 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "noCredentialFoundForHash": "Nenhuma credencial encontrada para este hash de PDF.",
     "title": "Verificador de credenciais",
     "subtitle": "Verifique a autenticidade e a integridade das Credenciais Verificáveis W3C.",
     "pastePayload": "Cole o payload JSON da VC",
@@ -167,7 +189,11 @@
     "valid": "Assinatura da credencial válida",
     "invalid": "Assinatura da credencial inválida",
     "issuerDid": "DID do emissor",
-    "holderDid": "DID do titular"
+    "holderDid": "DID do titular",
+    "schemaStructure": "Estrutura do Esquema",
+    "pdfUploadTab": "Upload de PDF",
+    "uploadPdfLabel": "Selecione o arquivo PDF sem criptografia para verificação",
+    "pdfPrivacyWarning": "A verificação por PDF expõe os dados momentaneamente para validação criptográfica (SSI), mas a plataforma não armazena nenhuma informação e descarta o arquivo imediatamente após o processamento."
   },
   "auth": {
     "signInTitle": "Entrar no Vertex SSIaaS",
@@ -180,6 +206,12 @@
     "cpfInvalid": "Formato ou tamanho de CPF inválido."
   },
   "settings": {
+    "retention": {
+      "title": "Retenção de PDFs",
+      "description": "Configure por quantos dias a plataforma manterá o PDF criptografado disponível para download do destinatário (entre 1 e 15 dias). Após este prazo, o arquivo será excluído permanentemente, restando apenas os metadados.",
+      "days": "dias"
+    },
+    "issuerIdentifier": "Identificador do Emissor",
     "title": "Configurações",
     "subtitle": "Gerencie sua identidade, segurança e preferências do aplicativo.",
     "tabs": {
@@ -240,5 +272,10 @@
     "schemaRequired": "Selecione um esquema.",
     "holderRequired": "Informe o e-mail do titular.",
     "issueFailed": "Não foi possível emitir a credencial."
+  },
+  "captcha": {
+    "question": "Verificação de Segurança: Quanto é {{a}} + {{b}}?",
+    "placeholder": "Sua resposta...",
+    "solved": "Desafio resolvido!"
   }
 }

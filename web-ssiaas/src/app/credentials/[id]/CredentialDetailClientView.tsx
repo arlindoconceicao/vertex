@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "@/locales/LanguageContext";
 import CredentialActions from "@/components/credentials/CredentialActions";
@@ -13,6 +14,8 @@ type CredentialDetailProps = {
     issuedAt: Date;
     expiresAt: Date | null;
     vcPayload: unknown;
+    pdfHash?: string | null;
+    pdfDownloadedAt: Date | null;
     issuerId: string;
     holderId: string;
     issuer: User;
@@ -26,6 +29,8 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
   const { t, locale } = useTranslation();
   const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
 
+  const [showData, setShowData] = useState(false);
+
   const statusStyles = {
     ACTIVE: { label: t("dashboard.tabs.status.active"), classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
     PENDING: { label: t("dashboard.tabs.status.pending"), classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
@@ -33,12 +38,20 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
   } as const;
 
   const { label, classes } = statusStyles[credential.status];
-  const payload = credential.vcPayload as Record<string, unknown>;
-  const schemaSnapshot = payload.credentialSchema as { id: string; name: string; version: string; } | undefined;
+  const payload = credential.vcPayload as Record<string, unknown> || {};
+  
+  const isPending = credential.status === "PENDING" && !payload.pdfHash;
+  
+  const schemaSnapshot = isPending
+     ? (payload.credentialSchema as { id: string; name: string; version: string; } | undefined)
+     : { id: payload.schemaId as string, name: "Schema", version: "1.0" };
+     
   const credentialSubject = payload.credentialSubject as Record<string, unknown> | undefined;
+  
   const types = (payload.type as string[]) ?? [];
-  const credentialType = types.find((type) => type !== "VerifiableCredential") ?? "Credential";
-  const hasProof = !!payload.proof;
+  const credentialType = isPending ? (types.find((type) => type !== "VerifiableCredential") ?? "Credential") : "Credential (Encrypted)";
+  const hasProof = !isPending;
+  const isDownloaded = !!credential.pdfDownloadedAt;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between">
@@ -75,9 +88,9 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
               )}
             </div>
             <h1 className="text-2xl font-bold">{credentialType}</h1>
-            {schemaSnapshot && (
+            {schemaSnapshot && schemaSnapshot.name && (
               <p className="text-gray-500 text-sm mt-1">
-                {t("credentials.schemaLabel")}: {schemaSnapshot.name} v{schemaSnapshot.version}
+                {t("credentials.schemaLabel")}: {schemaSnapshot.name} {t("schemas.v")}{schemaSnapshot.version || "1.0"} {t("credentials.idLabel")}{schemaSnapshot.id})
               </p>
             )}
           </div>
@@ -93,10 +106,65 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
             <PartyCard label={t("dashboard.tabs.issuedTo")} user={credential.holder} isYou={isHolder} t={t} />
           </div>
 
-          {credentialSubject && (
+          {/* Estado de PDF / Metadata */}
+          {!isPending && (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
               <h2 className="text-sm font-semibold text-gray-300 mb-4">
-                {t("credentials.credentialData")}
+                {t("credentials.credentialSummary")}
+              </h2>
+              <div className="space-y-2">
+                <div className="flex flex-col bg-gray-800/60 rounded-xl px-4 py-3">
+                  <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">{t("credentials.originalPdfHash")}</span>
+                  <span className="text-sm text-emerald-400 font-mono break-all">{credential.pdfHash || (payload.pdfHash as string) || "N/A"}</span>
+                </div>
+                {!!payload.timestamp && (
+                  <div className="flex flex-col bg-gray-800/60 rounded-xl px-4 py-3">
+                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">{t("credentials.signatureDate")}</span>
+                    <span className="text-sm text-white">{new Date(String(payload.timestamp)).toLocaleString(dateLocale)}</span>
+                  </div>
+                )}
+                {isHolder && (
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    <a
+                      href={`/api/credentials/${credential.id}/pdf`}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      {t("credentials.downloadEncryptedPdf")}
+                    </a>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {t("credentials.pdfReadDisclaimer")}
+                    </p>
+                  </div>
+                )}
+                {isIssuer && (
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    {!isDownloaded ? (
+                      <button
+                        onClick={() => setShowData(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Mostrar Dados
+                      </button>
+                    ) : (
+                      <p className="text-sm text-gray-400">
+                        {t("credentials.dataWipedDisclaimer")}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {credentialSubject && (isHolder || (isIssuer && showData) || (isIssuer && isDownloaded)) && (
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">
+                {t("credentials.credentialData")} {isPending && t("credentials.provisional")}
               </h2>
               <div className="space-y-2">
                 {Object.entries(credentialSubject)
@@ -104,7 +172,7 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
                   .map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between bg-gray-800/60 rounded-xl px-4 py-3">
                       <span className="text-sm text-gray-400">{key}</span>
-                      <span className="text-sm text-white font-medium">{String(value)}</span>
+                      <span className={`text-sm font-medium ${isDownloaded ? "text-gray-500 italic" : "text-white"}`}>{String(value)}</span>
                     </div>
                   ))}
               </div>
@@ -129,7 +197,7 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
           </div>
 
           <div>
-            <p className="text-xs text-gray-500 mb-2">{t("credentials.w3cPayload")}</p>
+            <p className="text-xs text-gray-500 mb-2">{t("credentials.rawServerMetadata")}</p>
             <pre className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-gray-400 overflow-x-auto">
               {JSON.stringify(credential.vcPayload, null, 2)}
             </pre>

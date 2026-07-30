@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/locales/LanguageContext";
 import {
   acceptCredential,
   revokeCredential,
@@ -18,6 +19,7 @@ export default function CredentialActions({
   status,
   role,
 }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export default function CredentialActions({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
-          {isPending ? "Accepting..." : "Accept Credential"}
+          {isPending ? t("credentials.accepting") : t("credentials.accept")}
         </button>
       )}
 
@@ -92,7 +94,7 @@ export default function CredentialActions({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
           </svg>
-          {isPending ? "Revoking..." : "Revoke Credential"}
+          {isPending ? t("credentials.revoking") : t("credentials.revoke")}
         </button>
       )}
     </div>
