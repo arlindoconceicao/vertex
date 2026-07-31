@@ -30,7 +30,10 @@ export default async function DashboardPage() {
         orderBy: { issuedAt: "desc" },
       }),
       prisma.verifiableCredential.findMany({
-        where: { holderId: session.user.id },
+        where: {
+          holderId: session.user.id,
+          status: { not: "PENDING" },
+        },
         select: {
           id: true,
           status: true,
@@ -49,7 +52,10 @@ export default async function DashboardPage() {
       }),
       prisma.verifiableCredential.groupBy({
         by: ["status"],
-        where: { holderId: session.user.id },
+        where: {
+          holderId: session.user.id,
+          status: { not: "PENDING" },
+        },
         _count: { _all: true },
       }),
     ]);

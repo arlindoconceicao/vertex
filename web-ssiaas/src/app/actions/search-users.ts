@@ -10,6 +10,7 @@ export type UserSearchResult = {
   email: string | null;
   image: string | null;
   cpf: string | null;
+  isSelf: boolean;
 };
 
 type SearchUsersResult =
@@ -34,7 +35,6 @@ export async function searchUsers(
   const user = await prisma.user.findFirst({
     where: {
       cpf: cleaned,
-      id: { not: session.user.id },
     },
     select: {
       id: true,
@@ -45,5 +45,17 @@ export async function searchUsers(
     },
   });
 
-  return { success: true, users: user ? [user] : [] };
+  if (!user) {
+    return { success: true, users: [] };
+  }
+
+  return {
+    success: true,
+    users: [
+      {
+        ...user,
+        isSelf: user.id === session.user.id,
+      },
+    ],
+  };
 }

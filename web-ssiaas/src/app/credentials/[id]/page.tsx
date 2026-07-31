@@ -50,6 +50,11 @@ export default async function CredentialDetailPage({ params, searchParams }: Pag
 
   if (!isIssuer && !isHolder) notFound();
 
+  // Credenciais PENDING são visíveis exclusivamente para o emissor (nunca para quem está vendo como destinatário)
+  if (credential.status === "PENDING" && !isIssuer) {
+    notFound();
+  }
+
   return (
     <CredentialDetailClientView
       credential={credential}

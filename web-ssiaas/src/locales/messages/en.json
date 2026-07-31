@@ -162,6 +162,8 @@
     "idLabel": "(ID: ",
     "title": "Issue Credential",
     "subtitle": "Select a schema and fill in the fields to issue a W3C Verifiable Credential to a holder.",
+    "issueTitle": "Issue Verifiable Credential",
+    "issueSubtitle": "Select a schema and fill in the fields to issue a W3C Verifiable Credential to a holder.",
     "selectSchema": "Select Credential Schema",
     "selectSchemaPlaceholder": "Select a schema...",
     "noSchemas": "No schemas available. Create one first.",

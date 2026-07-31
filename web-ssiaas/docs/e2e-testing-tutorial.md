@@ -58,7 +58,9 @@ node lib/complete-pairing.js '{"pairingId":"...", "nonce":"...", ...}'
 
 1. Acesse o **Dashboard** da plataforma.
 2. Clique em **Emitir Nova Credencial**.
-3. Preencha os formulários com os dados do titular (Destinatário) e submeta. A credencial ficará aguardando a assinatura da Mobile Wallet.
+3. Preencha os formulários com os dados do titular (Destinatário) e submeta. 
+4. A credencial ficará no estado `PENDING` aguardando a assinatura da Mobile Wallet.
+   - **Regra de Privacidade & Segurança:** Enquanto estiver `PENDING`, a credencial fica visível **exclusivamente para o Emissor** em sua aba "Credenciais Emitidas". O Destinatário **nunca** visualiza credenciais pendentes até que o processo de assinatura pós-quântica seja concluído.
 
 ---
 
@@ -90,6 +92,7 @@ O App do Emissor criptografa o PDF usando a chave pública (ML-KEM) do Destinat�
 ```bash
 node lib/upload-pdfs.js
 ```
+*Após a conclusão deste envio, o status da credencial muda automaticamente para `ACTIVE`, tornando-a finalmente visível e disponível na aba "Credenciais Recebidas" do Destinatário.*
 
 ---
 
@@ -125,15 +128,16 @@ Para atestar o ciclo completo, utilize o arquivo decifrado ou o hash gerado no P
 
 ## 10. Dinâmica de Privacidade no Dashboard (Holder vs Issuer)
 
-O Dashboard (`/credentials/[id]`) agora trata dinamicamente o apagamento (Zero-Knowledge) de dados e exibe a tela dependendo do seu papel na transação:
+O Dashboard (`/credentials/[id]`) trata dinamicamente a visibilidade e o apagamento (Zero-Knowledge) de dados:
 
 - **Visão do Destinatário (Holder):**
-  Aba "Credenciais Recebidas". Você terá a opção de baixar o PDF criptografado. Após o primeiro download (simulado via web ou mobile), a plataforma **apagará definitivamente os dados PII do banco**, substituindo as chaves com `"Ocultado (PII removido)"`.
+  Aba "Credenciais Recebidas". Exibe credenciais nos status `ACTIVE` ou `REVOKED` (credenciais `PENDING` não são exibidas). Você terá a opção de baixar o PDF criptografado. Após o primeiro download, a plataforma **apagará definitivamente os dados PII do banco**, substituindo as chaves com `"Ocultado (PII removido)"`.
 
 - **Visão do Emissor (Issuer):**
-  Aba "Credenciais Emitidas". 
-  - **Antes do Holder fazer o download**: Exibe o botão **Mostrar Dados**, permitindo ver os dados que você emitiu.
-  - **Depois do Holder fazer o download**: O botão "Mostrar Dados" desaparece e a tela exibirá apenas as chaves (ex: `Nome`, `CPF`) com os valores marcados como "Ocultado (PII removido)", pois a plataforma obedece a política de que, assim que a posse foi assumida, os dados são descartados da base.
+  Aba "Credenciais Emitidas". Exibe emissões em todos os status (`PENDING`, `ACTIVE`, `REVOKED`).
+  - **Enquanto PENDING**: Aguardando assinatura pelo App Assinador.
+  - **Depois de ACTIVE (antes do download pelo Holder)**: Exibe o botão **Mostrar Dados**, permitindo ver os dados emitidos.
+  - **Depois do Holder fazer o download**: O botão "Mostrar Dados" desaparece e a tela exibirá apenas as chaves (ex: `Nome`, `CPF`) com os valores marcados como "Ocultado (PII removido)".
 
 > **Importante para testes unificados:** 
 > Se você usou o **mesmo usuário** (mesmo e-mail/DID) para atuar como Emissor e Destinatário no teste, ao clicar no card da credencial lá na tela principal, a plataforma enviará um parâmetro interno (`?view=received` ou `?view=issued`) forçando a perspectiva correta daquela aba para que os botões não se sobreponham.
@@ -141,8 +145,6 @@ O Dashboard (`/credentials/[id]`) agora trata dinamicamente o apagamento (Zero-K
 ### Script de Reset para Testes Visuais
 
 Caso você já tenha rodado a simulação de download do Destinatário e deseje testar a visualização dos dados puros novamente na visão do Emissor **sem precisar emitir uma credencial nova**, basta utilizar o script de reset.
-
-Este script anula a data de download, informando à UI que ela "ainda não foi baixada". **Nota:** Como os dados originais já foram apagados permanentemente no download anterior, usar este reset apenas ativará o botão "Mostrar Dados" novamente, mas os valores continuarão ocultados (a não ser que você crie uma credencial nova).
 
 ```bash
 # Resetar uma credencial específica:

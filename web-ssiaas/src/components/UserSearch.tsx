@@ -114,8 +114,13 @@ export default function UserSearch() {
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
                   {user.name ?? "No name"}
+                  {user.isSelf && (
+                    <span className="text-[10px] font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-md">
+                      ({t("credentials.you")})
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 <p className="text-xs text-gray-500">

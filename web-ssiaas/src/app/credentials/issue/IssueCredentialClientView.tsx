@@ -13,9 +13,10 @@ type SchemaOption = {
 
 type Props = {
   schemas: SchemaOption[];
+  initialHolderEmail?: string;
 };
 
-export default function IssueCredentialClientView({ schemas }: Props) {
+export default function IssueCredentialClientView({ schemas, initialHolderEmail }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -53,7 +54,7 @@ export default function IssueCredentialClientView({ schemas }: Props) {
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8">
-          <IssueCredentialForm schemas={schemas} />
+          <IssueCredentialForm schemas={schemas} initialHolderEmail={initialHolderEmail} />
         </div>
       </main>
     </div>

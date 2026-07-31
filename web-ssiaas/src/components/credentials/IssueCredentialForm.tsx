@@ -14,15 +14,16 @@ type SchemaOption = {
 
 type Props = {
   schemas: SchemaOption[];
+  initialHolderEmail?: string;
 };
 
-export default function IssueCredentialForm({ schemas }: Props) {
+export default function IssueCredentialForm({ schemas, initialHolderEmail }: Props) {
   const router = useRouter();
   const { t } = useTranslation();
   const [isPending, startTransition] = useTransition();
 
   const [selectedSchemaId, setSelectedSchemaId] = useState("");
-  const [holderEmail, setHolderEmail] = useState("");
+  const [holderEmail, setHolderEmail] = useState(initialHolderEmail || "");
   const [expiresAt, setExpiresAt] = useState("");
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,7 @@ export default function IssueCredentialForm({ schemas }: Props) {
       if (result.success) {
         setSuccess(t("common.saved"));
         setTimeout(() => {
-          router.push(`/credentials/${result.credentialId}`);
+          router.push(`/credentials/${result.credentialId}?view=issued`);
         }, 1500);
       } else {
         setError(result.error || t("errors.issueFailed"));

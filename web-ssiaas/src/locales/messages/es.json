@@ -162,6 +162,8 @@
     "idLabel": "(ID: ",
     "title": "Emitir credencial",
     "subtitle": "Selecciona un esquema y completa los campos para emitir una credencial verificable W3C a un titular.",
+    "issueTitle": "Emitir Credencial Verificable",
+    "issueSubtitle": "Seleccione un esquema y complete los campos para emitir una Credencial Verificable W3C a un titular.",
     "selectSchema": "Seleccionar esquema de credencial",
     "selectSchemaPlaceholder": "Selecciona un esquema...",
     "noSchemas": "No hay esquemas disponibles. Crea uno primero.",

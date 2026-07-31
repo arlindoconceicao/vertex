@@ -3,10 +3,16 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import IssueCredentialClientView from "./IssueCredentialClientView";
 
-export default async function IssueCredentialPage() {
+type PageProps = {
+  searchParams: Promise<{ holder?: string }>;
+};
+
+export default async function IssueCredentialPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   if (!session.user.cpf) redirect("/complete-registration");
+
+  const { holder } = await searchParams;
 
   const schemasRaw = await prisma.credentialSchema.findMany({
     where: { creatorId: session.user.id },
@@ -27,5 +33,5 @@ export default async function IssueCredentialPage() {
       .fields ?? []),
   }));
 
-  return <IssueCredentialClientView schemas={schemas} />;
+  return <IssueCredentialClientView schemas={schemas} initialHolderEmail={holder} />;
 }
