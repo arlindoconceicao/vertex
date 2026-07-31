@@ -88,7 +88,14 @@
       "statusPending": "Pendente",
       "statusActive": "Ativa",
       "statusRevoked": "Revogada"
-    }
+    },
+    "searchPlaceholder": "Buscar por nome, e-mail, esquema ou ID...",
+    "noSearchResults": "Nenhuma credencial encontrada para a sua busca.",
+    "clearSearch": "Limpar busca",
+    "filterStatusAll": "Todos os Status",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Próximo",
+    "paginationPage": "Página {{current}} de {{total}}"
   },
   "schemas": {
     "v": "v",
@@ -187,7 +194,11 @@
     "showData": "Mostrar Dados",
     "defaultType": "Credencial",
     "encryptedType": "Credencial (Criptografada)",
-    "dataWipedDisclaimer": "Os atributos da credencial foram apagados da plataforma para proteger a privacidade do destinatário. O arquivo foi baixado com sucesso."
+    "dataWipedDisclaimer": "Os atributos da credencial foram apagados da plataforma para proteger a privacidade do destinatário. O arquivo foi baixado com sucesso.",
+    "revokeModalTitle": "Revogar Credencial",
+    "revokeModalWarning": "Tem certeza de que deseja revogar esta credencial? Esta ação não pode ser desfeita e invalidará permanentemente a credencial para o titular.",
+    "confirmRevoke": "Sim, Revogar Credencial",
+    "revokedAt": "Revogada em"
   },
   "verify": {
     "jsonPayloadTab": "JSON Payload (W3C)",
@@ -196,6 +207,8 @@
     "pastePdfHash": "Cole o Hash (SHA-256) do PDF Original",
     "pdfHashPlaceholder": "ex: 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "noCredentialFoundForHash": "Nenhuma credencial encontrada para este hash de PDF.",
+    "revoked": "Esta credencial foi REVOGADA pelo emissor e não é mais válida.",
+    "revokedWithDate": "Esta credencial foi REVOGADA pelo emissor em {{date}} e não é mais válida.",
     "title": "Verificador de credenciais",
     "subtitle": "Verifique a autenticidade e a integridade das Credenciais Verificáveis W3C.",
     "pastePayload": "Cole o payload JSON da VC",

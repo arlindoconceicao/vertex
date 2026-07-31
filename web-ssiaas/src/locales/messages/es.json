@@ -88,7 +88,14 @@
       "statusPending": "Pendiente",
       "statusActive": "Activa",
       "statusRevoked": "Revocadas"
-    }
+    },
+    "searchPlaceholder": "Buscar por nombre, correo, esquema o ID...",
+    "noSearchResults": "No se encontraron credenciales que coincidan con su búsqueda.",
+    "clearSearch": "Limpiar búsqueda",
+    "filterStatusAll": "Todos los Estados",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Siguiente",
+    "paginationPage": "Página {{current}} de {{total}}"
   },
   "schemas": {
     "v": "v",
@@ -187,15 +194,21 @@
     "showData": "Mostrar Datos",
     "defaultType": "Credencial",
     "encryptedType": "Credencial (Cifrada)",
-    "dataWipedDisclaimer": "Los atributos de la credencial se han borrado de la plataforma para proteger la privacidad del destinatario. El archivo fue descargado con éxito."
+    "dataWipedDisclaimer": "Los atributos de la credencial se han borrado de la plataforma para proteger la privacidad del destinatario. El archivo fue descargado con éxito.",
+    "revokeModalTitle": "Revocar Credencial",
+    "revokeModalWarning": "¿Está seguro de que desea revocar esta credencial? Esta acción no se puede deshacer e invalidará permanentemente la credencial para el titular.",
+    "confirmRevoke": "Sí, Revocar Credencial",
+    "revokedAt": "Revocada el"
   },
   "verify": {
     "jsonPayloadTab": "JSON Payload (W3C)",
     "pdfHashTab": "PDF Hash (Proof of Existence)",
-    "proofOfExistenceMetadata": "Proof of Existence (Metadatos)",
+    "proofOfExistenceMetadata": "Proof of Existence (Metadata)",
     "pastePdfHash": "Pegue el Hash (SHA-256) del PDF Original",
     "pdfHashPlaceholder": "ej: 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "noCredentialFoundForHash": "No se encontró ninguna credencial para este hash de PDF.",
+    "revoked": "Esta credencial ha sido REVOCADA por el emisor y ya no es válida.",
+    "revokedWithDate": "Esta credencial fue REVOCADA por el emisor el {{date}} y ya no es válida.",
     "title": "Verificador de credenciales",
     "subtitle": "Verifica la autenticidad y la integridad de las credenciales verificables W3C.",
     "pastePayload": "Pega la carga útil JSON de la VC",

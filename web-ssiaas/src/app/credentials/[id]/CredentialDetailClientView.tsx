@@ -16,6 +16,7 @@ type CredentialDetailProps = {
     vcPayload: unknown;
     pdfHash?: string | null;
     pdfDownloadedAt: Date | null;
+    revokedAt?: Date | null;
     issuerId: string;
     holderId: string;
     issuer: User;
@@ -48,20 +49,24 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
      
   const credentialSubject = payload.credentialSubject as Record<string, unknown> | undefined;
   
-  const types = (payload.type as string[]) ?? [];
-  const credentialType = isPending ? (types.find((type) => type !== "VerifiableCredential") ?? t("credentials.defaultType")) : t("credentials.encryptedType");
-  const hasProof = !isPending;
-  const isDownloaded = !!credential.pdfDownloadedAt;
+  const isDownloaded = Boolean(credential.pdfDownloadedAt);
+  const hasProof = Boolean(credential.pdfHash || payload.pdfHash);
+  const credentialType = isPending ? ((payload.type as string[] | undefined)?.find((type) => type !== "VerifiableCredential") ?? t("credentials.defaultType")) : t("credentials.encryptedType");
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between">
       <div>
         <header className="border-b border-gray-800 bg-gray-900">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-            >
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 10c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <span className="font-semibold tracking-tight">{t("common.appName")}</span>
+            </Link>
+            <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
@@ -77,6 +82,14 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
               <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${classes}`}>
                 {label}
               </span>
+              {credential.status === "REVOKED" && credential.revokedAt && (
+                <span className="text-xs font-mono text-red-400 bg-red-950/60 border border-red-900/60 rounded-full px-3 py-1 inline-flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {t("credentials.revokedAt")}: {new Date(credential.revokedAt).toLocaleString(dateLocale)}
+                </span>
+              )}
               {hasProof ? (
                 <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-indigo-500/10 text-indigo-400">
                   {t("credentials.signed")}

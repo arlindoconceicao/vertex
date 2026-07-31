@@ -195,7 +195,10 @@ export async function revokeCredential(
   try {
     await prisma.verifiableCredential.update({
       where: { id: credentialId },
-      data: { status: "REVOKED" },
+      data: {
+        status: "REVOKED",
+        revokedAt: new Date(),
+      },
     });
 
     revalidatePath(`/credentials/${credentialId}`);

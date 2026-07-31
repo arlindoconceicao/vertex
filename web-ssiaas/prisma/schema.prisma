@@ -142,6 +142,7 @@ model VerifiableCredential {
   issuedAt  DateTime @default(now())
   expiresAt DateTime?
   pdfDownloadedAt DateTime?
+  revokedAt DateTime?
 
   issuerId  String
   issuer    User     @relation("IssuerRelation", fields: [issuerId], references: [id])

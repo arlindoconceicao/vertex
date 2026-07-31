@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { DashboardCredential } from "@/lib/types";
 import CredentialCard from "./CredentialCard";
@@ -132,7 +132,60 @@ type CredentialGridProps = {
   emptyMessage: string;
 };
 
+const ITEMS_PER_PAGE = 6;
+
 function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGridProps) {
+  const { t } = useTranslation();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "PENDING" | "REVOKED">("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filtragem reativa por contraparte, esquema, tipo, ID ou status
+  const filteredCredentials = useMemo(() => {
+    return credentials.filter((vc) => {
+      if (statusFilter !== "ALL" && vc.status !== statusFilter) {
+        return false;
+      }
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+        const counterpart = perspective === "received" ? vc.issuer : vc.holder;
+        const counterpartName = counterpart.name || "";
+        const counterpartEmail = counterpart.email || "";
+        const schemaName = vc.schemaSnapshot?.name || "";
+        const schemaId = vc.schemaSnapshot?.id || "";
+        const credentialType = vc.credentialType || "";
+        const id = vc.id || "";
+
+        return (
+          counterpartName.toLowerCase().includes(term) ||
+          counterpartEmail.toLowerCase().includes(term) ||
+          schemaName.toLowerCase().includes(term) ||
+          schemaId.toLowerCase().includes(term) ||
+          credentialType.toLowerCase().includes(term) ||
+          id.toLowerCase().includes(term)
+        );
+      }
+      return true;
+    });
+  }, [credentials, searchTerm, statusFilter, perspective]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchTerm(val);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (val: "ALL" | "ACTIVE" | "PENDING" | "REVOKED") => {
+    setStatusFilter(val);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.ceil(filteredCredentials.length / ITEMS_PER_PAGE) || 1;
+  const paginatedCredentials = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCredentials.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCredentials, currentPage]);
+
   if (credentials.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center bg-gray-900 border border-gray-800 rounded-2xl">
@@ -155,10 +208,117 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {credentials.map((vc) => (
-        <CredentialCard key={vc.id} credential={vc} perspective={perspective} />
-      ))}
+    <div className="space-y-4">
+      {/* ── Barra de Filtros e Busca ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Seletor de Status */}
+        <div className="relative shrink-0">
+          <select
+            value={statusFilter}
+            onChange={(e) => handleStatusChange(e.target.value as "ALL" | "ACTIVE" | "PENDING" | "REVOKED")}
+            className="w-full sm:w-auto bg-gray-900 border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-all"
+          >
+            <option value="ALL">{t("dashboard.filterStatusAll")}</option>
+            <option value="ACTIVE">{t("dashboard.tabs.status.active")}</option>
+            <option value="PENDING">{t("dashboard.tabs.status.pending")}</option>
+            <option value="REVOKED">{t("dashboard.tabs.status.revoked")}</option>
+          </select>
+        </div>
+
+        {/* Campo de Busca */}
+        <div className="relative w-full sm:w-80">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder={t("dashboard.searchPlaceholder")}
+            className="w-full bg-gray-900 border border-gray-800 text-white placeholder-gray-500 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => handleSearchChange("")}
+              title={t("dashboard.clearSearch")}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Resultado da Busca ── */}
+      {filteredCredentials.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-gray-900 border border-gray-800 rounded-2xl">
+          <svg className="w-9 h-9 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <p className="text-gray-400 text-sm font-medium">{t("dashboard.noSearchResults")}</p>
+          <div className="flex items-center gap-2 mt-3">
+            {searchTerm && (
+              <button
+                onClick={() => handleSearchChange("")}
+                className="text-xs font-medium text-indigo-400 hover:text-indigo-300 px-3 py-1.5 bg-indigo-950/80 border border-indigo-800 rounded-lg transition-colors"
+              >
+                {t("dashboard.clearSearch")}
+              </button>
+            )}
+            {statusFilter !== "ALL" && (
+              <button
+                onClick={() => handleStatusChange("ALL")}
+                className="text-xs font-medium text-gray-400 hover:text-white px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg transition-colors"
+              >
+                {t("dashboard.filterStatusAll")}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {paginatedCredentials.map((vc) => (
+              <CredentialCard key={vc.id} credential={vc} perspective={perspective} />
+            ))}
+          </div>
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-2xl px-5 py-3.5 text-sm">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:hover:bg-gray-800 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                {t("dashboard.paginationPrevious")}
+              </button>
+
+              <span className="text-xs text-gray-400">
+                {t("dashboard.paginationPage", { current: currentPage, total: totalPages })}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:hover:bg-gray-800 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                {t("dashboard.paginationNext")}
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

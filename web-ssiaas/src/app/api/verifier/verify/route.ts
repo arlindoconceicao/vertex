@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSsiPqCore } from "@/lib/ssi-pq";
+import crypto from "crypto";
 
 // POST /api/verifier/verify
 // Verifica uma Credencial Verificável assinada.
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to read file" }, { status: 500 });
     }
 
+    const calculatedPdfHash = crypto.createHash("sha256").update(buffer).digest("hex");
+
     const core = getSsiPqCore();
     let manifest;
     try {
@@ -42,6 +45,30 @@ export async function POST(request: NextRequest) {
     const issuerDid = manifest?.signed_credential?.credential?.issuer_did;
     if (!issuerDid) {
       return NextResponse.json({ error: `No issuer DID found in credential. Manifest JSON: ${JSON.stringify(manifest, null, 2)}` }, { status: 400 });
+    }
+
+    const requestId = manifest?.signed_credential?.credential?.request_id || manifest?.signed_credential?.credential?.id;
+
+    // Checagem de Status no Banco de Dados (Revogação)
+    const dbCredential = await prisma.verifiableCredential.findFirst({
+      where: {
+        OR: [
+          { pdfHash: calculatedPdfHash },
+          ...(requestId ? [{ id: requestId }] : []),
+        ],
+      },
+      select: { status: true, revokedAt: true },
+    });
+
+    if (dbCredential?.status === "REVOKED") {
+      return NextResponse.json(
+        {
+          valid: false,
+          errors: ["REVOKED_CREDENTIAL"],
+          revokedAt: dbCredential.revokedAt,
+        },
+        { status: 200 }
+      );
     }
 
     const issuer = await prisma.user.findUnique({
@@ -112,10 +139,22 @@ export async function POST(request: NextRequest) {
     if (pdfHash && typeof pdfHash === "string") {
       const credential = await prisma.verifiableCredential.findFirst({
         where: { pdfHash },
+        select: { status: true, revokedAt: true, metadata: true, vcPayload: true }
       });
 
       if (!credential) {
         return NextResponse.json({ valid: false, errors: ["Nenhuma credencial encontrada para este hash de PDF."] }, { status: 200 });
+      }
+
+      if (credential.status === "REVOKED") {
+        return NextResponse.json(
+          {
+            valid: false,
+            errors: ["REVOKED_CREDENTIAL"],
+            revokedAt: credential.revokedAt,
+          },
+          { status: 200 }
+        );
       }
 
       const metadata = credential.metadata || credential.vcPayload || {};

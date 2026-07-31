@@ -26,6 +26,7 @@ export default async function CredentialDetailPage({ params, searchParams }: Pag
       vcPayload: true,
       pdfHash: true,
       pdfDownloadedAt: true,
+      revokedAt: true,
       issuerId: true,
       holderId: true,
       issuer: { select: { id: true, name: true, email: true, image: true } },

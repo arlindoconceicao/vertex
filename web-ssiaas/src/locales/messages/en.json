@@ -88,7 +88,14 @@
       "statusPending": "Pending",
       "statusActive": "Active",
       "statusRevoked": "Revoked"
-    }
+    },
+    "searchPlaceholder": "Search by name, email, schema or ID...",
+    "noSearchResults": "No credentials found matching your search.",
+    "clearSearch": "Clear search",
+    "filterStatusAll": "All Statuses",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPage": "Page {{current}} of {{total}}"
   },
   "schemas": {
     "v": "v",
@@ -187,7 +194,11 @@
     "showData": "Show Data",
     "defaultType": "Credential",
     "encryptedType": "Credential (Encrypted)",
-    "dataWipedDisclaimer": "The credential attributes have been deleted from the platform to protect the recipient's privacy. The file was successfully downloaded."
+    "dataWipedDisclaimer": "The credential attributes have been deleted from the platform to protect the recipient's privacy. The file was successfully downloaded.",
+    "revokeModalTitle": "Revoke Credential",
+    "revokeModalWarning": "Are you sure you want to revoke this credential? This action cannot be undone and will permanently invalidate the credential for the holder.",
+    "confirmRevoke": "Yes, Revoke Credential",
+    "revokedAt": "Revoked on"
   },
   "verify": {
     "jsonPayloadTab": "JSON Payload (W3C)",
@@ -196,6 +207,8 @@
     "pastePdfHash": "Paste the original PDF Hash (SHA-256)",
     "pdfHashPlaceholder": "e.g. 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "noCredentialFoundForHash": "No credential found for this PDF hash.",
+    "revoked": "This credential has been REVOKED by the issuer and is no longer valid.",
+    "revokedWithDate": "This credential was REVOKED by the issuer on {{date}} and is no longer valid.",
     "title": "Credential Verifier",
     "subtitle": "Verify the authenticity and integrity of W3C Verifiable Credentials.",
     "pastePayload": "Paste VC JSON Payload",

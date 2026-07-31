@@ -7,12 +7,14 @@ import MathCaptcha from "./MathCaptcha";
 type VerifyResult = {
   valid: boolean;
   errors: string[];
+  revokedAt?: string | null;
   metadata?: unknown;
   schemaStructure?: unknown;
 };
 
 export default function VerifierForm() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
   const [mode, setMode] = useState<"pdf" | "hash">("pdf");
   const [isPending, startTransition] = useTransition();
   const [fileInput, setFileInput] = useState<File | null>(null);
@@ -195,6 +197,10 @@ export default function VerifierForm() {
                   <p className="text-sm text-red-300">
                     {err === "Nenhuma credencial encontrada para este hash de PDF." 
                       ? t("verify.noCredentialFoundForHash") 
+                      : err === "REVOKED_CREDENTIAL"
+                      ? result.revokedAt
+                        ? t("verify.revokedWithDate", { date: new Date(result.revokedAt).toLocaleString(dateLocale) })
+                        : t("verify.revoked")
                       : err}
                   </p>
                 </div>
