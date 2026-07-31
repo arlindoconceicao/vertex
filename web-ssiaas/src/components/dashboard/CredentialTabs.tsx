@@ -220,7 +220,9 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
           >
             <option value="ALL">{t("dashboard.filterStatusAll")}</option>
             <option value="ACTIVE">{t("dashboard.tabs.status.active")}</option>
-            <option value="PENDING">{t("dashboard.tabs.status.pending")}</option>
+            {perspective === "issued" && (
+              <option value="PENDING">{t("dashboard.tabs.status.pending")}</option>
+            )}
             <option value="REVOKED">{t("dashboard.tabs.status.revoked")}</option>
           </select>
         </div>
