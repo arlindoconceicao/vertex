@@ -51,7 +51,7 @@ export default function CompleteRegistrationClientView({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={userImage}
-                alt="Profile"
+                alt={t("common.profileAlt")}
                 className="w-9 h-9 rounded-full"
               />
             )}

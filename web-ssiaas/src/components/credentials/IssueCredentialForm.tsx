@@ -192,9 +192,9 @@ export default function IssueCredentialForm({ schemas }: Props) {
                     }
                     className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                   >
-                    <option value="">Select...</option>
-                    <option value="true">True</option>
-                    <option value="false">False</option>
+                    <option value="">{t("common.select")}</option>
+                    <option value="true">{t("common.trueVal")}</option>
+                    <option value="false">{t("common.falseVal")}</option>
                   </select>
                 ) : (
                   <input

@@ -43,7 +43,7 @@ export default function Navbar({ userName, userImage }: NavbarProps) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={userImage}
-                  alt="Profile"
+                  alt={t("common.profileAlt")}
                   className="w-8 h-8 rounded-full"
                 />
               )}

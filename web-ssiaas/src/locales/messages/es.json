@@ -172,6 +172,9 @@
     "accepting": "Aceptando...",
     "status": "Estado",
     "payload": "Carga útil JSON de la VC",
+    "showData": "Mostrar Datos",
+    "defaultType": "Credencial",
+    "encryptedType": "Credencial (Cifrada)",
     "dataWipedDisclaimer": "Los atributos de la credencial se han borrado de la plataforma para proteger la privacidad del destinatario. El archivo fue descargado con éxito."
   },
   "verify": {
@@ -238,8 +241,9 @@
     }
   },
   "didPairing": {
-    "pairedTitle": "Cuenta emparejada con la aplicación móvil de firma",
-    "didLabel": "Identificador descentralizado (DID)",
+    "pairedTitle": "Cuenta vinculada con la App Mobile Signer",
+    "didLabel": "Identificador Descentralizado (DID)",
+    "issuerIdentifierLabel": "Identificador del Emisor",
     "dsaKeyLabel": "Clave pública de firma (ML-DSA-65)",
     "mlkemKeyLabel": "Clave pública de cifrado (ML-KEM-768)",
     "pairedAt": "Emparejada el",

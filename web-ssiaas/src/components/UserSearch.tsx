@@ -119,7 +119,7 @@ export default function UserSearch() {
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 <p className="text-xs text-gray-500">
-                  CPF: {user.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
+                  {t("common.cpfLabel")} {user.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                 </p>
               </div>
 

@@ -172,6 +172,9 @@
     "accepting": "Aceitando...",
     "status": "Status",
     "payload": "Payload JSON da VC",
+    "showData": "Mostrar Dados",
+    "defaultType": "Credencial",
+    "encryptedType": "Credencial (Criptografada)",
     "dataWipedDisclaimer": "Os atributos da credencial foram apagados da plataforma para proteger a privacidade do destinatário. O arquivo foi baixado com sucesso."
   },
   "verify": {
@@ -238,8 +241,9 @@
     }
   },
   "didPairing": {
-    "pairedTitle": "Conta emparelhada com o aplicativo móvel de assinatura",
-    "didLabel": "Identificador descentralizado (DID)",
+    "pairedTitle": "Conta pareada com o App Mobile Signer",
+    "didLabel": "Identificador Descentralizado (DID)",
+    "issuerIdentifierLabel": "Identificador do Emissor",
     "dsaKeyLabel": "Chave pública de assinatura (ML-DSA-65)",
     "mlkemKeyLabel": "Chave pública de cifragem (ML-KEM-768)",
     "pairedAt": "Emparelhado em",

@@ -172,6 +172,9 @@
     "accepting": "Accepting...",
     "status": "Status",
     "payload": "VC JSON Payload",
+    "showData": "Show Data",
+    "defaultType": "Credential",
+    "encryptedType": "Credential (Encrypted)",
     "dataWipedDisclaimer": "The credential attributes have been deleted from the platform to protect the recipient's privacy. The file was successfully downloaded."
   },
   "verify": {
@@ -240,6 +243,7 @@
   "didPairing": {
     "pairedTitle": "Account Paired with Mobile Signer App",
     "didLabel": "Decentralized Identifier (DID)",
+    "issuerIdentifierLabel": "Issuer Identifier",
     "dsaKeyLabel": "Signing Public Key (ML-DSA-65)",
     "mlkemKeyLabel": "Encryption Public Key (ML-KEM-768)",
     "pairedAt": "Paired At",

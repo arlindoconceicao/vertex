@@ -154,7 +154,7 @@ export default function DidPairingComponent({
         {initialIssuerIdentifier && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-              Identificador do Emissor
+              {t("didPairing.issuerIdentifierLabel")}
             </p>
             <p className="text-sm text-emerald-400 font-mono break-all select-all">
               {initialIssuerIdentifier}
