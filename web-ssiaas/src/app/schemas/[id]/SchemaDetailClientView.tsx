@@ -64,6 +64,9 @@ export default function SchemaDetailClientView({ schema, isMine }: SchemaDetailP
             <span className="text-xs text-gray-600">v{schema.version}</span>
           </div>
           <h1 className="text-2xl font-bold">{schema.name}</h1>
+          <p className="text-xs text-indigo-400 font-mono mt-1 select-all">
+            {t("schemas.schemaId")}: {schema.id}
+          </p>
           <p className="text-gray-400 text-sm mt-2">{schema.description}</p>
           <p className="text-xs text-gray-600 mt-2">
             {isMine ? t("schemas.createdByYou") : `${t("schemas.createdBy")} ${schema.creator.name}`}

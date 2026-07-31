@@ -93,6 +93,7 @@
   "schemas": {
     "v": "v",
     "ipfs": "IPFS",
+    "schemaId": "Schema ID",
     "title": "Schemas",
     "newTitle": "New Schema",
     "newSubtitle": "Your credential templates and public community schemas.",
@@ -130,7 +131,18 @@
     "publishedOn": "Published on",
     "credentialFields": "Credential Fields",
     "rawJsonSchema": "Raw JSON Schema",
-    "required": "required"
+    "required": "required",
+    "searchPlaceholder": "Search schemas by name or ID...",
+    "noSearchResults": "No schemas found matching your search.",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationPage": "Page {{current}} of {{total}}",
+    "clearSearch": "Clear search",
+    "filterLabel": "Filter:",
+    "filterAll": "All Schemas",
+    "filterMine": "My Schemas",
+    "filterPublic": "Public Schemas",
+    "filterPrivate": "My Private Schemas"
   },
   "credentials": {
     "credentialSummary": "Credential Summary",
