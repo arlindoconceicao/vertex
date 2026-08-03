@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const core = require("./ssi_pq_core.node");
 
 async function main() {
@@ -36,6 +37,11 @@ async function main() {
 
   const activeDidData = registeredDids[registeredDids.length - 1];
   console.log(`🔑 Autenticando com DID do titular: ${activeDidData.did}`);
+  
+  // Gera o Token HMAC M2M Personalizado
+  const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
+  const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
+  const bearerToken = crypto.createHmac("sha256", signerSecret).update(activeDidData.did).digest("hex");
 
   // Autenticação (PoP)
   const authPayload = { action: "available_credentials_auth", timestamp: new Date().toISOString() };
@@ -64,6 +70,7 @@ async function main() {
       headers: {
         "Content-Type": "application/json",
         "x-signer-auth-credential": authCredentialBase64,
+        "Authorization": `Bearer ${bearerToken}`,
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -87,7 +94,7 @@ async function main() {
       const downloadResponse = await fetch(downloadUrl, {
         method: "GET",
         headers: {
-          "authorization": `Bearer mobile-signer-secret-token`
+          "authorization": `Bearer ${bearerToken}`
         }
       });
       if (!downloadResponse.ok) throw new Error(`HTTP ${downloadResponse.status}`);

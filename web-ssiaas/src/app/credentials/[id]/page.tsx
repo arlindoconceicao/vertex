@@ -29,7 +29,7 @@ export default async function CredentialDetailPage({ params, searchParams }: Pag
       revokedAt: true,
       issuerId: true,
       holderId: true,
-      issuer: { select: { id: true, name: true, email: true, image: true } },
+      issuer: { select: { id: true, name: true, email: true, image: true, pdfRetentionDays: true } },
       holder: { select: { id: true, name: true, email: true, image: true } },
     },
   });
@@ -55,11 +55,22 @@ export default async function CredentialDetailPage({ params, searchParams }: Pag
     notFound();
   }
 
+  // Verifica expiração lógica do PDF
+  let isPdfExpired = false;
+  if (credential.pdfDownloadedAt && credential.issuer?.pdfRetentionDays) {
+    const expirationDate = new Date(credential.pdfDownloadedAt);
+    expirationDate.setDate(expirationDate.getDate() + credential.issuer.pdfRetentionDays);
+    if (new Date() > expirationDate) {
+      isPdfExpired = true;
+    }
+  }
+
   return (
     <CredentialDetailClientView
       credential={credential}
       isIssuer={isIssuer}
       isHolder={isHolder}
+      isPdfExpired={isPdfExpired}
     />
   );
 }

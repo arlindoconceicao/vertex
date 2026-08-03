@@ -1,4 +1,7 @@
-# Simulação do Aplicativo Móvel (Signer)
+# Simulação Mobile e Scripts de Apoio (`lib/`)
+
+> [!WARNING]
+> **ATENÇÃO (AMBIENTE DE PRODUÇÃO):** Todos os scripts de simulação Node (`.js` e `.ts`) localizados na pasta `lib/` operam com acesso direto ao banco de dados e devem ser usados apenas em Desenvolvimento/Testes. Em um ambiente de **Produção**, esses scripts DEVEM ser apagados. A pasta `lib/` em produção deve conter apenas a biblioteca binária `ssi_pq_core.node` e módulos estritamente necessários para a aplicação web.
 
 Este documento descreve os scripts criados na pasta `lib/` para simular o comportamento do aplicativo móvel de assinaturas (Mobile Signer App) e o fluxo de comunicação ponta a ponta com a plataforma Web SSIaaS.
 

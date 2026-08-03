@@ -157,6 +157,8 @@
     "signatureDate": "Data da Assinatura",
     "downloadEncryptedPdf": "Baixar PDF Criptografado",
     "pdfReadDisclaimer": "O arquivo só pode ser lido pelo App da sua identidade (via chave privada ML-KEM).",
+    "pdfExpired": "Arquivo Expirado",
+    "pdfExpiredDisclaimer": "O prazo de retenção deste arquivo expirou e ele não está mais disponível para download.",
     "provisional": "(Provisório)",
     "rawServerMetadata": "Metadados Brutos no Servidor",
     "idLabel": "(ID: ",
@@ -246,13 +248,15 @@
     "subtitle": "Gerencie sua identidade, segurança e preferências do aplicativo.",
     "tabs": {
       "profile": "Perfil e identidade",
-      "language": "Idioma e preferências"
+      "language": "Idioma e preferências",
+      "platform": "Plataforma"
     },
     "profileSection": {
       "title": "Informações do perfil",
       "userId": "ID do usuário",
       "email": "E-mail",
-      "cpf": "CPF"
+      "cpf": "CPF",
+      "hmacToken": "Token de Acesso Mobile (HMAC Hex)"
     },
     "didSection": {
       "title": "Identidade descentralizada (DID)",

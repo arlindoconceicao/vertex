@@ -98,6 +98,7 @@ SSI model, they need a Decentralized Identifier — a Post-Quantum DID with ML-D
    node lib/complete-pairing.js '<JSON_PAYLOAD_COPIADO>'
    ```
 7. Point out: "The terminal script generates real ML-DSA-65 and ML-KEM-768 keypairs using `ssi_pq_core.node`, signs the challenge, posts to the platform, and automatically persists the encrypted wallet database to `lib/mobile_wallet.db` (with password saved in `lib/keys.txt`). Within 3 seconds, the browser auto-refreshes to show the Account Paired state."
+8. Click on the **Plataforma** (Platform) tab and show the PDF Retention settings slider. Explain: "As an Issuer, you have the right to dictate how long your encrypted PDF credentials will physically live on the server before they are forcefully removed by a cronjob, minimizing personal data footprint."
 
 ---
 

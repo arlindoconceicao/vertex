@@ -15,7 +15,18 @@ export async function GET(
   
   const credential = await prisma.verifiableCredential.findUnique({
     where: { id },
-    select: { pdfFile: true, holderId: true, pdfDownloadedAt: true, metadata: true, vcPayload: true }
+    select: { 
+      pdfFile: true, 
+      holderId: true, 
+      pdfDownloadedAt: true, 
+      metadata: true, 
+      vcPayload: true,
+      issuer: {
+        select: {
+          pdfRetentionDays: true
+        }
+      }
+    }
   });
 
   if (!credential) {
@@ -29,6 +40,17 @@ export async function GET(
 
   if (!credential.pdfFile) {
      return NextResponse.json({ error: "PDF not available" }, { status: 404 });
+  }
+
+  // Verificar Expiração Lógica
+  if (credential.pdfDownloadedAt && credential.issuer?.pdfRetentionDays) {
+    const expirationDate = new Date(credential.pdfDownloadedAt);
+    expirationDate.setDate(expirationDate.getDate() + credential.issuer.pdfRetentionDays);
+    const now = new Date();
+    
+    if (now > expirationDate) {
+      return NextResponse.json({ error: "PDF expired" }, { status: 410 });
+    }
   }
 
   // Se for o primeiro download, registramos a data e apagamos o payload com PII

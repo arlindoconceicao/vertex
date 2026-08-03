@@ -18,11 +18,15 @@ A plataforma opera apenas como um conduíte entre o Emissor (Issuer) e o Destina
 Assim, caso a plataforma sofra uma invasão, nenhum dado pessoal de cidadãos/entidades estará exposto no banco de dados.
 
 ## 2. Configuração de Retenção de PDFs
-Como os PDFs armazenados estão duplamente protegidos (AES-256-GCM + ML-KEM da chave pública do destinatário), eles permanecem seguros no banco da nuvem. No entanto, para fins de políticas rigorosas de retenção e economia de disco, introduzimos o **Controle de Retenção**.
+Como os PDFs armazenados estão duplamente protegidos (AES-256-GCM + ML-KEM da chave pública do destinatário), eles permanecem seguros no banco da nuvem. No entanto, para fins de políticas rigorosas de retenção e economia de disco, introduzimos o **Controle de Retenção em Camadas**.
 
-- O **Emissor** pode configurar, na tela de Configurações do seu perfil, o número de dias que um PDF permanecerá disponível para download (entre **1 e 15 dias**).
+- O **Emissor** pode configurar, na aba "Plataforma" dentro de Configurações, o número de dias que um PDF permanecerá disponível para download (entre **1 e 15 dias**).
 - O padrão é de 7 dias.
-- Futuramente, será habilitado um Cronjob diário na plataforma que excluirá a coluna de buffer binário (`pdfFile`) das credenciais em que a data (`issuedAt`) ultrapasse essa janela, conservando apenas os Metadados da transação.
+
+A execução dessa retenção funciona em 3 camadas complementares de segurança:
+1. **Expiração Lógica (Tempo Real):** Quando o destinatário tenta baixar o PDF, a API e a Interface calculam imediatamente se `pdfDownloadedAt + pdfRetentionDays` é menor que a data atual. Caso sim, a interface oculta o botão e a API bloqueia o download com erro `HTTP 410 Gone`, garantindo privacidade absoluta mesmo que a exclusão física no banco de dados não tenha ocorrido.
+2. **Limpeza Dinâmica (Dashboard):** Toda vez que um emissor acessa a tela principal do seu Dashboard, a plataforma executa silenciosamente uma exclusão física de todos os PDFs gerados por ele que já extrapolaram a sua preferência individual.
+3. **Limpeza Global Absoluta (Cronjob):** Um Cronjob diário (configurado via `vercel.json` e `/api/cron/cleanup-pdfs`) atua como um "lixeiro global", varrendo e apagando fisicamente qualquer PDF do servidor que tenha ultrapassado o teto máximo da plataforma (**15 dias**) independente das configurações individuais do usuário, garantindo que a nuvem não se torne um repositório infinito.
 
 ## 3. Verificação por Prova de Existência (Proof of Existence via Hash)
 Um pilar essencial da identidade descentralizada é a capacidade de um terceiro validar uma credencial.

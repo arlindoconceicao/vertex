@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSsiPqCore } from "@/lib/ssi-pq";
+import { validateSignerToken } from "@/lib/signer-auth";
 
 // GET /api/signer/recipient-key/:did
 // Consumido pelo App Mobile Signer para buscar o DID Document (e chave ML-KEM)
@@ -29,6 +30,12 @@ export async function GET(
     }
 
     const signerDid = authCredential.credential.issuer_did;
+
+    // --- NOVA BARREIRA: Token Bearer HMAC M2M ---
+    const authHeader = request.headers.get("authorization");
+    if (!validateSignerToken(authHeader, signerDid)) {
+      return NextResponse.json({ error: "Invalid or missing Bearer token (M2M)" }, { status: 401 });
+    }
 
     // 1. Buscar o usuário pelo DID (do signer) para validar a assinatura
     const user = await prisma.user.findUnique({

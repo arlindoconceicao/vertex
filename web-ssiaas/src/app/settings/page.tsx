@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { generateSignerToken } from "@/lib/signer-auth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SettingsHeader from "./SettingsHeader";
@@ -53,6 +54,11 @@ export default async function SettingsPage() {
     issuerIdentifier = core.issuerIdentifierBase64(didDocument);
   }
 
+  let bearerToken = null;
+  if (user?.did) {
+    bearerToken = generateSignerToken(user.did);
+  }
+
   const formattedUser = {
     id: user?.id || "",
     email: user?.email || "",
@@ -63,6 +69,7 @@ export default async function SettingsPage() {
     didPairedAt: user?.didPairedAt ? user.didPairedAt.toISOString() : null,
     issuerIdentifier,
     pdfRetentionDays: user?.pdfRetentionDays || 7,
+    bearerToken,
   };
 
   return (

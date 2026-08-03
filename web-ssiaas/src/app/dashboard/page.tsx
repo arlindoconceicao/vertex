@@ -13,6 +13,31 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
   if (!session.user.cpf) redirect("/complete-registration");
 
+  // Limpeza Pessoal: Aplica a preferência de retenção individual do usuário ativo (ex: 7 dias)
+  const userPrefs = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { pdfRetentionDays: true }
+  });
+
+  if (userPrefs?.pdfRetentionDays) {
+    const expirationThreshold = new Date();
+    expirationThreshold.setDate(expirationThreshold.getDate() - userPrefs.pdfRetentionDays);
+
+    await prisma.verifiableCredential.updateMany({
+      where: {
+        issuerId: session.user.id,
+        pdfFile: { not: null },
+        pdfDownloadedAt: {
+          not: null,
+          lt: expirationThreshold
+        }
+      },
+      data: {
+        pdfFile: null
+      }
+    });
+  }
+
   // Busca paralela: credenciais emitidas, recebidas e métricas
   const [issuedRaw, receivedRaw, issuedGroups, receivedGroups] =
     await Promise.all([

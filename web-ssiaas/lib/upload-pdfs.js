@@ -38,6 +38,11 @@ async function main() {
 
   const activeDidData = registeredDids[registeredDids.length - 1];
   console.log(`🔑 Autenticando com DID: ${activeDidData.did}`);
+  
+  // Gera o Token HMAC M2M Personalizado
+  const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
+  const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
+  const bearerToken = crypto.createHmac("sha256", signerSecret).update(activeDidData.did).digest("hex");
 
   // Autenticação (PoP)
   const authPayload = { action: "pending_requests_auth", timestamp: new Date().toISOString() };
@@ -66,6 +71,7 @@ async function main() {
       headers: {
         "Content-Type": "application/json",
         "x-signer-auth-credential": authCredentialBase64,
+        "Authorization": `Bearer ${bearerToken}`,
       },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -101,7 +107,10 @@ async function main() {
     console.log(`🔍 Buscando chave pública do destinatário: ${recipientDid}`);
     const keyResponse = await fetch(`${baseUrl}/api/signer/recipient-key/${recipientDid}`, {
        method: "GET",
-       headers: { "x-signer-auth-credential": authCredentialBase64 }
+       headers: { 
+         "x-signer-auth-credential": authCredentialBase64,
+         "Authorization": `Bearer ${bearerToken}`
+       }
     });
 
     if (!keyResponse.ok) {
@@ -196,7 +205,7 @@ async function main() {
         const uploadResponse = await fetch(callbackEndpoint, {
             method: "POST",
             headers: {
-                "authorization": `Bearer mobile-signer-secret-token` // Token estático do .env (ajuste conforme necessario)
+                "authorization": `Bearer ${bearerToken}`
             },
             body: formData
         });

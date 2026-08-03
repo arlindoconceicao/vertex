@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSsiPqCore } from "@/lib/ssi-pq";
+import { validateSignerToken } from "@/lib/signer-auth";
 
 // GET /api/signer/credentials/available
 // Retorna as VCs com status ACTIVE que possuem pdfFile e aguardam download pelo Holder
@@ -24,6 +25,12 @@ export async function GET(request: Request) {
     }
 
     const holderDid = authCredential.credential.issuer_did;
+
+    // --- NOVA BARREIRA: Token Bearer HMAC M2M ---
+    const authHeader = request.headers.get("authorization");
+    if (!validateSignerToken(authHeader, holderDid)) {
+      return NextResponse.json({ error: "Invalid or missing Bearer token (M2M)" }, { status: 401 });
+    }
 
     // Buscar o usuário pelo DID para obter o DID Document
     const user = await prisma.user.findUnique({

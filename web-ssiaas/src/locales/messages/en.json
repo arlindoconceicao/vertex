@@ -157,6 +157,8 @@
     "signatureDate": "Signature Date",
     "downloadEncryptedPdf": "Download Encrypted PDF",
     "pdfReadDisclaimer": "The file can only be read by your identity App (via ML-KEM private key).",
+    "pdfExpired": "File Expired",
+    "pdfExpiredDisclaimer": "The retention period for this file has expired and it is no longer available for download.",
     "provisional": "(Provisional)",
     "rawServerMetadata": "Raw Server Metadata",
     "idLabel": "(ID: ",
@@ -246,13 +248,15 @@
     "subtitle": "Manage your identity, security, and application preferences.",
     "tabs": {
       "profile": "Profile & Identity",
-      "language": "Language & Preferences"
+      "language": "Language & Preferences",
+      "platform": "Platform Settings"
     },
     "profileSection": {
       "title": "Profile Information",
       "userId": "User ID",
       "email": "Email",
-      "cpf": "CPF"
+      "cpf": "CPF",
+      "hmacToken": "Mobile App Access Token (HMAC Hex)"
     },
     "didSection": {
       "title": "Decentralized Identity (DID)",

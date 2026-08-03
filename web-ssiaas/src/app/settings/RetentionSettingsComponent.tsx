@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/locales/LanguageContext";
 
 export default function RetentionSettingsComponent({ initialDays }: { initialDays: number }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [days, setDays] = useState(initialDays);
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState("");
@@ -20,6 +22,7 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
         });
         if (res.ok) {
           setStatusMsg("Configurações de retenção salvas com sucesso!");
+          router.refresh();
         } else {
           setStatusMsg("Erro ao salvar as configurações.");
         }
@@ -31,10 +34,10 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-6">
-      <h2 className="text-sm font-semibold text-gray-300 mb-1">
+      <h2 className="text-lg font-bold text-white mb-2">
         {t("settings.retention.title")}
       </h2>
-      <p className="text-xs text-gray-500 mb-6">
+      <p className="text-sm text-gray-400 mb-8 leading-relaxed">
         {t("settings.retention.description")}
       </p>
 

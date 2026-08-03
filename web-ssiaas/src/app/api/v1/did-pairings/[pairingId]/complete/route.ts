@@ -6,6 +6,7 @@ import {
   verifyDidDocument,
   verifyPairingChallengeProof,
 } from "@/lib/ssi-pq";
+import { generateSignerToken } from "@/lib/signer-auth";
 
 interface CompletePairingBody {
   id?: string;
@@ -340,12 +341,15 @@ export async function POST(
       return updatedUser;
     });
 
+    const bearerToken = generateSignerToken(targetDid);
+
     return NextResponse.json(
       {
         paired: true,
         did: result.did,
         status: "ACTIVE",
         pairedAt: result.didPairedAt?.toISOString() || pairedAt.toISOString(),
+        bearerToken: bearerToken // Token HMAC M2M para o aplicativo salvar
       },
       { status: 200 }
     );

@@ -24,9 +24,10 @@ type CredentialDetailProps = {
   };
   isIssuer: boolean;
   isHolder: boolean;
+  isPdfExpired?: boolean;
 };
 
-export default function CredentialDetailClientView({ credential, isIssuer, isHolder }: CredentialDetailProps) {
+export default function CredentialDetailClientView({ credential, isIssuer, isHolder, isPdfExpired }: CredentialDetailProps) {
   const { t, locale } = useTranslation();
   const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
 
@@ -138,16 +139,29 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
                 )}
                 {isHolder && (
                   <div className="mt-4 pt-4 border-t border-gray-800">
-                    <a
-                      href={`/api/credentials/${credential.id}/pdf`}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                      {t("credentials.downloadEncryptedPdf")}
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {t("credentials.pdfReadDisclaimer")}
-                    </p>
+                    {!isPdfExpired ? (
+                      <>
+                        <a
+                          href={`/api/credentials/${credential.id}/pdf`}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                          {t("credentials.downloadEncryptedPdf")}
+                        </a>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {t("credentials.pdfReadDisclaimer")}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 inline-block">
+                        <p className="text-sm font-medium text-red-400">
+                          {t("credentials.pdfExpired")}
+                        </p>
+                        <p className="text-xs text-red-400/80 mt-1">
+                          {t("credentials.pdfExpiredDisclaimer")}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
                 {isIssuer && (

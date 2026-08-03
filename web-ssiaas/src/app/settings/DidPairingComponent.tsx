@@ -13,6 +13,7 @@ type Props = {
   initialMlkemKey: string | null;
   initialPairedAt: string | null;
   initialIssuerIdentifier?: string | null;
+  bearerToken?: string | null;
 };
 
 interface ChallengeData {
@@ -30,6 +31,7 @@ export default function DidPairingComponent({
   initialMlkemKey,
   initialPairedAt,
   initialIssuerIdentifier,
+  bearerToken,
 }: Props) {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -183,6 +185,7 @@ export default function DidPairingComponent({
             </p>
           </div>
         )}
+
 
         {initialPairedAt && (
           <div className="bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center text-xs">

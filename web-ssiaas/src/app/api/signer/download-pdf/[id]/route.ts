@@ -8,19 +8,24 @@ export async function GET(
 ) {
   const authHeader = request.headers.get("authorization");
 
-  if (!validateSignerToken(authHeader)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
   
   const credential = await prisma.verifiableCredential.findUnique({
     where: { id },
-    select: { pdfFile: true, pdfDownloadedAt: true, metadata: true }
+    select: { 
+      pdfFile: true, 
+      pdfDownloadedAt: true, 
+      metadata: true,
+      holder: { select: { did: true } } 
+    }
   });
 
-  if (!credential) {
+  if (!credential || !credential.holder?.did) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!validateSignerToken(authHeader, credential.holder.did)) {
+    return NextResponse.json({ error: "Unauthorized or invalid Bearer token (M2M)" }, { status: 401 });
   }
 
   if (!credential.pdfFile) {

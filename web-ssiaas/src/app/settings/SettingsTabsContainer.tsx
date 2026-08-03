@@ -17,12 +17,13 @@ type Props = {
     didPairedAt: string | null;
     issuerIdentifier?: string | null;
     pdfRetentionDays: number;
+    bearerToken?: string | null;
   };
 };
 
 export default function SettingsTabsContainer({ user }: Props) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"profile" | "language">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "language" | "platform">("profile");
 
   return (
     <div className="space-y-8">
@@ -78,6 +79,31 @@ export default function SettingsTabsContainer({ user }: Props) {
             </svg>
             {t("settings.tabs.language")}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("platform")}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === "platform"
+                ? "border-indigo-500 text-indigo-400 font-semibold"
+                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+              />
+            </svg>
+            {t("settings.tabs.platform")}
+          </button>
         </nav>
       </div>
 
@@ -114,6 +140,16 @@ export default function SettingsTabsContainer({ user }: Props) {
                   </span>
                 </div>
               )}
+              {user.bearerToken && (
+                <div className="bg-gray-800/60 border border-indigo-900/50 rounded-xl px-4 py-3 space-y-1">
+                  <p className="text-xs text-indigo-300/70 font-medium uppercase tracking-wider">
+                    {t("settings.profileSection.hmacToken")}
+                  </p>
+                  <p className="text-sm text-indigo-400 font-mono break-all select-all">
+                    {user.bearerToken}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -134,14 +170,17 @@ export default function SettingsTabsContainer({ user }: Props) {
               initialMlkemKey={user.didMlkemKey}
               initialPairedAt={user.didPairedAt}
               initialIssuerIdentifier={user.issuerIdentifier}
+              bearerToken={user.bearerToken}
             />
           </div>
-
+        </div>
+      ) : activeTab === "language" ? (
+        <LanguageSettingsTab />
+      ) : activeTab === "platform" ? (
+        <div className="space-y-8">
           <RetentionSettingsComponent initialDays={user.pdfRetentionDays} />
         </div>
-      ) : (
-        <LanguageSettingsTab />
-      )}
+      ) : null}
     </div>
   );
 }

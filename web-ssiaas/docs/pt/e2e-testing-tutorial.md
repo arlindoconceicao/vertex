@@ -1,6 +1,9 @@
-# Tutorial de Teste E2E (Emissão, Assinatura e Verificação)
+# Tutorial E2E: Autenticação, Assinatura e Download Pós-Quântico
 
-Este tutorial descreve o passo a passo completo e ordenado para testar o ciclo de vida de uma Credencial Verificável na plataforma, simulando as ações do Emissor (App Mobile), do Destinatário (App Mobile/Web) e do Verificador (Plataforma Pública) partindo **exatamente do zero**.
+> [!WARNING]
+> **ATENÇÃO (AMBIENTE DE PRODUÇÃO):** Todos os scripts Node (`.js` e `.ts`) citados neste tutorial, localizados na pasta `lib/`, acessam o banco de dados diretamente e manipulam estados críticos da aplicação para fins de teste. Em um ambiente de **Produção**, esses arquivos DEVEM ser removidos. A pasta `lib/` em produção deve conter apenas o binário `ssi_pq_core.node` e utilitários internos do Next.js, evitando acessos não autorizados.
+
+Este tutorial descreve o passo a passo completo e ordenado para testar o ciclo de vida de uma Credencial Verificável na plataforma, simulando as ações do Emissor (App Mobile), do Destinatário (App Mobile/Web) e do Verificador (Plataforma Pública) partindo **exatamente do zero**. Todos os testes utilizam os scripts utilitários localizados na pasta `lib/`.
 
 Utilize este roteiro para homologar o fluxo Pós-Quântico ponta a ponta.
 

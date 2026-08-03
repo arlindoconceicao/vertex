@@ -17,10 +17,6 @@ import { validateSignerToken } from "@/lib/signer-auth";
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
 
-  if (!validateSignerToken(authHeader)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -52,6 +48,10 @@ export async function POST(request: NextRequest) {
       { error: "Missing or invalid field in metadata: requestId" },
       { status: 400 }
     );
+  }
+
+  if (!validateSignerToken(authHeader, issuerDid)) {
+    return NextResponse.json({ error: "Unauthorized or invalid Bearer token (M2M)" }, { status: 401 });
   }
 
   // ── Busca e validação da VC ────────────────────────────────

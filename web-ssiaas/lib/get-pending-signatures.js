@@ -17,6 +17,7 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const core = require("./ssi_pq_core.node");
 
 async function main() {
@@ -27,7 +28,8 @@ async function main() {
       ? `${process.env.NEXT_PUBLIC_APP_URL}/api/signer/requests/pending`
       : "http://localhost:3000/api/signer/requests/pending";
 
-  const signerSecret = process.env.SIGNER_SECRET || "mobile-signer-secret-token";
+  const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
+  const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
 
   // 1. Carregamento da Wallet SQLite e Chaves Locais do Usuário
   const keysFilePath = path.join(__dirname, "keys.txt");
@@ -108,6 +110,9 @@ async function main() {
 
   // Codifica o JSON da credencial em base64 para enviar seguro no header
   const authHeaderBase64 = Buffer.from(JSON.stringify(signedAuthCredential)).toString('base64');
+  
+  // Gera o Token HMAC M2M Personalizado
+  const bearerToken = crypto.createHmac("sha256", signerSecret).update(signerDid).digest("hex");
 
   // 3. Consulta de Requisições de Assinatura Pendentes na Plataforma
   console.log("\n📡 Consultando credenciais pendentes na plataforma...");
@@ -117,6 +122,7 @@ async function main() {
       method: "GET",
       headers: {
         "x-signer-auth-credential": authHeaderBase64,
+        "Authorization": `Bearer ${bearerToken}`,
         "Content-Type": "application/json",
       },
     });
