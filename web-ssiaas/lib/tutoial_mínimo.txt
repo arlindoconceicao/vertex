@@ -1,0 +1,188 @@
+1) Resete completamente o banco da aplicação:
+
+    docker start vertex_postgres
+    npx prisma migrate reset
+    npx prisma generate
+    npm run dev
+    Veja rodando em http://localhost:3000
+    Em caso de erro use: npx prisma db push --force-reset
+
+==========================================================================================================================
+2) Abra a plataforma em http://localhost:3000/
+
+==========================================================================================================================
+3) Vá para configurações (settings). Temos que fazer o pareamento com o dispositivo móvel (no caso aqui simulado)
+   Na tela Settings clique em "iniciar pareamento" e depois "Copiar Payload Comppleto JSON"
+   Execute o script abaixo substituindo PAYLOAD pelo payload copiado da plataforma.
+
+    node lib/complete-pairing.js 'PAYLOAD'
+
+    O script vai rodar e concluir de modo parecido com isto:
+
+    =================================================
+    ✅ PAREAMENTO CONCLUÍDO COM SUCESSO PELA PLATAFORMA!
+    =================================================
+    {
+      "paired": true,
+      "did": "did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf",
+      "status": "ACTIVE",
+      "pairedAt": "2026-08-04T13:53:29.051Z",
+      "bearerToken": "d7ad504a2e97083dab9151a019b8f3409d5d101b23156d98ae6ff868523b864b"
+    }
+
+    👉 Agora observe a tela da plataforma web (http://localhost:3000/settings)!
+       Ela atualizará automaticamente para o estado PAREADO.
+
+==========================================================================================================================
+4) Na plataforma, crie um esquema e emita uma credencial. Na listagem de credenciais emitidas ela vai aparecer como "PENDENTE",
+   ou seja, ela ainda não foi assinada pelo aplicativo MOBILE.
+
+
+==========================================================================================================================
+5) Execute o script abaixo. Ele vai listar as credenciais pendentes de assinatura do usuário do app.
+
+    node lib/get-pending-signatures.js
+
+    O script vai retornar algo como:
+
+    =================================================
+    🚀 SIMULANDO APLICATIVO MÓVEL - BUSCA DE ASSINATURAS PENDENTES
+    =================================================
+    📌 Endpoint   : http://localhost:3000/api/signer/requests/pending
+    🔑 Wallet Key : /home/yugi/vertex/web-ssiaas/lib/keys.txt
+    💾 Wallet DB  : /home/yugi/vertex/web-ssiaas/lib/mobile_wallet.db
+
+    🆔 DIDs Registrados na Wallet Móvel (1):
+       [1] DID: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+           Rótulo: Mobile DID (teste@gmail.com)
+
+    🔑 Usando DID para autenticação: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+    ✍️  Assinando desafio de autenticação (VC) via wallet interna...
+    ✔  Credencial de autenticação gerada com sucesso.
+
+    📡 Consultando credenciais pendentes na plataforma...
+
+    =================================================
+    ✅ CONSULTA CONCLUÍDA: 1 credencial(is) pendente(s)
+    =================================================
+
+    📋 [Credencial Pendente #1]
+       • ID Requisição (VC ID) : cmseq2azc0005sxxkfjsigi88
+       • Data de Emissão        : 2026-08-04T13:56:59.545Z
+       • Emissor                : Edimar (did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf)
+       • Payload Não Assinado   :
+    {
+          "type": [
+                "VerifiableCredential",
+                "Identidade"
+          ],
+          "issuer": "did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf",
+          "@context": [
+                "https://www.w3.org/2018/credentials/v1"
+          ],
+          "issuanceDate": "2026-08-04T13:56:59.544Z",
+          "credentialSchema": {
+                "id": "cmsep2kfr0003sxxkiuu8taq4",
+                "name": "Identidade",
+                "version": "1.0"
+          },
+          "credentialSubject": {
+                "id": "did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf",
+                "nome": "Miguel",
+                "cidade": "Jacareí",
+                "estado": "SP",
+                "Identidade": "1234567"
+          }
+    }
+
+
+==========================================================================================================================
+6) Execute o script abaixo. Ele vai gerar os PDFs, ou seja, as credenciais e assiná-las.
+
+    node lib/generate-pending-pdfs.js
+
+    A saída será algo como:
+
+    =================================================
+    📄 GERANDO PDFs DE CREDENCIAIS PENDENTES
+    =================================================
+    🔑 Autenticando com DID: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+    📡 Buscando credenciais pendentes...
+    📋 Encontradas 1 credenciais pendentes. Gerando PDFs...
+       ✔ PDF gerado (com assinatura embutida) para requisição cmseq2azc0005sxxkfjsigi88: /home/yugi/vertex/web-ssiaas/lib/credential_cmseq2azc0005sxxkfjsigi88.pdf
+
+    Você notará que existe um PDF (ou mais de um) na pasta lib
+
+==========================================================================================================================
+7) Se quiser testar a validação via Hash mais tarde na tela pública, você pode extrair o SHA-256 exato deste PDF em claro agora. 
+
+    node lib/get-pdf-hash.js lib/credential_XXXXXXXX.pdf 
+
+    Guarde o hash retornado para colar na aba “PDF Hash” da página de Verificação. 
+
+==========================================================================================================================
+8) Para fazer o UPLOD do PDF cifrado para a plataforma:
+
+    node lib/upload-pdfs.js
+
+    A saída será algo como:
+
+    =================================================
+    📤 ENVIANDO PDFs CRIPTOGRAFADOS PARA A PLATAFORMA
+    =================================================
+    🔑 Autenticando com DID: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+    📡 Buscando requisições pendentes para obter os IDs e DIDs...
+
+    📄 Processando upload para requisição: cmseq2azc0005sxxkfjsigi88
+    🔍 Buscando chave pública do destinatário: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+    🔒 Criptografando o PDF...
+    🚀 Fazendo upload via POST multipart/form-data...
+    ✅ Upload da credencial cmseq2azc0005sxxkfjsigi88 concluído com sucesso!
+
+==========================================================================================================================
+8) Para fazer o downlod pelo app use:
+
+    node lib/simulate-mobile-download.js
+
+    Este script simula o App fazendo a chamada API de download do arquivo .enc, abrindo a
+    mobile_wallet.db e realizando a decapsulação (ML-KEM + AES-GCM) para gerar o PDF em claro localmente.
+
+    Uma outra maneiar é baixar o PDF pela plataforma e depois decifrar com o app:
+
+    node lib/decrypt-local-pdf.js lib/credential_cmseq2azc0005sxxkfjsigi88.pdf.enc
+
+    A saída é a credencial decifrada também.
+    
+    =================================================
+    🔓 DECIFRANDO PDF LOCALMENTE COM A WALLET
+    =================================================
+    🔑 Usando carteira do DID do titular: did:ssipq:zHzcqWj9c21JqCYdKGGoeVDSXtjaTMdVowavVstxGuEYf
+    🔑 Decapsulando o segredo compartilhado via ML-KEM...
+    🔓 Decifrando PDF com AES-256-GCM...
+    ✅ Sucesso! Arquivo decifrado salvo na pasta atual como: credential_cmseq2azc0005sxxkfjsigi88.pdf_decifrado.pdf
+
+==========================================================================================================================
+9) Validação:
+
+    Acesse localhost:3000/verify:
+
+    Pode validar pelo hash do PDF neste caso você pode calculá-lo facilmente conforme mostramos no passo 7.
+    Na aba PDF hash colo que hash obtido pelo passo 7 (ou copie o hash direto da plataforma)
+    Você verá que a credencial é válida.
+
+    Para validar de forma criptográfica você deve fazer o upload do PDF decifrado na aba "Upload de PDF"
+    Aqui também você valida facilmente o PDF com a ressalva:
+
+    A verificação por PDF expõe os dados momentaneamente para validação criptográfica (SSI), 
+    mas a plataforma não armazena nenhuma informação e descarta o arquivo imediatamente após o processamento.
+
+    No caso de verificar o PDF em claro você expõe o PDF da mesma forma que faria na plataforma GOV.BR
+    No caso de verificação pelo HASH a plataforma apenas faz uma comparação de hashes e portanto não
+    expomos os dados a plataforma.
+
+
+
+
+
+
+
