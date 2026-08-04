@@ -97,7 +97,12 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
           router.push(`/credentials/${result.credentialId}?view=issued`);
         }, 1500);
       } else {
-        setError(result.error || t("errors.issueFailed"));
+        const errKey =
+          result.error === "You must register a DID before issuing credentials. Go to Settings." ||
+          result.error?.includes("register a DID")
+            ? "errors.didRequired"
+            : null;
+        setError(errKey ? t(errKey) : result.error || t("errors.issueFailed"));
       }
     });
   }

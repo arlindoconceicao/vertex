@@ -1,11 +1,16 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const core = require("./ssi_pq_core.node");
+require("dotenv").config();
 
 async function main() {
   const endpoint = process.env.NEXT_PUBLIC_APP_URL
     ? `${process.env.NEXT_PUBLIC_APP_URL}/api/signer/requests/pending`
     : "http://localhost:3000/api/signer/requests/pending";
+
+  const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
+  const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
 
   const keysFilePath = path.join(__dirname, "keys.txt");
   const walletPath = path.join(__dirname, "mobile_wallet.db");
@@ -36,7 +41,8 @@ async function main() {
   }
 
   const activeDidData = registeredDids[registeredDids.length - 1];
-  console.log(`🔑 Autenticando com DID: ${activeDidData.did}`);
+  const signerDid = activeDidData.did;
+  console.log(`🔑 Autenticando com DID: ${signerDid}`);
 
   // Autenticação (PoP)
   const authPayload = { action: "pending_requests_auth", timestamp: new Date().toISOString() };
@@ -45,7 +51,7 @@ async function main() {
   const authCredential = core.walletIssueCredentialFromSchema(
     walletPath,
     walletPassword,
-    activeDidData.did,
+    signerDid,
     authSchema,
     authPayload,
     {
@@ -56,6 +62,7 @@ async function main() {
   );
 
   const authCredentialBase64 = Buffer.from(JSON.stringify(authCredential)).toString("base64");
+  const bearerToken = crypto.createHmac("sha256", signerSecret).update(signerDid).digest("hex");
 
   console.log("📡 Buscando credenciais pendentes...");
   let pendingRequests = [];
@@ -65,6 +72,7 @@ async function main() {
       headers: {
         "Content-Type": "application/json",
         "x-signer-auth-credential": authCredentialBase64,
+        "Authorization": `Bearer ${bearerToken}`,
       },
     });
 

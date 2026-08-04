@@ -306,7 +306,8 @@
     "unexpectedError": "An unexpected error occurred. Please try again.",
     "schemaRequired": "Please select a schema.",
     "holderRequired": "Please specify a holder email.",
-    "issueFailed": "Failed to issue credential."
+    "issueFailed": "Failed to issue credential.",
+    "didRequired": "You must register a DID before issuing credentials. Go to Settings."
   },
   "captcha": {
     "question": "Security Check: How much is {{a}} + {{b}}?",

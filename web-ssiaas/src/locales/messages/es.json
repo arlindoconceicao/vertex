@@ -306,7 +306,8 @@
     "unexpectedError": "Se produjo un error inesperado. Inténtalo de nuevo.",
     "schemaRequired": "Selecciona un esquema.",
     "holderRequired": "Especifica el correo electrónico del titular.",
-    "issueFailed": "No se pudo emitir la credencial."
+    "issueFailed": "No se pudo emitir la credencial.",
+    "didRequired": "Debes registrar un DID antes de emitir credenciales. Ve a Configuración."
   },
   "captcha": {
     "question": "Comprobación de Seguridad: ¿Cuánto es {{a}} + {{b}}?",
