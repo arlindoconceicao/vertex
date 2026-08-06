@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSI-PQ Benchmark Metrics</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+    h1, h2 { text-align: center; color: #2c3e50; }
+    .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #ddd; }
+    th { background-color: #34495e; color: #fff; text-transform: uppercase; font-size: 14px; }
+    tr:hover { background-color: #f1f1f1; }
+    .col-header { text-align: left; font-weight: bold; }
+    .desc { font-size: 0.85em; color: #666; display: block; }
+    .size-col { background-color: #e8f4f8; }
+    .size-head { background-color: #2980b9 !important; }
+    .info-bar { background-color: #eef; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+    .info-bar ul { list-style: none; padding-left: 0; margin: 5px 0 0; }
+    .info-bar li { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resultados de Benchmark: Criptografia Pós-Quântica (SSI-PQ)</h1>
+    <div class="info-bar">
+      <strong>💻 Informações da Máquina:</strong>
+      <ul>
+        <li><strong>Sistema Operacional:</strong> Linux 7.0.0-28-generic (x64)</li>
+        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 400MHz)</li>
+        <li><strong>Memória RAM:</strong> 15 GB</li>
+      </ul>
+      <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+      <strong>⚙️ Parâmetros do Teste:</strong>
+      <ul>
+        <li><strong>Iterações (Computadas):</strong> 100</li>
+        <li><strong>Iterações de Warmup (Ignoradas por thread):</strong> 5</li>
+        <li><strong>Threads simultâneas:</strong> 10</li>
+      </ul>
+      <p style="font-size: 0.85em; color: #555;"><i>* Todos os tempos estão listados em milissegundos (ms). As estatísticas representam a Média ± Desvio Padrão.</i></p>
+    </div>
+    
+    <h2>Tabela 1: Tempos de Execução (em ms)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Métrica (Operação)</th>
+          <th>Level 1 (128-bit)<br><span class="desc">ML-DSA-44 / ML-KEM-512</span></th><th>Level 3 (192-bit)<br><span class="desc">ML-DSA-65 / ML-KEM-768</span></th><th>Level 5 (256-bit)<br><span class="desc">ML-DSA-87 / ML-KEM-1024</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-header">1. Construir Esquema (createSchemaFromAttributes)</td>
+          <td>0.420 ± 0.104</td><td>0.415 ± 0.111</td><td>0.407 ± 0.110</td>
+        </tr>
+        <tr>
+          <td class="col-header">2. Emitir Credencial (walletIssueCredentialFromSchema)</td>
+          <td>684.067 ± 104.895</td><td>685.561 ± 107.776</td><td>748.726 ± 112.591</td>
+        </tr>
+        <tr>
+          <td class="col-header">3. Verificar Credencial JSON (verifySignedCredential)</td>
+          <td>50.654 ± 9.938</td><td>98.870 ± 14.507</td><td>166.238 ± 24.280</td>
+        </tr>
+        <tr>
+          <td class="col-header">4. Construir PDF Base (signedCredentialToPdf)</td>
+          <td>5.703 ± 1.473</td><td>7.240 ± 2.056</td><td>8.758 ± 2.605</td>
+        </tr>
+        <tr>
+          <td class="col-header">5. Embutir & Assinar PDF (walletEmbedSignedCredentialInPdf)</td>
+          <td>711.149 ± 129.130</td><td>762.447 ± 126.758</td><td>821.567 ± 129.393</td>
+        </tr>
+        <tr>
+          <td class="col-header">6. Encapsular Segredo (mlkemEncapsulate)</td>
+          <td>2.393 ± 0.653</td><td>2.993 ± 0.734</td><td>3.678 ± 0.599</td>
+        </tr>
+        <tr>
+          <td class="col-header">7. Cifrar PDF (aes256GcmEncrypt)</td>
+          <td>6.324 ± 1.589</td><td>7.315 ± 1.821</td><td>8.632 ± 1.974</td>
+        </tr>
+        <tr>
+          <td class="col-header">8. Decapsular Segredo (walletMlkemDecapsulate)</td>
+          <td>627.158 ± 94.722</td><td>611.921 ± 81.199</td><td>596.110 ± 93.138</td>
+        </tr>
+        <tr>
+          <td class="col-header">9. Decifrar Arquivo (aes256GcmDecrypt)</td>
+          <td>5.064 ± 1.261</td><td>6.496 ± 1.922</td><td>7.337 ± 2.014</td>
+        </tr>
+        <tr>
+          <td class="col-header">10. Verificar PDF Assinado (verifySignedCredentialPdf)</td>
+          <td>105.047 ± 17.335</td><td>211.175 ± 31.180</td><td>348.118 ± 51.960</td>
+        </tr>
+        <tr>
+          <td class="col-header">11. Extrair Manifesto do PDF (extractCredentialManifestFromPdf)</td>
+          <td>1.026 ± 0.234</td><td>1.221 ± 0.270</td><td>1.466 ± 0.358</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Tabela 2: Comparativo de Tamanhos (em KB)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="size-head">Métrica de Tamanho</th>
+          <th class="size-head">Level 1 (128-bit)</th><th class="size-head">Level 3 (192-bit)</th><th class="size-head">Level 5 (256-bit)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-header size-col">JSON Original (Referência)</td>
+          <td class="size-col">0.28 KB</td><td class="size-col">0.28 KB</td><td class="size-col">0.28 KB</td>
+        </tr>
+        <tr>
+          <td class="col-header size-col">12. Schema JSON</td>
+          <td class="size-col">0.83 KB<br><span class="desc">vs Original: 292%</span></td><td class="size-col">0.83 KB<br><span class="desc">vs Original: 292%</span></td><td class="size-col">0.83 KB<br><span class="desc">vs Original: 292%</span></td>
+        </tr>
+        <tr>
+          <td class="col-header size-col">13. JSON Assinado</td>
+          <td class="size-col">7.83 KB<br><span class="desc">vs Original: 2766%</span></td><td class="size-col">9.84 KB<br><span class="desc">vs Original: 3476%</span></td><td class="size-col">12.41 KB<br><span class="desc">vs Original: 4384%</span></td>
+        </tr>
+        <tr>
+          <td class="col-header size-col">14. PDF Base Visual</td>
+          <td class="size-col">11.91 KB<br><span class="desc">vs Schema: 1438%</span></td><td class="size-col">14.19 KB<br><span class="desc">vs Schema: 1714%</span></td><td class="size-col">16.42 KB<br><span class="desc">vs Schema: 1983%</span></td>
+        </tr>
+        <tr>
+          <td class="col-header size-col">15. PDF Embutido/Final</td>
+          <td class="size-col">26.14 KB<br><span class="desc">vs JSON Assinado: 334%</span></td><td class="size-col">32.44 KB<br><span class="desc">vs JSON Assinado: 330%</span></td><td class="size-col">39.81 KB<br><span class="desc">vs JSON Assinado: 321%</span></td>
+        </tr>
+        <tr>
+          <td class="col-header size-col">-  PDF Cifrado</td>
+          <td class="size-col">26.14 KB<br><span class="desc">vs Final PDF: 100.0%</span></td><td class="size-col">32.44 KB<br><span class="desc">vs Final PDF: 100.0%</span></td><td class="size-col">39.81 KB<br><span class="desc">vs Final PDF: 100.0%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

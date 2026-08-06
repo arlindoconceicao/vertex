@@ -28,7 +28,7 @@
       <strong>💻 Informações da Máquina:</strong>
       <ul>
         <li><strong>Sistema Operacional:</strong> Linux 7.0.0-28-generic (x64)</li>
-        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 4100MHz)</li>
+        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 4357MHz)</li>
         <li><strong>Memória RAM:</strong> 15 GB</li>
       </ul>
       <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
@@ -52,47 +52,47 @@
       <tbody>
         <tr>
           <td class="col-header">1. Construir Esquema (createSchemaFromAttributes)</td>
-          <td>0.412 ± 0.108</td><td>0.399 ± 0.111</td><td>0.405 ± 0.119</td>
+          <td>0.443 ± 0.105</td><td>0.413 ± 0.104</td><td>0.448 ± 0.103</td>
         </tr>
         <tr>
           <td class="col-header">2. Emitir Credencial (walletIssueCredentialFromSchema)</td>
-          <td>630.797 ± 92.346</td><td>689.277 ± 105.380</td><td>761.910 ± 114.143</td>
+          <td>721.903 ± 95.113</td><td>758.193 ± 121.919</td><td>865.362 ± 148.595</td>
         </tr>
         <tr>
           <td class="col-header">3. Verificar Credencial JSON (verifySignedCredential)</td>
-          <td>49.098 ± 6.685</td><td>100.337 ± 14.934</td><td>167.825 ± 26.144</td>
+          <td>52.964 ± 7.496</td><td>105.678 ± 15.030</td><td>182.953 ± 26.991</td>
         </tr>
         <tr>
           <td class="col-header">4. Construir PDF Base (signedCredentialToPdf)</td>
-          <td>5.771 ± 1.373</td><td>7.291 ± 2.012</td><td>8.768 ± 2.747</td>
+          <td>6.321 ± 1.362</td><td>8.090 ± 2.519</td><td>10.299 ± 2.633</td>
         </tr>
         <tr>
           <td class="col-header">5. Embutir & Assinar PDF (walletEmbedSignedCredentialInPdf)</td>
-          <td>677.126 ± 92.409</td><td>773.509 ± 112.978</td><td>839.023 ± 115.082</td>
+          <td>775.922 ± 161.495</td><td>865.303 ± 139.302</td><td>991.327 ± 149.192</td>
         </tr>
         <tr>
           <td class="col-header">6. Encapsular Segredo (mlkemEncapsulate)</td>
-          <td>2.270 ± 0.542</td><td>3.124 ± 0.779</td><td>3.810 ± 0.817</td>
+          <td>2.339 ± 0.737</td><td>3.772 ± 3.599</td><td>4.444 ± 1.534</td>
         </tr>
         <tr>
           <td class="col-header">7. Cifrar PDF (aes256GcmEncrypt)</td>
-          <td>5.993 ± 1.336</td><td>7.726 ± 1.788</td><td>8.761 ± 2.135</td>
+          <td>6.915 ± 2.736</td><td>8.823 ± 3.339</td><td>11.046 ± 4.000</td>
         </tr>
         <tr>
           <td class="col-header">8. Decapsular Segredo (walletMlkemDecapsulate)</td>
-          <td>593.216 ± 76.802</td><td>611.804 ± 80.899</td><td>613.119 ± 95.813</td>
+          <td>671.029 ± 110.647</td><td>675.763 ± 100.640</td><td>688.656 ± 110.317</td>
         </tr>
         <tr>
           <td class="col-header">9. Decifrar Arquivo (aes256GcmDecrypt)</td>
-          <td>4.764 ± 1.103</td><td>6.245 ± 1.719</td><td>7.639 ± 1.891</td>
+          <td>5.219 ± 1.486</td><td>6.933 ± 1.541</td><td>8.519 ± 2.046</td>
         </tr>
         <tr>
           <td class="col-header">10. Verificar PDF Assinado (verifySignedCredentialPdf)</td>
-          <td>100.033 ± 13.670</td><td>210.742 ± 31.005</td><td>348.663 ± 48.109</td>
+          <td>107.638 ± 18.789</td><td>229.114 ± 33.095</td><td>385.367 ± 56.154</td>
         </tr>
         <tr>
           <td class="col-header">11. Extrair Manifesto do PDF (extractCredentialManifestFromPdf)</td>
-          <td>0.970 ± 0.229</td><td>1.223 ± 0.276</td><td>1.454 ± 0.350</td>
+          <td>1.064 ± 0.266</td><td>1.435 ± 0.552</td><td>1.720 ± 0.535</td>
         </tr>
       </tbody>
     </table>
