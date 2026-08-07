@@ -240,6 +240,7 @@
     "cpfInvalid": "Invalid CPF format or length."
   },
   "settings": {
+    "tabsAriaLabel": "Settings navigation tabs",
     "retention": {
       "title": "PDF Retention",
       "description": "Configure how many days the platform will keep the encrypted PDF available for download by the recipient (between 1 and 15 days). After this period, the file will be permanently deleted, leaving only metadata.",

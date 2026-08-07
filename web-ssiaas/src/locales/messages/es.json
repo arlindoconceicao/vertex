@@ -240,6 +240,7 @@
     "cpfInvalid": "El formato o la longitud del CPF no son válidos."
   },
   "settings": {
+    "tabsAriaLabel": "Navegación de pestañas de configuración",
     "retention": {
       "title": "Retención de PDFs",
       "description": "Configure por cuántos días la plataforma mantendrá el PDF cifrado disponible para descarga por el destinatario (entre 1 y 15 días). Después de este período, el archivo se eliminará permanentemente, dejando solo metadatos.",

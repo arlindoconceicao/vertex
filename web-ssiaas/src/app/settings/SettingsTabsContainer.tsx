@@ -29,7 +29,7 @@ export default function SettingsTabsContainer({ user }: Props) {
     <div className="space-y-8">
       {/* Settings Navigation Tabs */}
       <div className="border-b border-gray-800">
-        <nav className="flex space-x-8" aria-label="Settings Tabs">
+        <nav className="flex space-x-8" aria-label={t("settings.tabsAriaLabel")}>
           <button
             type="button"
             onClick={() => setActiveTab("profile")}
