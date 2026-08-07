@@ -171,6 +171,7 @@
     "noSchemas": "No schemas available. Create one first.",
     "holderEmail": "Holder Email Address",
     "holderEmailPlaceholder": "holder@example.com",
+    "enterFieldPlaceholder": "Enter {{field}}...",
     "expiration": "Expiration",
     "expirationDate": "Expiration Date (optional)",
     "noExpiration": "No expiration",
@@ -205,6 +206,7 @@
     "revokedAt": "Revoked on"
   },
   "verify": {
+    "expirationDate": "Expiration Date",
     "jsonPayloadTab": "JSON Payload (W3C)",
     "pdfHashTab": "PDF Hash (Proof of Existence)",
     "proofOfExistenceMetadata": "Proof of Existence (Metadata)",
@@ -307,7 +309,11 @@
     "schemaRequired": "Please select a schema.",
     "holderRequired": "Please specify a holder email.",
     "issueFailed": "Failed to issue credential.",
-    "didRequired": "You must register a DID before issuing credentials. Go to Settings."
+    "didRequired": "You must register a DID before issuing credentials. Go to Settings.",
+    "fieldRequired": "Field \"{{field}}\" is required.",
+    "noUserWithEmail": "No user found with this email.",
+    "schemaNotFound": "Schema not found.",
+    "futureExpiration": "Expiration date must be in the future."
   },
   "captcha": {
     "question": "Security Check: How much is {{a}} + {{b}}?",

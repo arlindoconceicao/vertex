@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON in metadata field" }, { status: 400 });
   }
 
-  const { requestId, issuerDid, recipientDid, timestamp, pdfHash, schemaId } = metadata;
+  const { requestId, issuerDid, recipientDid, timestamp, pdfHash, schemaId, expirationDate } = metadata;
 
   if (!requestId || typeof requestId !== "string") {
     return NextResponse.json(
@@ -94,7 +94,8 @@ export async function POST(request: NextRequest) {
           recipientDid,
           timestamp,
           schemaId,
-          pdfHash
+          pdfHash,
+          expirationDate
         },
         pdfFile: pdfBuffer,
         pdfHash: pdfHash || null,

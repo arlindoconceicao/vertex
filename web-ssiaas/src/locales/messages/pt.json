@@ -171,6 +171,7 @@
     "noSchemas": "Nenhum esquema disponível. Crie um primeiro.",
     "holderEmail": "Endereço de e-mail do titular",
     "holderEmailPlaceholder": "titular@exemplo.com",
+    "enterFieldPlaceholder": "Informe {{field}}...",
     "expiration": "Expiração",
     "expirationDate": "Data de expiração (opcional)",
     "noExpiration": "Sem expiração",
@@ -205,6 +206,7 @@
     "revokedAt": "Revogada em"
   },
   "verify": {
+    "expirationDate": "Data de Expiração",
     "jsonPayloadTab": "JSON Payload (W3C)",
     "pdfHashTab": "PDF Hash (Proof of Existence)",
     "proofOfExistenceMetadata": "Proof of Existence (Metadados)",
@@ -307,7 +309,11 @@
     "schemaRequired": "Selecione um esquema.",
     "holderRequired": "Informe o e-mail do titular.",
     "issueFailed": "Não foi possível emitir a credencial.",
-    "didRequired": "Você precisa registrar um DID antes de emitir credenciais. Vá para Configurações."
+    "didRequired": "Você precisa registrar um DID antes de emitir credenciais. Vá para Configurações.",
+    "fieldRequired": "O campo \"{{field}}\" é obrigatório.",
+    "noUserWithEmail": "Nenhum usuário foi encontrado com este e-mail.",
+    "schemaNotFound": "Esquema não encontrado.",
+    "futureExpiration": "A data de expiração deve ser no futuro."
   },
   "captcha": {
     "question": "Verificação de Segurança: Quanto é {{a}} + {{b}}?",

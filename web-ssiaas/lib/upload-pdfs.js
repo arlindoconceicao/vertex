@@ -192,7 +192,8 @@ async function main() {
         recipientDid: recipientDid,
         timestamp: new Date().toISOString(),
         pdfHash: pdfHash,
-        schemaId: request.unsignedPayload.credentialSchema?.id || "N/A"
+        schemaId: request.unsignedPayload.credentialSchema?.id || "N/A",
+        expirationDate: request.unsignedPayload.expirationDate || null
     };
 
     // 6. Enviar via form-data

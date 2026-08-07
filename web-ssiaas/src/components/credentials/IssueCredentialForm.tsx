@@ -67,7 +67,7 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
         const raw = fieldValues[field.name] ?? "";
 
         if (field.required && !raw.trim()) {
-          setError(`Field "${field.name}" is required.`);
+          setError(t("errors.fieldRequired", { field: field.name }));
           return;
         }
 
@@ -97,12 +97,19 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
           router.push(`/credentials/${result.credentialId}?view=issued`);
         }, 1500);
       } else {
-        const errKey =
-          result.error === "You must register a DID before issuing credentials. Go to Settings." ||
-          result.error?.includes("register a DID")
-            ? "errors.didRequired"
-            : null;
-        setError(errKey ? t(errKey) : result.error || t("errors.issueFailed"));
+        let errKey = "errors.issueFailed";
+        if (result.error?.includes("register a DID")) {
+          errKey = "errors.didRequired";
+        } else if (result.error === "No user found with this email.") {
+          errKey = "errors.noUserWithEmail";
+        } else if (result.error === "Schema not found.") {
+          errKey = "errors.schemaNotFound";
+        } else if (result.error === "Expiration date must be in the future.") {
+          errKey = "errors.futureExpiration";
+        } else if (result.error === "Unauthorized.") {
+          errKey = "errors.unauthorized";
+        }
+        setError(t(errKey));
       }
     });
   }
@@ -209,7 +216,7 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
                     onChange={(e) =>
                       setFieldValues({ ...fieldValues, [field.name]: e.target.value })
                     }
-                    placeholder={`Enter ${field.name}...`}
+                    placeholder={t("credentials.enterFieldPlaceholder", { field: field.name })}
                     className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                   />
                 )}

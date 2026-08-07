@@ -125,17 +125,24 @@ async function main() {
 
     const issuedAt = new Date().toISOString();
     
+    const issueOptions = {
+      credentialId: request.requestId,
+      issuedAt: issuedAt,
+      visiblePaths: visiblePaths
+    };
+    
+    if (request.unsignedPayload.expirationDate) {
+      issueOptions.expirationDate = request.unsignedPayload.expirationDate;
+      issueOptions.expiresAt = request.unsignedPayload.expirationDate;
+    }
+    
     const signedCredential = core.walletIssueCredentialFromSchema(
       walletPath,
       walletPassword,
       activeDidData.did,
       schema,
       credentialData,
-      {
-        credentialId: request.requestId,
-        issuedAt: issuedAt,
-        visiblePaths: visiblePaths
-      }
+      issueOptions
     );
 
     const pdfBaseBuffer = Buffer.from(
