@@ -209,7 +209,9 @@
     "expirationDate": "Data de Expiração",
     "jsonPayloadTab": "JSON Payload (W3C)",
     "pdfHashTab": "PDF Hash (Proof of Existence)",
-    "proofOfExistenceMetadata": "Proof of Existence (Metadados)",
+    "proofOfExistenceMetadata": "Prova de Existência (Metadados)",
+    "chooseFile": "Escolher arquivo",
+    "noFileSelected": "Nenhum arquivo selecionado",
     "pastePdfHash": "Cole o Hash (SHA-256) do PDF Original",
     "pdfHashPlaceholder": "ex: 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "noCredentialFoundForHash": "Nenhuma credencial encontrada para este hash de PDF.",
@@ -227,7 +229,15 @@
     "schemaStructure": "Estrutura do Esquema",
     "pdfUploadTab": "Upload de PDF",
     "uploadPdfLabel": "Selecione o arquivo PDF sem criptografia para verificação",
-    "pdfPrivacyWarning": "A verificação por PDF expõe os dados momentaneamente para validação criptográfica (SSI), mas a plataforma não armazena nenhuma informação e descarta o arquivo imediatamente após o processamento."
+    "pdfPrivacyWarning": "A verificação por PDF expõe os dados momentaneamente para validação criptográfica (SSI), mas a plataforma não armazena nenhuma informação e descarta o arquivo imediatamente após o processamento.",
+    "errors": {
+      "selectPdfFile": "Por favor, selecione um arquivo PDF.",
+      "provideValidHash": "Por favor, informe um Hash de PDF válido.",
+      "verificationFailed": "Falha no processo de verificação.",
+      "invalidSignature": "A assinatura do PDF não é válida ou foi adulterada.",
+      "issuerNotRegistered": "O DID do emissor não está registrado na plataforma.",
+      "invalidPdfManifest": "PDF inválido ou manifesto SSI não encontrado."
+    }
   },
   "auth": {
     "signInTitle": "Entrar no Vertex SSIaaS",

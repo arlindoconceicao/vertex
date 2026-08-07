@@ -77,18 +77,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (!issuer || !issuer.didDocument) {
-      return NextResponse.json({ valid: false, errors: ["Issuer DID not registered in platform."] }, { status: 200 });
+      return NextResponse.json({ valid: false, errors: ["ISSUER_NOT_REGISTERED"] }, { status: 200 });
     }
 
     let verification;
     try {
       verification = core.verifySignedCredentialPdf(buffer, issuer.didDocument as object);
     } catch (e) {
-      return NextResponse.json({ valid: false, errors: ["Verification failed cryptographically."] }, { status: 200 });
+      return NextResponse.json({ valid: false, errors: ["INVALID_SIGNATURE"] }, { status: 200 });
     }
 
     if (!verification || !verification.valid) {
-      return NextResponse.json({ valid: false, errors: ["A assinatura do PDF não é válida ou foi adulterada."] }, { status: 200 });
+      return NextResponse.json({ valid: false, errors: ["INVALID_SIGNATURE"] }, { status: 200 });
     }
 
     // Se houver schemaId no manifest, buscamos a estrutura
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!credential) {
-        return NextResponse.json({ valid: false, errors: ["Nenhuma credencial encontrada para este hash de PDF."] }, { status: 200 });
+        return NextResponse.json({ valid: false, errors: ["NO_CREDENTIAL_FOUND"] }, { status: 200 });
       }
 
       if (credential.status === "REVOKED") {

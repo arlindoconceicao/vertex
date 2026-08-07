@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslation } from "@/locales/LanguageContext";
 import VerifierForm from "@/components/verifier/VerifierForm";
 import Footer from "@/components/Footer";
+import PublicLanguageSelector from "@/components/PublicLanguageSelector";
 
 export default function VerifyClientView() {
   const { t } = useTranslation();
@@ -33,12 +34,15 @@ export default function VerifyClientView() {
                 {t("common.appName")}
               </span>
             </div>
-            <Link
-              href="/login"
-              className="text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              {t("common.login")}
-            </Link>
+            <div className="flex items-center gap-4">
+              <PublicLanguageSelector />
+              <Link
+                href="/login"
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                {t("common.login")}
+              </Link>
+            </div>
           </div>
         </header>
 

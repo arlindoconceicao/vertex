@@ -210,6 +210,8 @@
     "jsonPayloadTab": "Charge utile JSON (W3C)",
     "pdfHashTab": "Empreinte PDF (preuve d'existence)",
     "proofOfExistenceMetadata": "Preuve d'existence (métadonnées)",
+    "chooseFile": "Choisir un fichier",
+    "noFileSelected": "Aucun fichier sélectionné",
     "pastePdfHash": "Collez l'empreinte du PDF original (SHA-256)",
     "pdfHashPlaceholder": "e.g. 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "noCredentialFoundForHash": "Aucune attestation trouvée pour cette empreinte PDF.",
@@ -227,7 +229,15 @@
     "schemaStructure": "Structure du schéma",
     "pdfUploadTab": "Téléversement du PDF",
     "uploadPdfLabel": "Sélectionnez le fichier PDF non chiffré à vérifier",
-    "pdfPrivacyWarning": "La vérification via PDF expose momentanément les données pour la validation cryptographique (SSI), mais la plateforme ne stocke aucune information et supprime immédiatement le fichier après traitement."
+    "pdfPrivacyWarning": "La vérification via PDF expose momentanément les données pour la validation cryptographique (SSI), mais la plateforme ne stocke aucune information et supprime immédiatement le fichier après traitement.",
+    "errors": {
+      "selectPdfFile": "Veuillez sélectionner un fichier PDF.",
+      "provideValidHash": "Veuillez fournir une empreinte PDF valide.",
+      "verificationFailed": "Échec du processus de vérification.",
+      "invalidSignature": "La signature du PDF n'est pas valide ou a été altérée.",
+      "issuerNotRegistered": "Le DID de l'émetteur n'est pas enregistré sur la plateforme.",
+      "invalidPdfManifest": "PDF non valide ou manifeste SSI introuvable."
+    }
   },
   "auth": {
     "signInTitle": "Se connecter à Vertex SSIaaS",

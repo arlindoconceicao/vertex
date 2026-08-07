@@ -33,7 +33,7 @@ export default function VerifierForm() {
         let response;
         if (mode === "pdf") {
           if (!fileInput) {
-            setParseError("Please select a PDF file.");
+            setParseError(t("verify.errors.selectPdfFile"));
             return;
           }
           const formData = new FormData();
@@ -45,7 +45,7 @@ export default function VerifierForm() {
           });
         } else {
           if (!hashInput.trim()) {
-            setParseError("Please provide a valid PDF Hash.");
+            setParseError(t("verify.errors.provideValidHash"));
             return;
           }
           response = await fetch("/api/verifier/verify", {
@@ -60,7 +60,7 @@ export default function VerifierForm() {
         if (response.ok) {
           setResult(data as VerifyResult);
         } else {
-          setParseError(data.error ?? "Verification failed.");
+          setParseError(data.error ?? t("verify.errors.verificationFailed"));
         }
         
         // Reset the captcha for the next verification
@@ -110,20 +110,28 @@ export default function VerifierForm() {
         </label>
         {mode === "pdf" ? (
           <div>
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  setFileInput(e.target.files[0]);
-                } else {
-                  setFileInput(null);
-                }
-                setResult(null);
-                setParseError(null);
-              }}
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-900 file:text-indigo-300 hover:file:bg-indigo-800"
-            />
+            <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-xl p-2.5">
+              <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow shrink-0">
+                <span>{t("verify.chooseFile")}</span>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setFileInput(e.target.files[0]);
+                    } else {
+                      setFileInput(null);
+                    }
+                    setResult(null);
+                    setParseError(null);
+                  }}
+                  className="hidden"
+                />
+              </label>
+              <span className="text-sm text-gray-300 font-mono truncate">
+                {fileInput ? fileInput.name : t("verify.noFileSelected")}
+              </span>
+            </div>
             <p className="mt-2 text-xs text-gray-400 flex items-start gap-1.5 bg-gray-900/50 p-3 rounded-lg">
               <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -195,12 +203,18 @@ export default function VerifierForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   <p className="text-sm text-red-300">
-                    {err === "Nenhuma credencial encontrada para este hash de PDF." 
+                    {err === "Nenhuma credencial encontrada para este hash de PDF." || err === "NO_CREDENTIAL_FOUND"
                       ? t("verify.noCredentialFoundForHash") 
                       : err === "REVOKED_CREDENTIAL"
                       ? result.revokedAt
                         ? t("verify.revokedWithDate", { date: new Date(result.revokedAt).toLocaleString(dateLocale) })
                         : t("verify.revoked")
+                      : err === "INVALID_SIGNATURE" || err === "A assinatura do PDF não é válida ou foi adulterada."
+                      ? t("verify.errors.invalidSignature")
+                      : err === "ISSUER_NOT_REGISTERED" || err === "Issuer DID not registered in platform."
+                      ? t("verify.errors.issuerNotRegistered")
+                      : err.includes("Invalid PDF") || err === "INVALID_PDF_MANIFEST"
+                      ? t("verify.errors.invalidPdfManifest")
                       : err}
                   </p>
                 </div>

@@ -14,22 +14,17 @@ export default async function AppLanguageProvider({ children }: AppLanguageProvi
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
 
-  let activeLocale = "en";
+  let activeLocale = cookieLocale || "en";
 
-  // Unauthenticated users (login screen) are strictly forced to English ("en")
   if (session?.user?.id) {
-    let userLanguage: string | undefined = cookieLocale;
-
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { language: true },
     });
 
     if (user?.language) {
-      userLanguage = user.language;
+      activeLocale = user.language;
     }
-
-    activeLocale = userLanguage || "en";
   }
 
   const availableLanguages = getAvailableLanguages();
