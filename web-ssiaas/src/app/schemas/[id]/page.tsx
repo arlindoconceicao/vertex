@@ -26,6 +26,7 @@ export default async function SchemaDetailPage({ params }: PageProps) {
       jsonSchema: true,
       createdAt: true,
       creatorId: true,
+      pinataFileId: true,
       creator: { select: { id: true, name: true } },
     },
   });
@@ -37,11 +38,13 @@ export default async function SchemaDetailPage({ params }: PageProps) {
   }
 
   const isMine = schema.creatorId === session.user.id;
+  const gatewayUrl = process.env.GATEWAY_PINATA || "gateway.pinata.cloud";
 
   return (
     <SchemaDetailClientView
       schema={schema}
       isMine={isMine}
+      gatewayUrl={gatewayUrl}
     />
   );
 }

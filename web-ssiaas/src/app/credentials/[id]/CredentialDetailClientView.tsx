@@ -210,14 +210,14 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
             <div className="bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4">
               <p className="text-xs text-gray-500 mb-1">{t("dashboard.tabs.issuedOn")}</p>
               <p className="text-sm text-white" suppressHydrationWarning>
-                {new Date(credential.issuedAt).toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric" })}
+                {new Date(credential.issuedAt).toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}
               </p>
             </div>
             <div className="bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4">
               <p className="text-xs text-gray-500 mb-1">{t("dashboard.tabs.expiresOn")}</p>
               <p className="text-sm text-white" suppressHydrationWarning>
                 {credential.expiresAt
-                  ? new Date(credential.expiresAt).toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric" })
+                  ? new Date(credential.expiresAt).toLocaleDateString(dateLocale, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
                   : t("dashboard.tabs.noExpiration")}
               </p>
             </div>

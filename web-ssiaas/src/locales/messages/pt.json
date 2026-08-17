@@ -134,8 +134,8 @@
     "createdBy": "Criado por",
     "ipfsCid": "CID do IPFS",
     "publishedOn": "Publicado em",
-    "credentialFields": "Campos da credencial",
-    "rawJsonSchema": "Esquema JSON bruto",
+    "credentialFields": "Campos da Credencial",
+    "rawJsonSchema": "JSON Schema Bruto",
     "required": "obrigatório",
     "searchPlaceholder": "Buscar esquemas por nome ou ID...",
     "noSearchResults": "Nenhum esquema encontrado para a sua busca.",
@@ -149,7 +149,9 @@
     "filterPublic": "Esquemas Públicos",
     "filterPrivate": "Meus Esquemas Privados",
     "makePublic": "Tornar Público",
-    "makePrivate": "Tornar Privado"
+    "makePrivate": "Tornar Privado",
+    "pinataFileId": "Pinata File ID",
+    "consultaIpfs": "Consulta IPFS"
   },
   "credentials": {
     "credentialSummary": "Resumo da Credencial",

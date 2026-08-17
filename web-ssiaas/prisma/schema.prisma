@@ -79,6 +79,7 @@ model User {
   credentialsIssued   VerifiableCredential[] @relation("IssuerRelation")
   credentialsReceived VerifiableCredential[] @relation("HolderRelation")
   didPairingChallenges DidPairingChallenge[]
+  didSearchChallenges  DidSearchChallenge[]
   accounts            Account[]
   sessions            Session[]
 
@@ -103,6 +104,9 @@ model CredentialSchema {
 
   // CID do IPFS — sem @unique, pois conteúdos idênticos geram o mesmo hash
   ipfsCid     String?
+
+  // ID administrativo retornado pelo Pinata
+  pinataFileId String?
 
   // Marca o momento em que o schema foi publicado no IPFS
   publishedAt DateTime?
@@ -215,4 +219,28 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// Status de um desafio de busca de DID
+enum DidSearchStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+// Desafio criptográfico para o App Mobile buscar DIDs
+model DidSearchChallenge {
+  id           String          @id @default(cuid())
+  nonce        String
+  requesterId  String
+  status       DidSearchStatus @default(PENDING)
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime        @default(now())
+
+  requester    User            @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId, status])
+  @@index([expiresAt])
+  @@map("did_search_challenges")
 }

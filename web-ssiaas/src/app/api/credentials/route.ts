@@ -171,8 +171,10 @@ export async function POST(request: NextRequest) {
 
   let parsedExpiresAt: Date | null = null;
 
-  if (expiresAt !== undefined) {
-    const date = new Date(expiresAt as string);
+  if (expiresAt !== undefined && expiresAt !== null && expiresAt !== "") {
+    const raw = String(expiresAt).trim();
+    const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T23:59:59.999Z` : raw;
+    const date = new Date(dateStr);
 
     if (isNaN(date.getTime())) {
       return NextResponse.json(

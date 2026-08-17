@@ -13,6 +13,7 @@ type SchemaDetailProps = {
     visibility: "PUBLIC" | "PRIVATE";
     storageLocation: "LOCAL" | "IPFS";
     ipfsCid: string | null;
+    pinataFileId: string | null;
     publishedAt: Date | null;
     jsonSchema: any;
     createdAt: Date;
@@ -20,9 +21,10 @@ type SchemaDetailProps = {
     creator: { id: string; name: string | null };
   };
   isMine: boolean;
+  gatewayUrl: string;
 };
 
-export default function SchemaDetailClientView({ schema, isMine }: SchemaDetailProps) {
+export default function SchemaDetailClientView({ schema, isMine, gatewayUrl }: SchemaDetailProps) {
   const { t, locale } = useTranslation();
   const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
   const isPublished = schema.publishedAt !== null;
@@ -72,7 +74,7 @@ export default function SchemaDetailClientView({ schema, isMine }: SchemaDetailP
             {isMine ? t("schemas.createdByYou") : `${t("schemas.createdBy")} ${schema.creator.name}`}
             {" · "}
             <span suppressHydrationWarning>
-              {new Date(schema.createdAt).toLocaleDateString(dateLocale)}
+              {new Date(schema.createdAt).toLocaleDateString(dateLocale, { timeZone: "UTC" })}
             </span>
           </p>
         </div>
@@ -87,11 +89,31 @@ export default function SchemaDetailClientView({ schema, isMine }: SchemaDetailP
 
         {schema.ipfsCid && (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-            <p className="text-xs text-gray-500 mb-1">{t("schemas.ipfsCid")}</p>
-            <p className="text-sm text-indigo-400 font-mono break-all">{schema.ipfsCid}</p>
-            <p className="text-xs text-gray-600 mt-2" suppressHydrationWarning>
-              {t("schemas.publishedOn")} {new Date(schema.publishedAt!).toLocaleDateString(dateLocale)}
-            </p>
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 mb-1">{t("schemas.pinataFileId")}</p>
+              <p className="text-sm text-indigo-400 font-mono break-all">{schema.pinataFileId}</p>
+            </div>
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 mb-1">{t("schemas.ipfsCid")}</p>
+              <p className="text-sm text-indigo-400 font-mono break-all">{schema.ipfsCid}</p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              <a 
+                href={`https://${gatewayUrl}/ipfs/${schema.ipfsCid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                {t("schemas.consultaIpfs")}
+              </a>
+              <p className="text-xs text-gray-600" suppressHydrationWarning>
+                {t("schemas.publishedOn")} {new Date(schema.publishedAt!).toLocaleDateString(dateLocale, { timeZone: "UTC" })}
+              </p>
+            </div>
           </div>
         )}
 

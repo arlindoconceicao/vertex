@@ -149,7 +149,9 @@
     "filterPublic": "Esquemas Públicos",
     "filterPrivate": "Mis Esquemas Privados",
     "makePublic": "Hacer Público",
-    "makePrivate": "Hacer Privado"
+    "makePrivate": "Hacer Privado",
+    "pinataFileId": "Pinata File ID",
+    "consultaIpfs": "View in IPFS"
   },
   "credentials": {
     "credentialSummary": "Resumen de Credencial",

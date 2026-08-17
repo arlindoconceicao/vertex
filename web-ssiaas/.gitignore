@@ -30,6 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+
 # env files (can opt-in for committing if needed)
 .env
 .env.*
@@ -45,3 +46,8 @@ next-env.d.ts
 /src/generated/prisma
 
 prisma/migrations/dev.db
+PAREAMENTO_DID_RECOMENDACOES.md
+Tutorial-IPFS-PINATA.pdf
+
+
+

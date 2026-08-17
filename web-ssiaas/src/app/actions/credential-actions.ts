@@ -67,7 +67,9 @@ export async function issueCredential(
   // Valida expiresAt se informado
   let parsedExpires: Date | null = null;
   if (expiresAt) {
-    const date = new Date(expiresAt);
+    const raw = expiresAt.trim();
+    const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T23:59:59.999Z` : raw;
+    const date = new Date(dateStr);
     if (isNaN(date.getTime()) || date <= new Date()) {
       return { success: false, error: "Expiration date must be in the future." };
     }

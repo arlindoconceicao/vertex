@@ -149,7 +149,9 @@
     "filterAll": "Tous les schémas",
     "filterMine": "Mes schémas",
     "filterPublic": "Schémas publics",
-    "filterPrivate": "Mes schémas privés"
+    "filterPrivate": "Mes schémas privés",
+    "pinataFileId": "Pinata File ID",
+    "consultaIpfs": "View in IPFS"
   },
   "credentials": {
     "credentialSummary": "Résumé de l'attestation",

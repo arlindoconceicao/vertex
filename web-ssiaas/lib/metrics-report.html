@@ -28,7 +28,7 @@
       <strong>💻 Informações da Máquina:</strong>
       <ul>
         <li><strong>Sistema Operacional:</strong> Linux 7.0.0-28-generic (x64)</li>
-        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 1379MHz)</li>
+        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 871MHz)</li>
         <li><strong>Memória RAM:</strong> 15 GB</li>
       </ul>
       <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
@@ -36,7 +36,7 @@
       <ul>
         <li><strong>Iterações (Computadas):</strong> 100</li>
         <li><strong>Iterações de Warmup (Ignoradas por thread):</strong> 5</li>
-        <li><strong>Threads simultâneas:</strong> 1</li>
+        <li><strong>Threads simultâneas:</strong> 10</li>
       </ul>
       <p style="font-size: 0.85em; color: #555;"><i>* Todos os tempos estão listados em milissegundos (ms). As estatísticas representam a Média ± Desvio Padrão.</i></p>
     </div>
@@ -52,47 +52,47 @@
       <tbody>
         <tr>
           <td class="col-header">1. Construir Esquema (createSchemaFromAttributes)</td>
-          <td>0.279 ± 0.019</td><td>0.282 ± 0.020</td><td>0.286 ± 0.016</td>
+          <td>1.031 ± 0.190</td><td>1.017 ± 0.220</td><td>0.983 ± 0.172</td>
         </tr>
         <tr>
           <td class="col-header">2. Emitir Credencial (walletIssueCredentialFromSchema)</td>
-          <td>440.273 ± 25.984</td><td>478.126 ± 10.929</td><td>528.198 ± 9.860</td>
+          <td>1676.575 ± 217.171</td><td>1735.886 ± 220.848</td><td>1946.043 ± 255.856</td>
         </tr>
         <tr>
           <td class="col-header">3. Verificar Credencial JSON (verifySignedCredential)</td>
-          <td>36.032 ± 1.826</td><td>73.619 ± 1.284</td><td>125.913 ± 0.693</td>
+          <td>129.349 ± 20.465</td><td>246.800 ± 26.585</td><td>427.732 ± 46.671</td>
         </tr>
         <tr>
           <td class="col-header">4. Construir PDF Base (signedCredentialToPdf)</td>
-          <td>3.355 ± 0.269</td><td>4.375 ± 0.119</td><td>5.431 ± 0.052</td>
+          <td>15.137 ± 3.020</td><td>18.881 ± 3.856</td><td>23.578 ± 4.826</td>
         </tr>
         <tr>
           <td class="col-header">5. Embutir & Assinar PDF (walletEmbedSignedCredentialInPdf)</td>
-          <td>478.126 ± 32.005</td><td>537.812 ± 40.449</td><td>610.948 ± 26.346</td>
+          <td>1814.889 ± 306.655</td><td>1861.776 ± 224.706</td><td>2118.585 ± 296.791</td>
         </tr>
         <tr>
           <td class="col-header">6. Encapsular Segredo (mlkemEncapsulate)</td>
-          <td>1.583 ± 0.182</td><td>2.020 ± 0.168</td><td>2.602 ± 0.100</td>
+          <td>7.316 ± 9.547</td><td>8.010 ± 1.380</td><td>10.218 ± 2.068</td>
         </tr>
         <tr>
           <td class="col-header">7. Cifrar PDF (aes256GcmEncrypt)</td>
-          <td>3.202 ± 0.259</td><td>3.916 ± 0.174</td><td>4.716 ± 0.171</td>
+          <td>15.824 ± 3.913</td><td>19.750 ± 3.676</td><td>23.702 ± 5.376</td>
         </tr>
         <tr>
           <td class="col-header">8. Decapsular Segredo (walletMlkemDecapsulate)</td>
-          <td>398.952 ± 8.264</td><td>396.762 ± 4.623</td><td>396.347 ± 2.542</td>
+          <td>1612.396 ± 239.344</td><td>1534.923 ± 195.038</td><td>1524.180 ± 237.614</td>
         </tr>
         <tr>
           <td class="col-header">9. Decifrar Arquivo (aes256GcmDecrypt)</td>
-          <td>3.155 ± 0.208</td><td>3.846 ± 0.082</td><td>4.675 ± 0.058</td>
+          <td>13.183 ± 2.586</td><td>15.426 ± 4.027</td><td>18.855 ± 5.009</td>
         </tr>
         <tr>
           <td class="col-header">10. Verificar PDF Assinado (verifySignedCredentialPdf)</td>
-          <td>74.848 ± 2.076</td><td>151.548 ± 2.388</td><td>258.217 ± 2.149</td>
+          <td>271.325 ± 38.248</td><td>513.071 ± 60.448</td><td>863.194 ± 91.162</td>
         </tr>
         <tr>
           <td class="col-header">11. Extrair Manifesto do PDF (extractCredentialManifestFromPdf)</td>
-          <td>0.635 ± 0.041</td><td>0.780 ± 0.107</td><td>0.952 ± 0.161</td>
+          <td>2.774 ± 0.915</td><td>3.035 ± 0.701</td><td>3.703 ± 0.647</td>
         </tr>
       </tbody>
     </table>

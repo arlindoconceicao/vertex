@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSI-PQ Benchmark de Tamanhos (Payload Escalável)</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+    h1, h2 { text-align: center; color: #2c3e50; }
+    .container { max-width: 1400px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+    th, td { padding: 10px; text-align: center; border-bottom: 1px solid #ddd; font-size: 14px; }
+    th { background-color: #34495e; color: #fff; }
+    tr:hover { background-color: #f1f1f1; }
+    .col-header { text-align: left; font-weight: bold; background-color: #e8f4f8; }
+    .desc { font-size: 0.85em; color: #777; display: block; }
+    .header-level { background-color: #2980b9 !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Benchmark de Tamanho de Payloads</h1>
+    <p style="text-align:center;">Impacto no tamanho das assinaturas e PDFs gerados à medida que o conteúdo original cresce de 1KB até 1MB.</p>
+    
+    
+    <h2>Level 1 (128-bit) <br><span style="font-size: 16px; font-weight: normal; color: #555;">(ML-DSA-44 / ML-KEM-512)</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="header-level">Payload Alvo</th>
+          <th class="header-level">JSON Original</th>
+          <th class="header-level">Schema JSON</th>
+          <th class="header-level">JSON Assinado</th>
+          <th class="header-level">PDF Base (Visual)</th>
+          <th class="header-level">PDF Embutido (Final)</th>
+          <th class="header-level">PDF Cifrado (AES-GCM)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="col-header">1 KB</td>
+          <td>1.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 21%</span></td>
+          <td>6.89 KB<br><span class="desc">vs Original: 679%</span></td>
+          <td>13.28 KB<br><span class="desc">vs Schema: 6297%</span></td>
+          <td>26.57 KB<br><span class="desc">vs JSON Ass: 386%</span></td>
+          <td>26.57 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">2 KB</td>
+          <td>2.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 10%</span></td>
+          <td>7.89 KB<br><span class="desc">vs Original: 392%</span></td>
+          <td>16.49 KB<br><span class="desc">vs Schema: 7818%</span></td>
+          <td>30.78 KB<br><span class="desc">vs JSON Ass: 390%</span></td>
+          <td>30.78 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">3 KB</td>
+          <td>3.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 7%</span></td>
+          <td>8.89 KB<br><span class="desc">vs Original: 295%</span></td>
+          <td>19.23 KB<br><span class="desc">vs Schema: 9115%</span></td>
+          <td>34.51 KB<br><span class="desc">vs JSON Ass: 388%</span></td>
+          <td>34.51 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">4 KB</td>
+          <td>4.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 5%</span></td>
+          <td>9.89 KB<br><span class="desc">vs Original: 246%</span></td>
+          <td>21.96 KB<br><span class="desc">vs Schema: 10409%</span></td>
+          <td>38.24 KB<br><span class="desc">vs JSON Ass: 387%</span></td>
+          <td>38.24 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">5 KB</td>
+          <td>5.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 4%</span></td>
+          <td>10.89 KB<br><span class="desc">vs Original: 217%</span></td>
+          <td>24.70 KB<br><span class="desc">vs Schema: 11707%</span></td>
+          <td>41.98 KB<br><span class="desc">vs JSON Ass: 386%</span></td>
+          <td>41.98 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">10 KB</td>
+          <td>10.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 2%</span></td>
+          <td>15.89 KB<br><span class="desc">vs Original: 159%</span></td>
+          <td>38.39 KB<br><span class="desc">vs Schema: 18198%</span></td>
+          <td>60.67 KB<br><span class="desc">vs JSON Ass: 382%</span></td>
+          <td>60.67 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">25 KB</td>
+          <td>25.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 1%</span></td>
+          <td>30.89 KB<br><span class="desc">vs Original: 123%</span></td>
+          <td>79.63 KB<br><span class="desc">vs Schema: 37751%</span></td>
+          <td>116.92 KB<br><span class="desc">vs JSON Ass: 378%</span></td>
+          <td>116.92 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">50 KB</td>
+          <td>50.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>55.89 KB<br><span class="desc">vs Original: 112%</span></td>
+          <td>148.38 KB<br><span class="desc">vs Schema: 70345%</span></td>
+          <td>210.67 KB<br><span class="desc">vs JSON Ass: 377%</span></td>
+          <td>210.67 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">100 KB</td>
+          <td>100.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>105.89 KB<br><span class="desc">vs Original: 106%</span></td>
+          <td>286.36 KB<br><span class="desc">vs Schema: 135758%</span></td>
+          <td>398.66 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>398.66 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">250 KB</td>
+          <td>250.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>255.89 KB<br><span class="desc">vs Original: 102%</span></td>
+          <td>700.86 KB<br><span class="desc">vs Schema: 332259%</span></td>
+          <td>963.15 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>963.15 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">500 KB</td>
+          <td>500.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>505.89 KB<br><span class="desc">vs Original: 101%</span></td>
+          <td>1391.66 KB<br><span class="desc">vs Schema: 659752%</span></td>
+          <td>1903.96 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>1903.96 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">1.0 MB</td>
+          <td>1024.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>1029.89 KB<br><span class="desc">vs Original: 101%</span></td>
+          <td>2844.81 KB<br><span class="desc">vs Schema: 1348652%</span></td>
+          <td>3881.11 KB<br><span class="desc">vs JSON Ass: 377%</span></td>
+          <td>3881.11 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+    <h2>Level 3 (192-bit) <br><span style="font-size: 16px; font-weight: normal; color: #555;">(ML-DSA-65 / ML-KEM-768)</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="header-level">Payload Alvo</th>
+          <th class="header-level">JSON Original</th>
+          <th class="header-level">Schema JSON</th>
+          <th class="header-level">JSON Assinado</th>
+          <th class="header-level">PDF Base (Visual)</th>
+          <th class="header-level">PDF Embutido (Final)</th>
+          <th class="header-level">PDF Cifrado (AES-GCM)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="col-header">1 KB</td>
+          <td>1.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 21%</span></td>
+          <td>8.90 KB<br><span class="desc">vs Original: 877%</span></td>
+          <td>15.57 KB<br><span class="desc">vs Schema: 7380%</span></td>
+          <td>32.87 KB<br><span class="desc">vs JSON Ass: 369%</span></td>
+          <td>32.87 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">2 KB</td>
+          <td>2.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 10%</span></td>
+          <td>9.90 KB<br><span class="desc">vs Original: 491%</span></td>
+          <td>18.77 KB<br><span class="desc">vs Schema: 8900%</span></td>
+          <td>37.08 KB<br><span class="desc">vs JSON Ass: 375%</span></td>
+          <td>37.08 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">3 KB</td>
+          <td>3.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 7%</span></td>
+          <td>10.90 KB<br><span class="desc">vs Original: 362%</span></td>
+          <td>21.51 KB<br><span class="desc">vs Schema: 10197%</span></td>
+          <td>40.82 KB<br><span class="desc">vs JSON Ass: 374%</span></td>
+          <td>40.82 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">4 KB</td>
+          <td>4.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 5%</span></td>
+          <td>11.90 KB<br><span class="desc">vs Original: 296%</span></td>
+          <td>24.24 KB<br><span class="desc">vs Schema: 11492%</span></td>
+          <td>44.55 KB<br><span class="desc">vs JSON Ass: 374%</span></td>
+          <td>44.55 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">5 KB</td>
+          <td>5.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 4%</span></td>
+          <td>12.90 KB<br><span class="desc">vs Original: 257%</span></td>
+          <td>26.98 KB<br><span class="desc">vs Schema: 12790%</span></td>
+          <td>48.29 KB<br><span class="desc">vs JSON Ass: 374%</span></td>
+          <td>48.29 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">10 KB</td>
+          <td>10.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 2%</span></td>
+          <td>17.90 KB<br><span class="desc">vs Original: 179%</span></td>
+          <td>40.67 KB<br><span class="desc">vs Schema: 19280%</span></td>
+          <td>66.98 KB<br><span class="desc">vs JSON Ass: 374%</span></td>
+          <td>66.98 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">25 KB</td>
+          <td>25.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 1%</span></td>
+          <td>32.90 KB<br><span class="desc">vs Original: 132%</span></td>
+          <td>81.92 KB<br><span class="desc">vs Schema: 38834%</span></td>
+          <td>123.22 KB<br><span class="desc">vs JSON Ass: 375%</span></td>
+          <td>123.22 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">50 KB</td>
+          <td>50.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>57.90 KB<br><span class="desc">vs Original: 116%</span></td>
+          <td>150.67 KB<br><span class="desc">vs Schema: 71427%</span></td>
+          <td>216.98 KB<br><span class="desc">vs JSON Ass: 375%</span></td>
+          <td>216.98 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">100 KB</td>
+          <td>100.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>107.90 KB<br><span class="desc">vs Original: 108%</span></td>
+          <td>288.65 KB<br><span class="desc">vs Schema: 136840%</span></td>
+          <td>404.96 KB<br><span class="desc">vs JSON Ass: 375%</span></td>
+          <td>404.96 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">250 KB</td>
+          <td>250.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>257.90 KB<br><span class="desc">vs Original: 103%</span></td>
+          <td>703.14 KB<br><span class="desc">vs Schema: 333341%</span></td>
+          <td>969.46 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>969.46 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">500 KB</td>
+          <td>500.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>507.90 KB<br><span class="desc">vs Original: 102%</span></td>
+          <td>1393.95 KB<br><span class="desc">vs Schema: 660834%</span></td>
+          <td>1910.26 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>1910.26 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">1.0 MB</td>
+          <td>1024.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>1031.90 KB<br><span class="desc">vs Original: 101%</span></td>
+          <td>2847.10 KB<br><span class="desc">vs Schema: 1349735%</span></td>
+          <td>3887.42 KB<br><span class="desc">vs JSON Ass: 377%</span></td>
+          <td>3887.42 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+    <h2>Level 5 (256-bit) <br><span style="font-size: 16px; font-weight: normal; color: #555;">(ML-DSA-87 / ML-KEM-1024)</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="header-level">Payload Alvo</th>
+          <th class="header-level">JSON Original</th>
+          <th class="header-level">Schema JSON</th>
+          <th class="header-level">JSON Assinado</th>
+          <th class="header-level">PDF Base (Visual)</th>
+          <th class="header-level">PDF Embutido (Final)</th>
+          <th class="header-level">PDF Cifrado (AES-GCM)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="col-header">1 KB</td>
+          <td>1.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 21%</span></td>
+          <td>11.47 KB<br><span class="desc">vs Original: 1130%</span></td>
+          <td>17.79 KB<br><span class="desc">vs Schema: 8434%</span></td>
+          <td>40.24 KB<br><span class="desc">vs JSON Ass: 351%</span></td>
+          <td>40.24 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">2 KB</td>
+          <td>2.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 10%</span></td>
+          <td>12.47 KB<br><span class="desc">vs Original: 619%</span></td>
+          <td>21.00 KB<br><span class="desc">vs Schema: 9955%</span></td>
+          <td>44.44 KB<br><span class="desc">vs JSON Ass: 356%</span></td>
+          <td>44.44 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">3 KB</td>
+          <td>3.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 7%</span></td>
+          <td>13.47 KB<br><span class="desc">vs Original: 447%</span></td>
+          <td>23.73 KB<br><span class="desc">vs Schema: 11252%</span></td>
+          <td>48.18 KB<br><span class="desc">vs JSON Ass: 358%</span></td>
+          <td>48.18 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">4 KB</td>
+          <td>4.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 5%</span></td>
+          <td>14.47 KB<br><span class="desc">vs Original: 360%</span></td>
+          <td>26.46 KB<br><span class="desc">vs Schema: 12546%</span></td>
+          <td>51.91 KB<br><span class="desc">vs JSON Ass: 359%</span></td>
+          <td>51.91 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">5 KB</td>
+          <td>5.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 4%</span></td>
+          <td>15.47 KB<br><span class="desc">vs Original: 308%</span></td>
+          <td>29.20 KB<br><span class="desc">vs Schema: 13844%</span></td>
+          <td>55.65 KB<br><span class="desc">vs JSON Ass: 360%</span></td>
+          <td>55.65 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">10 KB</td>
+          <td>10.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 2%</span></td>
+          <td>20.47 KB<br><span class="desc">vs Original: 204%</span></td>
+          <td>42.89 KB<br><span class="desc">vs Schema: 20335%</span></td>
+          <td>74.34 KB<br><span class="desc">vs JSON Ass: 363%</span></td>
+          <td>74.34 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">25 KB</td>
+          <td>25.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 1%</span></td>
+          <td>35.47 KB<br><span class="desc">vs Original: 142%</span></td>
+          <td>84.14 KB<br><span class="desc">vs Schema: 39888%</span></td>
+          <td>130.59 KB<br><span class="desc">vs JSON Ass: 368%</span></td>
+          <td>130.59 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">50 KB</td>
+          <td>50.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>60.47 KB<br><span class="desc">vs Original: 121%</span></td>
+          <td>152.89 KB<br><span class="desc">vs Schema: 72482%</span></td>
+          <td>224.34 KB<br><span class="desc">vs JSON Ass: 371%</span></td>
+          <td>224.34 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">100 KB</td>
+          <td>100.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>110.47 KB<br><span class="desc">vs Original: 110%</span></td>
+          <td>290.87 KB<br><span class="desc">vs Schema: 137895%</span></td>
+          <td>412.32 KB<br><span class="desc">vs JSON Ass: 373%</span></td>
+          <td>412.32 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">250 KB</td>
+          <td>250.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>260.47 KB<br><span class="desc">vs Original: 104%</span></td>
+          <td>705.37 KB<br><span class="desc">vs Schema: 334396%</span></td>
+          <td>976.82 KB<br><span class="desc">vs JSON Ass: 375%</span></td>
+          <td>976.82 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">500 KB</td>
+          <td>500.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>510.47 KB<br><span class="desc">vs Original: 102%</span></td>
+          <td>1396.17 KB<br><span class="desc">vs Schema: 661889%</span></td>
+          <td>1917.63 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>1917.63 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">1.0 MB</td>
+          <td>1024.01 KB</td>
+          <td>0.21 KB<br><span class="desc">vs Original: 0%</span></td>
+          <td>1034.47 KB<br><span class="desc">vs Original: 101%</span></td>
+          <td>2849.32 KB<br><span class="desc">vs Schema: 1350789%</span></td>
+          <td>3894.78 KB<br><span class="desc">vs JSON Ass: 376%</span></td>
+          <td>3894.78 KB<br><span class="desc">vs Embutido: 100.0%</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+  </div>
+</body>
+</html>

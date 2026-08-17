@@ -130,6 +130,13 @@ Para validar a integridade do fluxo de desafio e verificação criptográfica:
 node --test lib/did-pairing-flow.test.js
 ```
 
+#### 5) Gerar Documentação da Estrutura do Banco de Dados
+Para exportar a estrutura completa do PostgreSQL (tabelas, enums e descrições baseadas no Prisma) para um arquivo HTML fácil de visualizar e compartilhar, execute:
+```bash
+node lib/generate-db-docs.js
+```
+> O arquivo será gerado em `lib/database_structure.html`.
+
 ---
 
 ### Act 2 — Schema Creation (Schemas Module)

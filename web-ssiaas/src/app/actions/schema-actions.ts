@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { pinata } from "@/lib/pinata";
 
 export type SchemaField = {
   name: string;
@@ -69,25 +70,34 @@ export async function publishSchema(
 
   const schema = await prisma.credentialSchema.findUnique({
     where: { id: schemaId },
-    select: { creatorId: true, publishedAt: true },
+    select: { 
+      creatorId: true, 
+      publishedAt: true,
+      name: true,
+      version: true,
+      jsonSchema: true
+    },
   });
 
   if (!schema) return { success: false, error: "Schema not found." };
   if (schema.creatorId !== session.user.id) return { success: false, error: "Forbidden." };
   if (schema.publishedAt) return { success: false, error: "Already published." };
 
-  // Mock IPFS CID — mesmo gerador da rota de API
-  const base58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  let cid = "Qm";
-  for (let i = 0; i < 44; i++) {
-    cid += base58[Math.floor(Math.random() * base58.length)];
-  }
-
   try {
+    const upload = await pinata.upload.public
+      .json(schema.jsonSchema as Record<string, unknown>)
+      .name(`${schema.name}-${schema.version}.json`)
+      .keyvalues({
+        resourceType: "ssi-schema",
+        schemaName: schema.name,
+        version: schema.version,
+      });
+
     await prisma.credentialSchema.update({
       where: { id: schemaId },
       data: {
-        ipfsCid: cid,
+        ipfsCid: upload.cid,
+        pinataFileId: upload.id,
         storageLocation: "IPFS",
         publishedAt: new Date(),
       },

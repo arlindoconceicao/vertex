@@ -229,7 +229,7 @@ export default function SchemasClientView({ schemas, userId }: Props) {
                     <div className="flex items-center justify-between text-xs text-gray-500 mt-auto pt-1">
                       <span>{isMine ? t("schemas.createdByYou") : `${t("schemas.createdBy")} ${schema.creator.name}`}</span>
                       <span suppressHydrationWarning>
-                        {new Date(schema.createdAt).toLocaleDateString(dateLocale)}
+                        {new Date(schema.createdAt).toLocaleDateString(dateLocale, { timeZone: "UTC" })}
                       </span>
                     </div>
                   </Link>

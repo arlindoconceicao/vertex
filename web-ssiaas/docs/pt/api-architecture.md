@@ -657,10 +657,68 @@ Resolves a DID and returns its W3C DID Document.
   ],
   "authentication": ["did:ssipq:zFpb7WX2S2M5GCL4NYufwkcY9dw6yVfiDhTx699hzLJaj#key-1"]
 }
+}
 ```
 
 ---
 
+### `POST /api/dids/search/challenge`
+
+Gera um desafio criptográfico (nonce) que deve ser assinado pelo aplicativo móvel para provar a posse da chave privada do DID, antes de realizar a busca de outro usuário.
+
+**Headers**
+| Header | Tipo | Descrição |
+|---|---|---|
+| `Authorization` | `string` | Bearer token (HMAC-SHA256 do DID usando SIGNER_SECRET) |
+
+**Request Body**
+```json
+{
+  "requesterId": "user123"
+}
+```
+
+**Response `201`**
+```json
+{
+  "id": "chal123",
+  "nonce": "Aleatorio123...",
+  "expiresAt": "2026-04-01T00:05:00Z"
+}
+```
+
+---
+
+### `GET /api/dids/search`
+
+Busca o DID e o Documento DID de um usuário pelo seu `cpf` ou `email`. Exige a resolução do desafio previamente gerado para garantir a autenticidade e evitar vazamento de dados.
+
+**Headers**
+| Header | Tipo | Descrição |
+|---|---|---|
+| `Authorization` | `string` | Bearer token (HMAC-SHA256 do DID usando SIGNER_SECRET) |
+| `x-requester-id` | `string` | ID do usuário solicitante (App Mobile) |
+| `x-challenge-id` | `string` | ID do desafio recebido anteriormente |
+| `x-challenge-signature` | `string` | Assinatura ML-DSA-65 do nonce |
+
+**Query Parameters**
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `cpf` | `string` | CPF do usuário alvo (Opcional se usar email) |
+| `email` | `string` | Email do usuário alvo (Opcional se usar CPF) |
+
+**Response `200`**
+```json
+{
+  "did": "did:ssipq:zFpb7...",
+  "didDocument": {
+    "@context": ["https://www.w3.org/ns/did/v1"],
+    "id": "did:ssipq:zFpb7..."
+  }
+}
+```
+
+---
 ## 7. Verifier
 
 ---

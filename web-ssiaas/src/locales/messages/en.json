@@ -135,6 +135,8 @@
     "createdByYou": "Created by you",
     "createdBy": "Created by",
     "ipfsCid": "IPFS CID",
+    "pinataFileId": "Pinata File ID",
+    "consultaIpfs": "View in IPFS",
     "publishedOn": "Published on",
     "credentialFields": "Credential Fields",
     "rawJsonSchema": "Raw JSON Schema",

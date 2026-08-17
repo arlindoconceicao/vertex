@@ -1,0 +1,739 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estrutura do Banco de Dados - Vertex SSIaaS</title>
+  <style>
+    :root { --bg: #0f172a; --text: #e2e8f0; --card: #1e293b; --border: #334155; --accent: #6366f1; --highlight: #818cf8; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 2rem; }
+    h1 { color: #fff; text-align: center; margin-bottom: 2rem; }
+    h2 { color: var(--highlight); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-top: 2.5rem; }
+    .table-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .table-desc { color: #94a3b8; font-style: italic; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+    th { background-color: rgba(0,0,0,0.2); color: #cbd5e1; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+    tr:last-child td { border-bottom: none; }
+    .field-name { font-weight: 600; color: #fff; }
+    .field-type { color: var(--highlight); font-family: monospace; font-size: 0.9rem; }
+    .field-desc { color: #94a3b8; font-size: 0.95rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(99, 102, 241, 0.2); color: var(--highlight); font-size: 0.75rem; margin-left: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Estrutura do Banco de Dados (PostgreSQL)</h1>
+  <p style="text-align: center; color: #94a3b8; margin-top: -1.5rem; margin-bottom: 3rem;">Documentação gerada automaticamente a partir do Prisma Schema</p>
+<h2>Tabelas Principais</h2>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">User</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">name</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">email</td>
+          <td class="field-type">String<span class="badge">@unique</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">emailVerified</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">image</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">cpf</td>
+          <td class="field-type">String?<span class="badge">@unique</span></td>
+          <td class="field-desc">Opcional — preenchido apenas após o primeiro login</td>
+        </tr>
+        <tr>
+          <td class="field-name">did</td>
+          <td class="field-type">String?<span class="badge">@unique</span></td>
+          <td class="field-desc">DID (Decentralized Identifier) do usuário no padrão SSI</td>
+        </tr>
+        <tr>
+          <td class="field-name">didPublicKey</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">[DEPRECATED] — Usar didDocument. A chave ML-DSA pode ser extraída de lá. Chave pública ML-DSA (multibase) associada à DID, usada para verificar assinaturas e montar o DID Document (W3C)</td>
+        </tr>
+        <tr>
+          <td class="field-name">didMlkemKey</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">Chave pública ML-KEM (multibase) associada à DID, usada para cifragem e encapsulamento de segredos pós-quânticos</td>
+        </tr>
+        <tr>
+          <td class="field-name">didDocument</td>
+          <td class="field-type">Json?</td>
+          <td class="field-desc">Documento DID completo emitido pelo wallet/signer, já contendo as chaves ML-DSA/ML-KEM e demais metadados necessários.</td>
+        </tr>
+        <tr>
+          <td class="field-name">didPairedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">Timestamp de quando o pareamento foi concluído com sucesso.</td>
+        </tr>
+        <tr>
+          <td class="field-name">language</td>
+          <td class="field-type">String<span class="badge">@default("en")</span></td>
+          <td class="field-desc">Idioma preferido do usuário ("en", "pt", etc.)</td>
+        </tr>
+        <tr>
+          <td class="field-name">pdfRetentionDays</td>
+          <td class="field-type">Int<span class="badge">@default(7)</span></td>
+          <td class="field-desc">Quantidade de dias que a plataforma deve reter o PDF após assinatura configurado pelo emissor (1 a 15)</td>
+        </tr>
+        <tr>
+          <td class="field-name">createdAt</td>
+          <td class="field-type">DateTime<span class="badge">@default(now())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">updatedAt</td>
+          <td class="field-type">DateTime<span class="badge">@updatedAt</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">schemasCreated</td>
+          <td class="field-type">CredentialSchema[]</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">credentialsIssued</td>
+          <td class="field-type">VerifiableCredential[]<span class="badge">@relation("IssuerRelation")</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">credentialsReceived</td>
+          <td class="field-type">VerifiableCredential[]<span class="badge">@relation("HolderRelation")</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">didPairingChallenges</td>
+          <td class="field-type">DidPairingChallenge[]</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">didSearchChallenges</td>
+          <td class="field-type">DidSearchChallenge[]</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">accounts</td>
+          <td class="field-type">Account[]</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">sessions</td>
+          <td class="field-type">Session[]</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">CredentialSchema</h3>
+    <p class="table-desc">Define a "estrutura" de uma credencial.</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">name</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">description</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">version</td>
+          <td class="field-type">String<span class="badge">@default("1.0")</span></td>
+          <td class="field-desc">Versão simples — sem cadeia de parentId/children</td>
+        </tr>
+        <tr>
+          <td class="field-name">visibility</td>
+          <td class="field-type">SchemaVisibility<span class="badge">@default(PRIVATE)</span></td>
+          <td class="field-desc">PRIVATE por padrão; o criador pode torná-lo PUBLIC depois</td>
+        </tr>
+        <tr>
+          <td class="field-name">storageLocation</td>
+          <td class="field-type">StorageLocation<span class="badge">@default(LOCAL)</span></td>
+          <td class="field-desc">Onde este schema está armazenado</td>
+        </tr>
+        <tr>
+          <td class="field-name">ipfsCid</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">CID do IPFS — sem @unique, pois conteúdos idênticos geram o mesmo hash</td>
+        </tr>
+        <tr>
+          <td class="field-name">pinataFileId</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">ID administrativo retornado pelo Pinata</td>
+        </tr>
+        <tr>
+          <td class="field-name">publishedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">Marca o momento em que o schema foi publicado no IPFS</td>
+        </tr>
+        <tr>
+          <td class="field-name">jsonSchema</td>
+          <td class="field-type">Json</td>
+          <td class="field-desc">Estrutura JSON que define os campos exigidos pela credencial</td>
+        </tr>
+        <tr>
+          <td class="field-name">createdAt</td>
+          <td class="field-type">DateTime<span class="badge">@default(now())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">updatedAt</td>
+          <td class="field-type">DateTime<span class="badge">@updatedAt</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">creatorId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">creator</td>
+          <td class="field-type">User<span class="badge">@relation(fields: [creatorId], references: [id])</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">VerifiableCredential</h3>
+    <p class="table-desc">A credencial em si: já preenchida e emitida para um Holder. Segue a estrutura W3C VC Data Model.</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">vcPayload</td>
+          <td class="field-type">Json</td>
+          <td class="field-desc">Payload W3C/JSON-LD completo (usado enquanto PENDING). Após assinatura, é substituído pelos metadados da credencial.</td>
+        </tr>
+        <tr>
+          <td class="field-name">metadata</td>
+          <td class="field-type">Json?</td>
+          <td class="field-desc">Metadados extraídos e mantidos permanentemente</td>
+        </tr>
+        <tr>
+          <td class="field-name">pdfFile</td>
+          <td class="field-type">Bytes?</td>
+          <td class="field-desc">Arquivo PDF cifrado armazenado após o callback</td>
+        </tr>
+        <tr>
+          <td class="field-name">pdfHash</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">Hash SHA-256 do arquivo original decifrado</td>
+        </tr>
+        <tr>
+          <td class="field-name">status</td>
+          <td class="field-type">VCStatus<span class="badge">@default(PENDING)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">issuedAt</td>
+          <td class="field-type">DateTime<span class="badge">@default(now())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expiresAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">pdfDownloadedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">revokedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">issuerId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">issuer</td>
+          <td class="field-type">User<span class="badge">@relation("IssuerRelation", fields: [issuerId], references: [id])</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">holderId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">holder</td>
+          <td class="field-type">User<span class="badge">@relation("HolderRelation", fields: [holderId], references: [id])</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">DidPairingChallenge</h3>
+    <p class="table-desc">Desafio para parear a conta de um usuário com um DID gerado em um aplicativo assinador externo (ex: app móvel).</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">userId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">cpf</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">email</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">pairingId</td>
+          <td class="field-type">String<span class="badge">@unique</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">nonce</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">status</td>
+          <td class="field-type">DidPairingStatus<span class="badge">@default(PENDING)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expiresAt</td>
+          <td class="field-type">DateTime</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">usedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">createdAt</td>
+          <td class="field-type">DateTime<span class="badge">@default(now())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">user</td>
+          <td class="field-type">User<span class="badge">@relation(fields: [userId], references: [id], onDelete: Cascade)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">Account</h3>
+    <p class="table-desc">MODELS ABAIXO: Gerados automaticamente pelo @auth/prisma-adapter</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">userId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">type</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">provider</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">providerAccountId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">refresh_token</td>
+          <td class="field-type">String?<span class="badge">@db.Text</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">access_token</td>
+          <td class="field-type">String?<span class="badge">@db.Text</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expires_at</td>
+          <td class="field-type">Int?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">token_type</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">scope</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">id_token</td>
+          <td class="field-type">String?<span class="badge">@db.Text</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">session_state</td>
+          <td class="field-type">String?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">user</td>
+          <td class="field-type">User<span class="badge">@relation(fields: [userId], references: [id], onDelete: Cascade)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">Session</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">sessionToken</td>
+          <td class="field-type">String<span class="badge">@unique</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">userId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expires</td>
+          <td class="field-type">DateTime</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">user</td>
+          <td class="field-type">User<span class="badge">@relation(fields: [userId], references: [id], onDelete: Cascade)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">VerificationToken</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">identifier</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">token</td>
+          <td class="field-type">String<span class="badge">@unique</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expires</td>
+          <td class="field-type">DateTime</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.5rem;">DidSearchChallenge</h3>
+    <p class="table-desc">Desafio criptográfico para o App Mobile buscar DIDs</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="20%">Campo</th>
+          <th width="20%">Tipo</th>
+          <th width="60%">Descrição / Atributos</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name">id</td>
+          <td class="field-type">String<span class="badge">@id @default(cuid())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">nonce</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">requesterId</td>
+          <td class="field-type">String</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">status</td>
+          <td class="field-type">DidSearchStatus<span class="badge">@default(PENDING)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">expiresAt</td>
+          <td class="field-type">DateTime</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">usedAt</td>
+          <td class="field-type">DateTime?</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">createdAt</td>
+          <td class="field-type">DateTime<span class="badge">@default(now())</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name">requester</td>
+          <td class="field-type">User<span class="badge">@relation(fields: [requesterId], references: [id], onDelete: Cascade)</span></td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div><h2>Tipos Enumerados (Enums)</h2>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.25rem;">Enum: VCStatus</h3>
+    <p class="table-desc">Ciclo de vida de uma VC (baseado no W3C VC Status List)</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Valor</th>
+          <th width="70%">Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">PENDING</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">ACTIVE</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">REVOKED</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.25rem;">Enum: SchemaVisibility</h3>
+    <p class="table-desc">Visibilidade de um schema: PRIVATE → visível apenas para o criador (padrão de nascimento) PUBLIC  → o criador optou por torná-lo um template para a comunidade</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Valor</th>
+          <th width="70%">Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">PRIVATE</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">PUBLIC</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.25rem;">Enum: StorageLocation</h3>
+    <p class="table-desc">Onde o conteúdo do schema está armazenado. Usado apenas por CredentialSchema — credenciais NUNCA vão para o IPFS.</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Valor</th>
+          <th width="70%">Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">LOCAL</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">IPFS</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.25rem;">Enum: DidPairingStatus</h3>
+    <p class="table-desc">Status de um desafio de pareamento de DID</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Valor</th>
+          <th width="70%">Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">PENDING</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">COMPLETED</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">EXPIRED</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">CANCELLED</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-card">
+    <h3 style="margin-top: 0; color: #fff; font-size: 1.25rem;">Enum: DidSearchStatus</h3>
+    <p class="table-desc">Status de um desafio de busca de DID</p>
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Valor</th>
+          <th width="70%">Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">PENDING</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">COMPLETED</td>
+          <td class="field-desc">-</td>
+        </tr>
+        <tr>
+          <td class="field-name" style="color: var(--highlight)">EXPIRED</td>
+          <td class="field-desc">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

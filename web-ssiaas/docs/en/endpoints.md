@@ -12,6 +12,8 @@ This document records the endpoints available on the SSI platform, organized by 
 ## DIDs (Decentralized Identifiers)
 - **`POST /api/dids`**: Creates a new Decentralized Identifier (DID).
 - **`GET /api/dids/[id]`**: Resolves a DID and returns its respective DID Document (W3C DID Document) in JSON format, exposing the public keys.
+- **`POST /api/dids/search/challenge`**: (M2M Integration) Generates a cryptographic challenge (nonce) associated with the Mobile App's DID (`requesterId`) for identity proof. Requires `SIGNER_SECRET` Bearer token authentication.
+- **`GET /api/dids/search`**: (M2M Integration) Searches for a DID Document using the `cpf` or `email` provided as a Query Parameter. Requires `x-requester-id`, `x-challenge-id`, and `x-challenge-signature` headers to validate that the mobile app solved the previously issued challenge and possesses the correct private key.
 
 ## Users
 - **`GET /api/users/search`**: Performs a strict search for a user in the system (often used for exact search by CPF when selecting a recipient for a credential).

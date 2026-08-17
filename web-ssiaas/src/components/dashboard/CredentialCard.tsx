@@ -77,13 +77,13 @@ export default function CredentialCard({ credential, perspective }: Props) {
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span suppressHydrationWarning>
           {t("dashboard.card.issuedOn", {
-            date: new Date(credential.issuedAt).toLocaleDateString(dateLocale),
+            date: new Date(credential.issuedAt).toLocaleDateString(dateLocale, { timeZone: "UTC" }),
           })}
         </span>
         {credential.expiresAt ? (
           <span suppressHydrationWarning>
             {t("dashboard.card.expiresOn", {
-              date: new Date(credential.expiresAt).toLocaleDateString(dateLocale),
+              date: new Date(credential.expiresAt).toLocaleDateString(dateLocale, { timeZone: "UTC" }),
             })}
           </span>
         ) : (
