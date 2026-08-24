@@ -5,6 +5,7 @@ import { useTranslation } from "@/locales/LanguageContext";
 import DidPairingComponent from "./DidPairingComponent";
 import LanguageSettingsTab from "./LanguageSettingsTab";
 import RetentionSettingsComponent from "./RetentionSettingsComponent";
+import DidDocumentTab from "./DidDocumentTab";
 
 type Props = {
   user: {
@@ -18,12 +19,13 @@ type Props = {
     issuerIdentifier?: string | null;
     pdfRetentionDays: number;
     bearerToken?: string | null;
+    didDocument?: any;
   };
 };
 
 export default function SettingsTabsContainer({ user }: Props) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"profile" | "language" | "platform">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "language" | "platform" | "document">("profile");
 
   return (
     <div className="space-y-8">
@@ -104,6 +106,27 @@ export default function SettingsTabsContainer({ user }: Props) {
             </svg>
             {t("settings.tabs.platform")}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("document")}
+            className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === "document"
+                ? "border-indigo-500 text-indigo-400 font-semibold"
+                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            {t("settings.tabs.document")}
+          </button>
         </nav>
       </div>
 
@@ -176,6 +199,8 @@ export default function SettingsTabsContainer({ user }: Props) {
         </div>
       ) : activeTab === "language" ? (
         <LanguageSettingsTab />
+      ) : activeTab === "document" ? (
+        <DidDocumentTab didDocument={user.didDocument} />
       ) : activeTab === "platform" ? (
         <div className="space-y-8">
           <RetentionSettingsComponent initialDays={user.pdfRetentionDays} />

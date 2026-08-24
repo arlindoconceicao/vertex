@@ -67,6 +67,7 @@ export default async function SettingsPage() {
     didPublicKey: user?.didPublicKey || null,
     didMlkemKey: user?.didMlkemKey || null,
     didPairedAt: user?.didPairedAt ? user.didPairedAt.toISOString() : null,
+    didDocument: user?.didDocument || null,
     issuerIdentifier,
     pdfRetentionDays: user?.pdfRetentionDays || 7,
     bearerToken,

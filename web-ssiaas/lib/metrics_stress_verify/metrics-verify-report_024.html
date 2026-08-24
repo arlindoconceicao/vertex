@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSI-PQ Verify Stress Test</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+    h1, h2 { text-align: center; color: #2c3e50; }
+    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { padding: 12px 15px; text-align: center; border-bottom: 1px solid #ddd; }
+    th { background-color: #34495e; color: #fff; text-transform: uppercase; font-size: 14px; }
+    tr:hover { background-color: #f1f1f1; }
+    .col-header { text-align: left; font-weight: bold; }
+    .desc { font-size: 0.85em; color: #666; display: block; }
+    .info-bar { background-color: #eef; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+    .info-bar ul { list-style: none; padding-left: 0; margin: 5px 0 0; }
+    .info-bar li { margin-bottom: 5px; }
+    .highlight { font-size: 1.2em; font-weight: bold; color: #27ae60; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resultados de Stress Test: Verificação de PDF (SSI-PQ)</h1>
+    <div class="info-bar">
+      <strong>💻 Informações da Máquina:</strong>
+      <ul>
+        <li><strong>Sistema Operacional:</strong> Linux 7.0.0-29-generic (x64)</li>
+        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 950MHz)</li>
+        <li><strong>Memória RAM:</strong> 15 GB</li>
+      </ul>
+      <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+      <strong>⚙️ Parâmetros do Teste:</strong>
+      <ul>
+        <li><strong>Iterações de Verificação:</strong> 1000</li>
+        <li><strong>Iterações de Warmup:</strong> 10</li>
+        <li><strong>Threads simultâneas:</strong> 24</li>
+        <li><strong>Tempo Total (Wall-clock):</strong> 274.533 segundos</li>
+      </ul>
+      <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
+      <strong>📊 Recursos do Sistema (Monitoramento Ativo):</strong>
+      <ul>
+        <li><strong>Memória RAM Utilizada:</strong> Média: 9813.903 MB | Min: 9315.840 MB | Max: 9915.258 MB | Desvio: ± 77.780 MB</li>
+        <li><strong>Uso de CPU por Núcleo:</strong><br>
+          <div style="font-size: 0.9em; margin-top: 5px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 5px;">
+            <span>Núcleo 0: <b>99.131%</b></span><span>Núcleo 1: <b>99.057%</b></span><span>Núcleo 2: <b>97.086%</b></span><span>Núcleo 3: <b>99.651%</b></span><span>Núcleo 4: <b>97.110%</b></span><span>Núcleo 5: <b>99.944%</b></span><span>Núcleo 6: <b>97.786%</b></span><span>Núcleo 7: <b>99.610%</b></span><span>Núcleo 8: <b>98.873%</b></span><span>Núcleo 9: <b>98.858%</b></span><span>Núcleo 10: <b>99.114%</b></span><span>Núcleo 11: <b>99.323%</b></span>
+          </div>
+        </li>
+      </ul>
+      <p style="font-size: 0.85em; color: #555; margin-top: 15px;"><i>* Os tempos listados estão em milissegundos (ms) e o throughput em verificações por segundo (vps).</i></p>
+    </div>
+    
+    <h2>Métricas de Verificação (verifySignedCredentialPdf)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nível de Segurança</th>
+          <th>Tempo Médio por PDF (ms)</th>
+          <th>Tempo Total por Nível (s)</th>
+          <th>Throughput (Verificações / seg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="col-header">
+            Level 1 (128-bit)<br><span class="desc">ML-DSA-44 / ML-KEM-512</span>
+          </td>
+          <td>651.962 ± 274.810</td>
+          <td>35.908</td>
+          <td class="highlight">27.849</td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">
+            Level 3 (192-bit)<br><span class="desc">ML-DSA-65 / ML-KEM-768</span>
+          </td>
+          <td>1334.132 ± 509.964</td>
+          <td>72.157</td>
+          <td class="highlight">13.859</td>
+        </tr>
+        
+        <tr>
+          <td class="col-header">
+            Level 5 (256-bit)<br><span class="desc">ML-DSA-87 / ML-KEM-1024</span>
+          </td>
+          <td>2010.494 ± 800.550</td>
+          <td>94.995</td>
+          <td class="highlight">10.527</td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

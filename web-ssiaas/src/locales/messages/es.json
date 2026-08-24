@@ -10,7 +10,7 @@
     "trueVal": "True",
     "falseVal": "False",
     "profileAlt": "Profile",
-    "appName": "Vertex SSIaaS",
+    "appName": "VeriFile",
     "dashboard": "Panel",
     "settings": "Configuración",
     "logout": "Cerrar sesión",
@@ -242,7 +242,7 @@
     }
   },
   "auth": {
-    "signInTitle": "Iniciar sesión en Vertex SSIaaS",
+    "signInTitle": "Iniciar sesión en VeriFile",
     "signInGoogle": "Iniciar sesión con Google",
     "completeProfileTitle": "Completa tu perfil",
     "completeProfileSubtitle": "El CPF es obligatorio para emitir y recibir credenciales verificables.",
@@ -264,7 +264,8 @@
     "tabs": {
       "profile": "Perfil e identidad",
       "language": "Idioma y preferencias",
-      "platform": "Plataforma"
+      "platform": "Plataforma",
+      "document": "Documento DID"
     },
     "profileSection": {
       "title": "Información del perfil",
@@ -284,6 +285,12 @@
       "autoDiscoveryNotice": "Los idiomas disponibles se detectan automáticamente a partir de los archivos de configuración regional del sistema.",
       "changeSuccess": "La preferencia de idioma se actualizó correctamente.",
       "changeError": "No se pudo actualizar la preferencia de idioma."
+    },
+    "documentSection": {
+      "title": "Documento Descentralizado (DID Document)",
+      "subtitle": "Este es su documento DID W3C que contiene las claves públicas.",
+      "empty": "No se encontró ningún documento DID. Empareje su aplicación móvil en la pestaña Perfil.",
+      "copy": "Copiar JSON"
     }
   },
   "didPairing": {

@@ -26,25 +26,25 @@
     <div class="info-bar">
       <strong>💻 Informações da Máquina:</strong>
       <ul>
-        <li><strong>Sistema Operacional:</strong> Linux 7.0.0-28-generic (x64)</li>
-        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 458MHz)</li>
+        <li><strong>Sistema Operacional:</strong> Linux 7.0.0-29-generic (x64)</li>
+        <li><strong>Processador:</strong> 12th Gen Intel(R) Core(TM) i5-12450H (12 cores, 1014MHz)</li>
         <li><strong>Memória RAM:</strong> 15 GB</li>
       </ul>
       <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
       <strong>⚙️ Parâmetros do Teste:</strong>
       <ul>
         <li><strong>Iterações de Verificação:</strong> 1000</li>
-        <li><strong>Iterações de Warmup:</strong> 5</li>
+        <li><strong>Iterações de Warmup:</strong> 10</li>
         <li><strong>Threads simultâneas:</strong> 230</li>
-        <li><strong>Tempo Total (Wall-clock):</strong> 357.354 segundos</li>
+        <li><strong>Tempo Total (Wall-clock):</strong> 1122.432 segundos</li>
       </ul>
       <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
       <strong>📊 Recursos do Sistema (Monitoramento Ativo):</strong>
       <ul>
-        <li><strong>Memória RAM Utilizada:</strong> Média: 14445.451 MB | Min: 8719.438 MB | Max: 15583.523 MB | Desvio: ± 1072.745 MB</li>
+        <li><strong>Memória RAM Utilizada:</strong> Média: 12295.309 MB | Min: 6232.320 MB | Max: 14070.656 MB | Desvio: ± 1082.080 MB</li>
         <li><strong>Uso de CPU por Núcleo:</strong><br>
           <div style="font-size: 0.9em; margin-top: 5px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 5px;">
-            <span>Núcleo 0: <b>99.883%</b></span><span>Núcleo 1: <b>99.854%</b></span><span>Núcleo 2: <b>99.759%</b></span><span>Núcleo 3: <b>99.878%</b></span><span>Núcleo 4: <b>99.806%</b></span><span>Núcleo 5: <b>99.879%</b></span><span>Núcleo 6: <b>99.913%</b></span><span>Núcleo 7: <b>99.766%</b></span><span>Núcleo 8: <b>99.859%</b></span><span>Núcleo 9: <b>99.864%</b></span><span>Núcleo 10: <b>99.858%</b></span><span>Núcleo 11: <b>99.862%</b></span>
+            <span>Núcleo 0: <b>99.845%</b></span><span>Núcleo 1: <b>99.930%</b></span><span>Núcleo 2: <b>99.899%</b></span><span>Núcleo 3: <b>99.879%</b></span><span>Núcleo 4: <b>99.867%</b></span><span>Núcleo 5: <b>99.980%</b></span><span>Núcleo 6: <b>99.903%</b></span><span>Núcleo 7: <b>99.876%</b></span><span>Núcleo 8: <b>99.879%</b></span><span>Núcleo 9: <b>99.888%</b></span><span>Núcleo 10: <b>99.890%</b></span><span>Núcleo 11: <b>99.890%</b></span>
           </div>
         </li>
       </ul>
@@ -57,6 +57,7 @@
         <tr>
           <th>Nível de Segurança</th>
           <th>Tempo Médio por PDF (ms)</th>
+          <th>Tempo Total por Nível (s)</th>
           <th>Throughput (Verificações / seg)</th>
         </tr>
       </thead>
@@ -66,24 +67,27 @@
           <td class="col-header">
             Level 1 (128-bit)<br><span class="desc">ML-DSA-44 / ML-KEM-512</span>
           </td>
-          <td>2552.024 ± 915.502</td>
-          <td class="highlight">30.529</td>
+          <td>6051.738 ± 2012.202</td>
+          <td>43.213</td>
+          <td class="highlight">23.141</td>
         </tr>
         
         <tr>
           <td class="col-header">
             Level 3 (192-bit)<br><span class="desc">ML-DSA-65 / ML-KEM-768</span>
           </td>
-          <td>4875.110 ± 2416.870</td>
-          <td class="highlight">14.661</td>
+          <td>12655.690 ± 2226.560</td>
+          <td>73.921</td>
+          <td class="highlight">13.528</td>
         </tr>
         
         <tr>
           <td class="col-header">
             Level 5 (256-bit)<br><span class="desc">ML-DSA-87 / ML-KEM-1024</span>
           </td>
-          <td>5472.933 ± 3361.567</td>
-          <td class="highlight">10.177</td>
+          <td>17354.451 ± 5634.793</td>
+          <td>114.813</td>
+          <td class="highlight">8.710</td>
         </tr>
         
       </tbody>

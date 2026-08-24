@@ -145,7 +145,8 @@ if (isMainThread) {
       
       finalResults[params.id] = {
         t_verifyPdf: getStats(allVerifications),
-        throughput: throughput
+        throughput: throughput,
+        wallClockTime: maxWallClock
       };
     }
     
@@ -203,9 +204,14 @@ if (isMainThread) {
 
     // Measurement Phase
     const totalIters = warmupIters + iters;
-    const startLevel = performance.now();
+    let startLevel = performance.now(); // Fallback caso não haja iterações reais
     for (let iter = 0; iter < totalIters; iter++) {
       const isWarmup = iter < warmupIters;
+      
+      // Reseta o cronômetro exatamente quando acaba o warmup e começam as iterações reais
+      if (iter === warmupIters) {
+        startLevel = performance.now();
+      }
 
       const start = performance.now();
       core.verifySignedCredentialPdf(finalPdf, senderDidDocument);
@@ -289,6 +295,7 @@ function generateHtmlReport(res, iters, threads, warmup, sysInfo, globalTime, me
         <tr>
           <th>Nível de Segurança</th>
           <th>Tempo Médio por PDF (ms)</th>
+          <th>Tempo Total por Nível (s)</th>
           <th>Throughput (Verificações / seg)</th>
         </tr>
       </thead>
@@ -299,6 +306,7 @@ function generateHtmlReport(res, iters, threads, warmup, sysInfo, globalTime, me
             ${p.id}<br><span class="desc">${p.mldsa} / ${p.mlkem}</span>
           </td>
           <td>${f(res[p.id].t_verifyPdf.avg)} ± ${f(res[p.id].t_verifyPdf.stdDev)}</td>
+          <td>${f(res[p.id].wallClockTime)}</td>
           <td class="highlight">${f(res[p.id].throughput)}</td>
         </tr>
         `).join('')}
