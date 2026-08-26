@@ -20,10 +20,14 @@ type Props = {
     pdfRetentionDays: number;
     bearerToken?: string | null;
     didDocument?: any;
+    didIpfsCid?: string | null;
+    didPinataFileId?: string | null;
+    didPublishedAt?: string | null;
   };
+  gatewayUrl: string;
 };
 
-export default function SettingsTabsContainer({ user }: Props) {
+export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"profile" | "language" | "platform" | "document">("profile");
 
@@ -200,7 +204,13 @@ export default function SettingsTabsContainer({ user }: Props) {
       ) : activeTab === "language" ? (
         <LanguageSettingsTab />
       ) : activeTab === "document" ? (
-        <DidDocumentTab didDocument={user.didDocument} />
+        <DidDocumentTab
+          didDocument={user.didDocument}
+          didIpfsCid={user.didIpfsCid}
+          didPinataFileId={user.didPinataFileId}
+          didPublishedAt={user.didPublishedAt}
+          gatewayUrl={gatewayUrl}
+        />
       ) : activeTab === "platform" ? (
         <div className="space-y-8">
           <RetentionSettingsComponent initialDays={user.pdfRetentionDays} />

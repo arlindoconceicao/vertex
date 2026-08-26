@@ -1,24 +1,25 @@
 # IPFS Integration with Pinata
 
-This document explains how the SSI Platform integrates with IPFS (InterPlanetary File System) using Pinata to host Credential Schemas.
+This document explains how the SSI Platform integrates with IPFS (InterPlanetary File System) using Pinata to host Credential Schemas and DID Documents.
 
 ## Overview
 
-Verifiable Credentials (VCs) rely on data schemas (JSON Schema) to define their structure. For interoperability, these schemas are published to the public IPFS network. The platform uses the Pinata SDK to upload these schemas without running a dedicated IPFS node.
+Verifiable Credentials (VCs) rely on data schemas (JSON Schema) to define their structure. In addition, the SSI architecture requires users' public keys to be available on the network via DID Documents. For interoperability and immutability, both schemas and DID documents can be published to the public IPFS network. The platform uses the Pinata SDK to upload these JSON files without running a dedicated IPFS node.
 
 ## Implementation Details
 
 1. **Database Schema:**
-   The `CredentialSchema` model in Prisma stores:
-   - `ipfsCid`: The content identifier used for cryptographic resolution in the SSI ecosystem.
-   - `pinataFileId`: The administrative ID used for managing the file via Pinata API.
-   - `storageLocation`: An enum indicating whether the file is `LOCAL` or on `IPFS`.
+   In Prisma, we use the following fields:
+   - For `CredentialSchema`: `ipfsCid`, `pinataFileId`, and `storageLocation`.
+   - For `User` (regarding the DID Document): `didIpfsCid`, `didPinataFileId`, and `didPublishedAt`.
 
 2. **Backend Server Action:**
-   In `src/app/actions/schema-actions.ts`, the `publishSchema` function utilizes `src/lib/pinata.ts` to push the JSON object to the Pinata public gateway. The schema is marked as a public file and appended with metadata `keyvalues` (`resourceType: ssi-schema`).
+   - In `src/app/actions/schema-actions.ts`, the `publishSchema` function pushes the schema to the Pinata gateway with the metadata `keyvalues` configured as `resourceType: ssi-schema`.
+   - In `src/app/actions/did-actions.ts`, the `publishDidDocumentToIpfs` function performs the same operation for the users' DID documents (metadata: `resourceType: did-document`).
 
 3. **Frontend Integration:**
-   When a schema is published, the user interface (`SchemaDetailClientView.tsx`) displays the Pinata File ID, the IPFS CID, and a button to view the raw JSON schema directly via the dedicated gateway (`https://{GATEWAY_URL}/ipfs/{CID}`).
+   - When a **schema** is published, the user interface (`SchemaDetailClientView.tsx`) displays the Pinata File ID, the IPFS CID, and the link for viewing.
+   - Similarly, when a user's **DID Document** is published, the DID Document tab in settings (`DidDocumentTab.tsx`) displays these technical details and provides a link for public consultation (`https://{GATEWAY_URL}/ipfs/{CID}`).
 
 ## Environment Configuration
 

@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 6. Search for the target user's DID
-    const whereClause = cpf ? { cpf: cpf.replace(/\D/g, "") } : { email };
+    const whereClause = cpf ? { cpf: cpf.replace(/\D/g, "") } : { email: email as string };
 
     const targetUser = await prisma.user.findFirst({
       where: whereClause,

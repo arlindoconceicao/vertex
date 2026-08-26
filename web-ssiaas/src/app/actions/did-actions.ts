@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { pinata } from "@/lib/pinata";
 
 type ActionResult =
   | { success: true }
@@ -81,5 +82,50 @@ export async function registerDid(
 
     console.error("[registerDid] Error:", error);
     return { success: false, error: "Failed to register DID." };
+  }
+}
+
+export async function publishDidDocumentToIpfs(): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { 
+      did: true, 
+      didDocument: true,
+      didPublishedAt: true
+    },
+  });
+
+  if (!user) return { success: false, error: "User not found." };
+  if (!user.did || !user.didDocument) return { success: false, error: "DID Document not found." };
+  if (user.didPublishedAt) return { success: false, error: "Already published." };
+
+  try {
+    const upload = await pinata.upload.public
+      .json(user.didDocument as Record<string, unknown>)
+      .name(`DID-${user.did}.json`)
+      .keyvalues({
+        resourceType: "did-document",
+        userDid: user.did,
+      });
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        didIpfsCid: upload.cid,
+        didPinataFileId: upload.id,
+        didPublishedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("[publishDidDocumentToIpfs] Error:", error);
+    return { success: false, error: "Failed to publish DID Document." };
   }
 }

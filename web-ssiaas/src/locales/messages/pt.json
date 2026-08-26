@@ -290,7 +290,14 @@
       "title": "Documento Descentralizado (DID Document)",
       "subtitle": "Este é o seu documento DID W3C que contém as chaves públicas.",
       "empty": "Nenhum documento DID encontrado. Por favor, faça o pareamento do seu aplicativo móvel na aba Perfil.",
-      "copy": "Copiar JSON"
+      "copy": "Copiar JSON",
+      "publishToIpfs": "Publicar no IPFS",
+      "publishing": "Publicando...",
+      "publishedIpfs": "Publicado no IPFS",
+      "pinataFileId": "Pinata File ID",
+      "ipfsCid": "CID do IPFS",
+      "viewOnIpfs": "Consultar IPFS",
+      "publishedOn": "Publicado em"
     }
   },
   "didPairing": {

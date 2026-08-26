@@ -288,9 +288,16 @@
     },
     "documentSection": {
       "title": "Decentralized Document (DID Document)",
-      "subtitle": "This is your W3C DID document containing the public keys.",
+      "subtitle": "This is your W3C DID document containing your public keys.",
       "empty": "No DID document found. Please pair your mobile app in the Profile tab.",
-      "copy": "Copy JSON"
+      "copy": "Copy JSON",
+      "publishToIpfs": "Publish to IPFS",
+      "publishing": "Publishing...",
+      "publishedIpfs": "Published to IPFS",
+      "pinataFileId": "Pinata File ID",
+      "ipfsCid": "IPFS CID",
+      "viewOnIpfs": "View on IPFS",
+      "publishedOn": "Published on"
     }
   },
   "didPairing": {

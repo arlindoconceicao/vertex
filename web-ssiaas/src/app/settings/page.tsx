@@ -25,6 +25,9 @@ export default async function SettingsPage() {
       email: true,
       language: true,
       pdfRetentionDays: true,
+      didIpfsCid: true,
+      didPinataFileId: true,
+      didPublishedAt: true,
     },
   });
 
@@ -71,7 +74,12 @@ export default async function SettingsPage() {
     issuerIdentifier,
     pdfRetentionDays: user?.pdfRetentionDays || 7,
     bearerToken,
+    didIpfsCid: user?.didIpfsCid || null,
+    didPinataFileId: user?.didPinataFileId || null,
+    didPublishedAt: user?.didPublishedAt ? user.didPublishedAt.toISOString() : null,
   };
+
+  const gatewayUrl = process.env.GATEWAY_PINATA || "gateway.pinata.cloud";
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between">
@@ -80,7 +88,7 @@ export default async function SettingsPage() {
 
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
           <SettingsHeader />
-          <SettingsTabsContainer user={formattedUser} />
+          <SettingsTabsContainer user={formattedUser} gatewayUrl={gatewayUrl} />
         </main>
       </div>
 

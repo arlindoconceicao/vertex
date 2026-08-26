@@ -288,9 +288,16 @@
     },
     "documentSection": {
       "title": "Document Décentralisé (DID Document)",
-      "subtitle": "Ceci est votre document DID W3C contenant les clés publiques.",
-      "empty": "Aucun document DID trouvé. Veuillez coupler votre application mobile dans l'onglet Profil.",
-      "copy": "Copier JSON"
+      "subtitle": "Voici votre document DID W3C contenant les clés publiques.",
+      "empty": "Aucun document DID trouvé. Veuillez jumeler votre application mobile dans l'onglet Profil.",
+      "copy": "Copier le JSON",
+      "publishToIpfs": "Publier sur IPFS",
+      "publishing": "Publication...",
+      "publishedIpfs": "Publié sur IPFS",
+      "pinataFileId": "ID de fichier Pinata",
+      "ipfsCid": "CID IPFS",
+      "viewOnIpfs": "Voir sur IPFS",
+      "publishedOn": "Publié le"
     }
   },
   "didPairing": {

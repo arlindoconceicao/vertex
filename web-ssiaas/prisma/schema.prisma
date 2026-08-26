@@ -65,6 +65,13 @@ model User {
   // Timestamp de quando o pareamento foi concluído com sucesso.
   didPairedAt   DateTime?
 
+  // CID do IPFS para o Documento DID
+  didIpfsCid     String?
+  // ID administrativo retornado pelo Pinata
+  didPinataFileId String?
+  // Momento em que o Documento DID foi publicado no IPFS
+  didPublishedAt DateTime?
+
   // Idioma preferido do usuário ("en", "pt", etc.)
   language      String    @default("en")
 
