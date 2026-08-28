@@ -17,11 +17,11 @@ export default function CompleteRegistrationClientView({
   const { t } = useTranslation();
 
   return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-base flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
             <svg
               className="w-8 h-8 text-white"
               fill="none"
@@ -39,13 +39,13 @@ export default function CompleteRegistrationClientView({
           <h1 className="text-2xl font-bold text-white tracking-tight">
             {t("auth.completeProfileTitle")}
           </h1>
-          <p className="text-gray-400 mt-2 text-sm">
+          <p className="text-text-muted mt-2 text-sm">
             {t("auth.completeProfileSubtitle")}
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-xl">
+        <div className="bg-surface border border-border rounded-2xl p-8 shadow-xl">
           <div className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-3 mb-6">
             {userImage && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -59,7 +59,7 @@ export default function CompleteRegistrationClientView({
               <p className="text-sm font-medium text-white truncate">
                 {userName}
               </p>
-              <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+              <p className="text-xs text-text-muted truncate">{userEmail}</p>
             </div>
           </div>
 

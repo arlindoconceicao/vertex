@@ -56,7 +56,7 @@ export default function SchemaForm() {
       {/* Nome e descrição */}
       <div className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="name" className="block text-sm font-medium text-text-main mb-2">
             {t("schemas.schemaName")}
           </label>
           <input
@@ -65,11 +65,11 @@ export default function SchemaForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("schemas.schemaNamePlaceholder")}
-            className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            className="w-full bg-surface border border-border text-text-main placeholder-text-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition"
           />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-text-main mb-2">
             {t("schemas.description")}
           </label>
           <textarea
@@ -78,7 +78,7 @@ export default function SchemaForm() {
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t("schemas.descriptionPlaceholder")}
             rows={3}
-            className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
+            className="w-full bg-surface border border-border text-text-main placeholder-text-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition resize-none"
           />
         </div>
       </div>
@@ -86,13 +86,13 @@ export default function SchemaForm() {
       {/* Campos dinâmicos do schema */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-gray-300">
+          <h3 className="text-sm font-medium text-text-main">
             {t("schemas.credentialFields")}
           </h3>
           <button
             type="button"
             onClick={addField}
-            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-xs text-primary-text hover:text-indigo-300 transition-colors cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -105,7 +105,7 @@ export default function SchemaForm() {
           {fields.map((field, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 bg-gray-800/60 border border-gray-700/50 rounded-xl px-4 py-3"
+              className="flex items-center gap-3 bg-surface-hover border border-border rounded-xl px-4 py-3"
             >
               {/* Nome do campo */}
               <input
@@ -113,7 +113,7 @@ export default function SchemaForm() {
                 value={field.name}
                 onChange={(e) => updateField(index, { name: e.target.value })}
                 placeholder={t("schemas.fieldName")}
-                className="flex-1 bg-transparent text-white placeholder-gray-500 text-sm focus:outline-none"
+                className="flex-1 bg-transparent text-text-main placeholder-text-muted text-sm focus:outline-none"
               />
 
               {/* Tipo */}
@@ -122,7 +122,7 @@ export default function SchemaForm() {
                 onChange={(e) =>
                   updateField(index, { type: e.target.value as SchemaField["type"] })
                 }
-                className="bg-gray-700 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 border-none focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="bg-base text-text-main border border-border text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-ring cursor-pointer"
               >
                 {FIELD_TYPES.map((ft) => (
                   <option key={ft} value={ft}>
@@ -137,9 +137,9 @@ export default function SchemaForm() {
                   type="checkbox"
                   checked={field.required}
                   onChange={(e) => updateField(index, { required: e.target.checked })}
-                  className="rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500 cursor-pointer"
+                  className="rounded border-border bg-base text-primary focus:ring-primary-ring cursor-pointer"
                 />
-                <span className="text-xs text-gray-400">{t("schemas.fieldRequired")}</span>
+                <span className="text-xs text-text-muted">{t("schemas.fieldRequired")}</span>
               </label>
 
               {/* Remover */}
@@ -147,7 +147,7 @@ export default function SchemaForm() {
                 <button
                   type="button"
                   onClick={() => removeField(index)}
-                  className="text-gray-600 hover:text-red-400 transition-colors cursor-pointer"
+                  className="text-text-muted hover:text-red-500 transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -161,8 +161,8 @@ export default function SchemaForm() {
 
       {/* Preview do JSON gerado */}
       <div>
-        <p className="text-xs text-gray-500 mb-2">{t("schemas.jsonPreview")}</p>
-        <pre className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-xs text-gray-400 overflow-x-auto">
+        <p className="text-xs text-text-subtle mb-2">{t("schemas.jsonPreview")}</p>
+        <pre className="bg-surface border border-border rounded-xl p-4 text-xs text-text-muted overflow-x-auto">
           {JSON.stringify({ fields }, null, 2)}
         </pre>
       </div>
@@ -172,7 +172,7 @@ export default function SchemaForm() {
         type="button"
         onClick={handleSubmit}
         disabled={isPending}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
+        className="w-full bg-primary hover:bg-primary-hover disabled:bg-indigo-900 disabled:text-primary-text disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
       >
         {isPending ? t("schemas.creating") : t("schemas.savePublish")}
       </button>

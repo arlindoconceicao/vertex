@@ -20,12 +20,12 @@ export default function IssueCredentialClientView({ schemas, initialHolderEmail 
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-gray-800 bg-gray-900">
+    <div className="min-h-screen bg-base text-text-main">
+      <header className="border-b border-border bg-surface">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-text-main transition-colors"
           >
             <svg
               className="w-4 h-4"
@@ -48,12 +48,12 @@ export default function IssueCredentialClientView({ schemas, initialHolderEmail 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">{t("credentials.issueTitle")}</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-text-muted text-sm mt-1">
             {t("credentials.issueSubtitle")}
           </p>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8">
+        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8">
           <IssueCredentialForm schemas={schemas} initialHolderEmail={initialHolderEmail} />
         </div>
       </main>

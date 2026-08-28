@@ -17,6 +17,7 @@ const SCHEMA_DETAIL_SELECT = {
   visibility: true,
   storageLocation: true,
   ipfsCid: true,
+  pinataFileId: true,
   publishedAt: true,
   jsonSchema: true,
   creator: {
@@ -55,7 +56,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Schema not found" }, { status: 404 });
     }
 
-    return NextResponse.json(schema, { status: 200 });
+    const gateway = process.env.GATEWAY_PINATA;
+    const ipfsUrl = schema.ipfsCid && gateway ? `https://${gateway}/ipfs/${schema.ipfsCid}` : null;
+
+    return NextResponse.json({ ...schema, ipfsUrl }, { status: 200 });
   } catch (error) {
     console.error("[GET /api/schemas/:id] Unexpected error:", error);
     return NextResponse.json(
@@ -201,7 +205,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       select: SCHEMA_DETAIL_SELECT,
     });
 
-    return NextResponse.json(updated, { status: 200 });
+    const gateway = process.env.GATEWAY_PINATA;
+    const ipfsUrl = updated.ipfsCid && gateway ? `https://${gateway}/ipfs/${updated.ipfsCid}` : null;
+
+    return NextResponse.json({ ...updated, ipfsUrl }, { status: 200 });
   } catch (error) {
     console.error("[PATCH /api/schemas/:id] Unexpected error:", error);
     return NextResponse.json(

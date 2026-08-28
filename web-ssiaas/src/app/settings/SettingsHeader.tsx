@@ -8,7 +8,7 @@ export default function SettingsHeader() {
   return (
     <div>
       <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
-      <p className="text-gray-400 text-sm mt-1">{t("settings.subtitle")}</p>
+      <p className="text-text-muted text-sm mt-1">{t("settings.subtitle")}</p>
     </div>
   );
 }

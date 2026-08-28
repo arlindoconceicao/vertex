@@ -12,6 +12,7 @@ const SCHEMA_LIST_SELECT = {
   visibility: true,
   storageLocation: true,
   ipfsCid: true,
+  pinataFileId: true,
   publishedAt: true,
   createdAt: true,
 } satisfies Prisma.CredentialSchemaSelect;
@@ -82,7 +83,13 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(schemas, { status: 200 });
+    const gateway = process.env.GATEWAY_PINATA;
+    const schemasWithUrl = schemas.map(schema => ({
+      ...schema,
+      ipfsUrl: schema.ipfsCid && gateway ? `https://${gateway}/ipfs/${schema.ipfsCid}` : null
+    }));
+
+    return NextResponse.json(schemasWithUrl, { status: 200 });
   } catch (error) {
     console.error("[GET /api/schemas] Unexpected error:", error);
     return NextResponse.json(

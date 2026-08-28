@@ -9,21 +9,22 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const requesterId = request.headers.get("x-requester-id");
     const challengeId = request.headers.get("x-challenge-id");
-    const signature = request.headers.get("x-challenge-signature");
+    const authCredentialBase64 = request.headers.get("x-signer-auth-credential");
 
     const cpf = request.nextUrl.searchParams.get("cpf");
     const email = request.nextUrl.searchParams.get("email");
+    const did = request.nextUrl.searchParams.get("did");
 
-    if (!requesterId || !challengeId || !signature) {
+    if (!requesterId || !challengeId || !authCredentialBase64) {
       return NextResponse.json(
-        { error: "Missing required headers (x-requester-id, x-challenge-id, x-challenge-signature)" },
+        { error: "Missing required headers (x-requester-id, x-challenge-id, x-signer-auth-credential)" },
         { status: 400 }
       );
     }
 
-    if (!cpf && !email) {
+    if (!cpf && !email && !did) {
       return NextResponse.json(
-        { error: "Missing required query parameter (cpf or email)" },
+        { error: "Missing required query parameter (cpf, email or did)" },
         { status: 400 }
       );
     }
@@ -68,50 +69,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Challenge has expired" }, { status: 400 });
     }
 
-    // 4. Verify the cryptographic signature of the nonce
-    // Extrai a chave ML-DSA do documento DID do solicitante
-    let requesterPublicKey = requester.didPublicKey;
-    if (!requesterPublicKey && requester.didDocument) {
-      const doc = requester.didDocument as any;
-      
-      // Formato SSI-PQ (keys array)
-      if (Array.isArray(doc.keys)) {
-        const k = doc.keys.find((key: any) => key.type === "mldsa" || key.type === "ML-DSA-65" || key.use === "sig");
-        if (k && (k.public_key_multibase || k.publicKeyMultibase)) {
-          requesterPublicKey = k.public_key_multibase || k.publicKeyMultibase;
-        }
-      }
-      
-      // Formato W3C (verificationMethod array)
-      if (!requesterPublicKey && Array.isArray(doc.verificationMethod)) {
-        for (const vm of doc.verificationMethod) {
-          if (vm.type === "Ed25519VerificationKey2020" && vm.publicKeyMultibase) {
-            requesterPublicKey = vm.publicKeyMultibase;
-            break;
-          }
-        }
-      }
+    // 4. Decode and Verify the Proof of Possession (VC)
+    const authCredentialJson = Buffer.from(authCredentialBase64, 'base64').toString('utf-8');
+    const authCredential = JSON.parse(authCredentialJson);
+
+    if (!authCredential || !authCredential.credential || !authCredential.credential.issuer_did) {
+      return NextResponse.json({ error: "Invalid auth credential structure" }, { status: 400 });
     }
 
-    if (!requesterPublicKey) {
-      return NextResponse.json({ error: "Requester does not have a public key to verify signature" }, { status: 400 });
+    if (authCredential.credential.issuer_did !== requester.did) {
+      return NextResponse.json({ error: "Credential issuer does not match requester DID" }, { status: 403 });
+    }
+
+    if (!requester.didDocument) {
+      return NextResponse.json({ error: "Requester has no DID document registered" }, { status: 400 });
     }
 
     const core = getSsiPqCore();
-    const normalizedPubKey = normalizeMldsaPublicKey(requesterPublicKey);
-    const messageBuffer = Buffer.from(challenge.nonce, "utf-8");
-
-    // "did-search-challenge" context or similar
-    const isValidSignature = core.mldsaVerify(
-      "ML-DSA-65",
-      normalizedPubKey,
-      messageBuffer,
-      "did-search-challenge",
-      signature
-    );
+    let isValidSignature = false;
+    try {
+      isValidSignature = core.verifySignedCredential(authCredential, requester.didDocument as object);
+    } catch (err) {
+      console.warn("Credential verification threw error:", err);
+    }
 
     if (!isValidSignature) {
-      return NextResponse.json({ error: "Invalid challenge signature" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid challenge credential signature" }, { status: 401 });
+    }
+
+    // 4.1. Validate the VC payload (action and nonce)
+    const disclosures = authCredential.attribute_disclosures || [];
+    const actionDisclosure = disclosures.find((d: any) => d.path === 'subject.action');
+    const nonceDisclosure = disclosures.find((d: any) => d.path === 'subject.nonce');
+
+    if (!actionDisclosure || actionDisclosure.value !== 'did_search_auth') {
+      return NextResponse.json({ error: "Invalid action in auth credential" }, { status: 401 });
+    }
+
+    if (!nonceDisclosure || nonceDisclosure.value !== challenge.nonce) {
+      return NextResponse.json({ error: "Nonce mismatch in auth credential" }, { status: 401 });
     }
 
     // 5. Mark challenge as COMPLETED
@@ -121,7 +117,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 6. Search for the target user's DID
-    const whereClause = cpf ? { cpf: cpf.replace(/\D/g, "") } : { email: email as string };
+    const whereClause = cpf ? { cpf: cpf.replace(/\D/g, "") } : (did ? { did } : { email: email as string });
 
     const targetUser = await prisma.user.findFirst({
       where: whereClause,
@@ -129,6 +125,9 @@ export async function GET(request: NextRequest) {
         did: true,
         didPublicKey: true,
         didDocument: true,
+        didIpfsCid: true,
+        didPinataFileId: true,
+        didPublishedAt: true,
       },
     });
 
@@ -142,18 +141,34 @@ export async function GET(request: NextRequest) {
       : {
           "@context": ["https://www.w3.org/ns/did/v1"],
           id: targetUser.did,
-          verificationMethod: [
+          keys: [
             {
-              id: `${targetUser.did}#key-1`,
-              type: "Ed25519VerificationKey2020",
-              controller: targetUser.did,
-              publicKeyMultibase: targetUser.didPublicKey,
-            },
+              id: "#mldsa-1",
+              type: "ML-DSA-65",
+              usage: ["authentication", "assertionMethod"],
+              public_key_multibase: targetUser.didPublicKey
+            }
           ],
-          authentication: [`${targetUser.did}#key-1`],
+          signature: {
+            alg: "ML-DSA-65",
+            key_id: "#mldsa-1",
+            value: "mock-signature"
+          },
+          status: "active",
+          type: "ssi_pq_did_document_v1"
         };
 
-    return NextResponse.json({ did: targetUser.did, didDocument }, { status: 200 });
+    const gateway = process.env.GATEWAY_PINATA;
+    const ipfsUrl = targetUser.didIpfsCid && gateway ? `https://${gateway}/ipfs/${targetUser.didIpfsCid}` : null;
+
+    return NextResponse.json({
+      did: targetUser.did,
+      didDocument,
+      ipfsCid: targetUser.didIpfsCid,
+      pinataFileId: targetUser.didPinataFileId,
+      publishedAt: targetUser.didPublishedAt,
+      ipfsUrl
+    }, { status: 200 });
   } catch (error) {
     console.error("[GET /api/dids/search] Unexpected error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

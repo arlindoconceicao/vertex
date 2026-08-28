@@ -31,11 +31,11 @@ export default function DidDocumentTab({
 
   if (!didDocument) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-1">
+      <div className="bg-surface border border-border rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-text-main mb-1">
           {t("settings.documentSection.title") || "Documento Descentralizado (DID Document)"}
         </h2>
-        <p className="text-sm text-gray-400 mt-4">
+        <p className="text-sm text-text-muted mt-4">
           {t("settings.documentSection.empty") || "Nenhum documento DID encontrado. Por favor, faça o pareamento do seu aplicativo móvel na aba Perfil."}
         </p>
       </div>
@@ -63,26 +63,26 @@ export default function DidDocumentTab({
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+    <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <h2 className="text-sm font-semibold text-gray-300">
+            <h2 className="text-sm font-semibold text-text-main">
               {t("settings.documentSection.title") || "Documento Descentralizado (DID Document)"}
             </h2>
             {isPublished && (
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-indigo-500/10 text-indigo-400">
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-indigo-500/10 text-primary-text">
                 {t("settings.documentSection.publishedIpfs") || "Publicado no IPFS"}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-text-subtle mt-1">
             {t("settings.documentSection.subtitle") || "Este é o seu documento DID W3C que contém as chaves públicas."}
           </p>
         </div>
         <button
           onClick={handleCopy}
-          className="flex-shrink-0 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-2 rounded-lg border border-gray-700 transition-colors flex items-center gap-2 cursor-pointer"
+          className="flex-shrink-0 bg-surface-hover hover:bg-border text-text-main text-xs px-3 py-2 rounded-lg border border-border transition-colors flex items-center gap-2 cursor-pointer"
         >
           {copied ? (
             <>
@@ -109,14 +109,14 @@ export default function DidDocumentTab({
       )}
 
       {didIpfsCid ? (
-        <div className="bg-gray-950 border border-gray-800 rounded-xl p-5 mb-4">
+        <div className="bg-base border border-border rounded-xl p-5 mb-4">
           <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-1">{t("settings.documentSection.pinataFileId") || "Pinata File ID"}</p>
-            <p className="text-sm text-indigo-400 font-mono break-all">{didPinataFileId}</p>
+            <p className="text-xs text-text-subtle mb-1">{t("settings.documentSection.pinataFileId") || "Pinata File ID"}</p>
+            <p className="text-sm text-primary-text font-mono break-all">{didPinataFileId}</p>
           </div>
           <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-1">{t("settings.documentSection.ipfsCid") || "IPFS CID"}</p>
-            <p className="text-sm text-indigo-400 font-mono break-all">{didIpfsCid}</p>
+            <p className="text-xs text-text-subtle mb-1">{t("settings.documentSection.ipfsCid") || "IPFS CID"}</p>
+            <p className="text-sm text-primary-text font-mono break-all">{didIpfsCid}</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -124,14 +124,14 @@ export default function DidDocumentTab({
               href={`https://${gatewayUrl}/ipfs/${didIpfsCid}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+              className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
               </svg>
               {t("settings.documentSection.viewOnIpfs") || "Consultar IPFS"}
             </a>
-            <p className="text-xs text-gray-600" suppressHydrationWarning>
+            <p className="text-xs text-text-muted" suppressHydrationWarning>
               {t("settings.documentSection.publishedOn") || "Publicado em"}{" "}
               {new Date(didPublishedAt!).toLocaleDateString(dateLocale, { timeZone: "UTC" })}
             </p>
@@ -142,7 +142,7 @@ export default function DidDocumentTab({
           <button
             onClick={handlePublish}
             disabled={isPending}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:bg-indigo-900 disabled:text-primary-text text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
@@ -152,8 +152,8 @@ export default function DidDocumentTab({
         </div>
       )}
 
-      <div className="bg-gray-950 border border-gray-800 rounded-xl p-4 max-h-[500px] overflow-y-auto">
-        <pre className="text-xs text-indigo-300 font-mono whitespace-pre-wrap break-all">
+      <div className="bg-base border border-border rounded-xl p-4 max-h-[500px] overflow-y-auto">
+        <pre className="text-xs text-primary-text font-mono whitespace-pre-wrap break-all">
           <code>{jsonString}</code>
         </pre>
       </div>

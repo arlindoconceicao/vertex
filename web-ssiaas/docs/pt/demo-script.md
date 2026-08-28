@@ -1,7 +1,7 @@
-# Vertex Web SSIaaS — Demo Script & Validation Guide
+# VeriFile — Demo Script & Validation Guide
 
 > **Purpose:** End-to-end system validation.
-> **Platform:** Vertex Web SSIaaS (Next.js + Prisma + PostgreSQL)
+> **Platform:** VeriFile (Next.js + Prisma + PostgreSQL)
 > **Research:** FAPESP-funded
 
 ---
@@ -390,4 +390,4 @@ Keep these in your back pocket for Q&A after the demo.
 
 ---
 
-*Vertex Web SSIaaS · UNIFESP · FAPESP Research*
+*VeriFile · UNIFESP · FAPESP Research*

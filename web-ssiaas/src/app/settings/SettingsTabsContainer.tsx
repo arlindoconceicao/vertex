@@ -34,15 +34,15 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
   return (
     <div className="space-y-8">
       {/* Settings Navigation Tabs */}
-      <div className="border-b border-gray-800">
+      <div className="border-b border-border">
         <nav className="flex space-x-8" aria-label={t("settings.tabsAriaLabel")}>
           <button
             type="button"
             onClick={() => setActiveTab("profile")}
             className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === "profile"
-                ? "border-indigo-500 text-indigo-400 font-semibold"
-                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+                ? "border-primary text-primary-text font-semibold"
+                : "border-transparent text-text-muted hover:text-gray-200 hover:border-border-hover"
             }`}
           >
             <svg
@@ -66,8 +66,8 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
             onClick={() => setActiveTab("language")}
             className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === "language"
-                ? "border-indigo-500 text-indigo-400 font-semibold"
-                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+                ? "border-primary text-primary-text font-semibold"
+                : "border-transparent text-text-muted hover:text-gray-200 hover:border-border-hover"
             }`}
           >
             <svg
@@ -91,8 +91,8 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
             onClick={() => setActiveTab("platform")}
             className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === "platform"
-                ? "border-indigo-500 text-indigo-400 font-semibold"
-                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+                ? "border-primary text-primary-text font-semibold"
+                : "border-transparent text-text-muted hover:text-gray-200 hover:border-border-hover"
             }`}
           >
             <svg
@@ -116,8 +116,8 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
             onClick={() => setActiveTab("document")}
             className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
               activeTab === "document"
-                ? "border-indigo-500 text-indigo-400 font-semibold"
-                : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700"
+                ? "border-primary text-primary-text font-semibold"
+                : "border-transparent text-text-muted hover:text-gray-200 hover:border-border-hover"
             }`}
           >
             <svg
@@ -138,41 +138,41 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
       {activeTab === "profile" ? (
         <div className="space-y-8">
           {/* Profile Details — Read-only */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-gray-300 mb-4">
+          <div className="bg-surface border border-border rounded-2xl p-6">
+            <h2 className="text-sm font-semibold text-text-main mb-4">
               {t("settings.profileSection.title")}
             </h2>
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-gray-800/60 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-400">
+              <div className="flex items-center justify-between bg-surface-hover border border-border rounded-xl px-4 py-3">
+                <span className="text-sm text-text-muted">
                   {t("settings.profileSection.userId")}
                 </span>
-                <span className="text-sm text-indigo-400 font-mono select-all">
+                <span className="text-sm text-primary-text font-mono select-all">
                   {user.id}
                 </span>
               </div>
-              <div className="flex items-center justify-between bg-gray-800/60 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-400">
+              <div className="flex items-center justify-between bg-surface-hover border border-border rounded-xl px-4 py-3">
+                <span className="text-sm text-text-muted">
                   {t("settings.profileSection.email")}
                 </span>
-                <span className="text-sm text-white">{user.email}</span>
+                <span className="text-sm text-text-main">{user.email}</span>
               </div>
               {user.cpf && (
-                <div className="flex items-center justify-between bg-gray-800/60 rounded-xl px-4 py-3">
-                  <span className="text-sm text-gray-400">
+                <div className="flex items-center justify-between bg-surface-hover border border-border rounded-xl px-4 py-3">
+                  <span className="text-sm text-text-muted">
                     {t("settings.profileSection.cpf")}
                   </span>
-                  <span className="text-sm text-white font-mono">
+                  <span className="text-sm text-text-main font-mono">
                     {user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                   </span>
                 </div>
               )}
               {user.bearerToken && (
-                <div className="bg-gray-800/60 border border-indigo-900/50 rounded-xl px-4 py-3 space-y-1">
-                  <p className="text-xs text-indigo-300/70 font-medium uppercase tracking-wider">
+                <div className="bg-surface-hover border border-border border border-indigo-900/50 rounded-xl px-4 py-3 space-y-1">
+                  <p className="text-xs text-primary-text font-medium uppercase tracking-wider">
                     {t("settings.profileSection.hmacToken")}
                   </p>
-                  <p className="text-sm text-indigo-400 font-mono break-all select-all">
+                  <p className="text-sm text-primary-text font-mono break-all select-all">
                     {user.bearerToken}
                   </p>
                 </div>
@@ -181,11 +181,11 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
           </div>
 
           {/* DID & Mobile Pairing Section */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-gray-300 mb-1">
+          <div className="bg-surface border border-border rounded-2xl p-6">
+            <h2 className="text-sm font-semibold text-text-main mb-1">
               {t("settings.didSection.title")}
             </h2>
-            <p className="text-xs text-gray-500 mb-6">
+            <p className="text-xs text-text-subtle mb-6">
               {t("settings.didSection.subtitle")}
             </p>
 

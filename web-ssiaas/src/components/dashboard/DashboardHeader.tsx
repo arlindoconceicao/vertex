@@ -15,7 +15,7 @@ export default function DashboardHeader({ userName }: DashboardHeaderProps) {
       <h1 className="text-2xl font-bold">
         {t("dashboard.greeting", { name: firstName })}
       </h1>
-      <p className="text-gray-400 text-sm mt-1">{t("dashboard.subtitle")}</p>
+      <p className="text-text-muted text-sm mt-1">{t("dashboard.subtitle")}</p>
     </div>
   );
 }

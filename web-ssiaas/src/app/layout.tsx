@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import AppLanguageProvider from "@/components/AppLanguageProvider";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vertex Web SSIaaS",
+  title: "VeriFile",
   description: "Verifiable Credentials Platform - UNIFESP",
 };
 
@@ -27,12 +28,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <AppLanguageProvider>{children}</AppLanguageProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppLanguageProvider>{children}</AppLanguageProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

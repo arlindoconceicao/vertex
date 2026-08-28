@@ -3,7 +3,7 @@
 > [!WARNING]
 > **ATENÇÃO (AMBIENTE DE PRODUÇÃO):** Todos os scripts de simulação Node (`.js` e `.ts`) localizados na pasta `lib/` operam com acesso direto ao banco de dados e devem ser usados apenas em Desenvolvimento/Testes. Em um ambiente de **Produção**, esses scripts DEVEM ser apagados. A pasta `lib/` em produção deve conter apenas a biblioteca binária `ssi_pq_core.node` e módulos estritamente necessários para a aplicação web.
 
-Este documento descreve os scripts criados na pasta `lib/` para simular o comportamento do aplicativo móvel de assinaturas (Mobile Signer App) e o fluxo de comunicação ponta a ponta com a plataforma Web SSIaaS.
+Este documento descreve os scripts criados na pasta `lib/` para simular o comportamento do aplicativo móvel de assinaturas (Mobile Signer App) e o fluxo de comunicação ponta a ponta com a plataforma VeriFile.
 
 Estes scripts interagem com a biblioteca nativa `ssi_pq_core.node` (Criptografia Pós-Quântica), o banco de dados cifrado do SQLite (`mobile_wallet.db`) e o backend Next.js local.
 
@@ -119,3 +119,36 @@ Execute o script passando o e-mail do usuário entre aspas:
 ```bash
 npx tsx lib/clear-user-credentials.ts "email@exemplo.com"
 ```
+
+## 6. Simulação de Integração M2M: Consulta de DIDs e Schemas
+
+**Script:** `lib/simulate-mobile-api.ts`
+
+Este script demonstra como o aplicativo mobile (ou um servidor de terceiros) deve realizar consultas seguras a Identificadores Descentralizados (DIDs) na plataforma. Para evitar acesso indevido e garantir que o mobile possua a chave privada correta, a busca de DID exige uma **Prova de Posse (Proof-of-Possession)**.
+
+### Etapas Exatas que o App Mobile Deve Reproduzir:
+
+1. **Obtenção do Token M2M:**
+   - O aplicativo calcula um token HMAC SHA-256 local combinando a chave secreta de M2M (`SIGNER_SECRET`) e o próprio DID do titular da carteira.
+   - O token gerado deve ser enviado no cabeçalho `Authorization: Bearer <token>`.
+
+2. **Solicitação do Desafio (Challenge):**
+   - O aplicativo realiza uma requisição `POST /api/dids/search/challenge`, enviando seu próprio ID (`x-requester-id`).
+   - A API retorna um `nonce` aleatório.
+
+3. **Geração da Credencial Efêmera de Autenticação (PoP):**
+   - **Crucial:** A biblioteca C++ e o App Mobile não efetuam a assinatura isolada do *nonce* com a chave ML-DSA. Em vez disso, eles emitem uma Verifiable Credential.
+   - O SDK mobile usa a função equivalente a `walletIssueCredentialFromSchema` para criar uma credencial que tem no payload o `nonce` gerado pela API e a ação `action: "did_search_auth"`.
+   - Essa Credencial Verificável é assinada matematicamente pela carteira do dispositivo com a curva pós-quântica ML-DSA-65, provando a identidade sem expor a chave bruta.
+
+4. **Busca do DID Alvo:**
+   - O aplicativo coverte a Credencial Verificável recém-criada para Base64.
+   - Realiza a chamada `GET /api/dids/search?did=<did_do_alvo>` ou informando o CPF.
+   - Fornece os cabeçalhos: `x-requester-id`, `x-challenge-id` e `x-signer-auth-credential` (contendo a VC em Base64).
+   - O servidor usa `core.verifySignedCredential()` para conferir matematicamente a assinatura e se o *nonce* do payload confere com o salvo.
+
+5. **Recepção do Documento DID e IPFS:**
+   - Estando validada a prova de posse, a API retorna o Documento DID do usuário alvo contendo as chaves públicas (ML-DSA e ML-KEM).
+   - O endpoint também devolve as propriedades de rede descentralizada: `ipfsCid` e a URL de acesso completa `ipfsUrl`.
+
+> **Nota sobre Schemas:** A consulta a esquemas requer sessão de usuário (login pela interface Next.js). Por conveniência, o script de simulação lê diretamente do banco de dados para demonstrar a estrutura de retorno da entidade Schema (incluindo também os novos atributos `ipfsCid` e `ipfsUrl`).

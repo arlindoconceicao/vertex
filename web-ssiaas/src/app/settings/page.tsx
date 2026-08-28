@@ -82,7 +82,7 @@ export default async function SettingsPage() {
   const gatewayUrl = process.env.GATEWAY_PINATA || "gateway.pinata.cloud";
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-base text-text-main flex flex-col justify-between">
       <div>
         <Navbar userName={session.user.name} userImage={session.user.image} />
 

@@ -33,7 +33,7 @@
     "userNotFound": "Usuario no encontrado",
     "required": "Obligatorio",
     "optional": "opcional",
-    "footerText": "Vertex Web SSIaaS · UNIFESP",
+    "footerText": "VeriFile · UNIFESP",
     "fundedBy": "Financiado por FAPESP"
   },
   "nav": {
@@ -346,5 +346,11 @@
     "question": "Comprobación de Seguridad: ¿Cuánto es {{a}} + {{b}}?",
     "placeholder": "Tu respuesta...",
     "solved": "¡Desafío resuelto!"
+  },
+  "themes": {
+    "dark": "Oscuro (Índigo)",
+    "light": "Claro (Índigo)",
+    "darkEmerald": "Oscuro (Esmeralda)",
+    "lightEmerald": "Claro (Esmeralda)"
   }
 }

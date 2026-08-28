@@ -35,12 +35,12 @@ export default function LanguageSettingsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-text-main">
             {t("settings.languageSection.title")}
           </h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-text-muted mt-1">
             {t("settings.languageSection.subtitle")}
           </p>
         </div>
@@ -68,8 +68,8 @@ export default function LanguageSettingsTab() {
                 disabled={isChanging}
                 className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer text-left ${
                   isSelected
-                    ? "bg-indigo-950/50 border-indigo-500 text-white shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/50"
-                    : "bg-gray-800/40 border-gray-800 text-gray-300 hover:bg-gray-800/80 hover:border-gray-700"
+                    ? "bg-primary/10 border-primary text-text-main shadow-lg ring-1 ring-primary-ring/50"
+                    : "bg-surface-hover border-border text-text-main hover:bg-border hover:border-border-hover"
                 } ${isChanging ? "opacity-60 cursor-wait" : ""}`}
               >
                 <div className="flex items-center gap-4">
@@ -77,15 +77,15 @@ export default function LanguageSettingsTab() {
                     {lang.flag || "🌐"}
                   </span>
                   <div>
-                    <p className="font-semibold text-base">{lang.name}</p>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mt-0.5">
+                    <p className="font-semibold text-base text-text-main">{lang.name}</p>
+                    <p className="text-xs text-text-muted uppercase tracking-wider mt-0.5">
                       {lang.code}
                     </p>
                   </div>
                 </div>
 
                 {isSelected && (
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 bg-indigo-900/60 px-3 py-1.5 rounded-full border border-indigo-700/60">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-text-main bg-primary/20 px-3 py-1.5 rounded-full border border-primary/30">
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -107,9 +107,9 @@ export default function LanguageSettingsTab() {
           })}
         </div>
 
-        <div className="flex items-center gap-2 pt-2 text-xs text-gray-500 border-t border-gray-800/60">
+        <div className="flex items-center gap-2 pt-2 text-xs text-text-subtle border-t border-border/60">
           <svg
-            className="w-4 h-4 text-indigo-400 flex-shrink-0"
+            className="w-4 h-4 text-primary-text flex-shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

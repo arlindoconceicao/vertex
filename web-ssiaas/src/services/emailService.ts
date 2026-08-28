@@ -65,7 +65,7 @@ function templateNewCredential({
 
           <hr style="border:none; border-top:1px solid #222; margin:32px 0;" />
           <p style="color:#525252; font-size:12px; margin:0;">
-            Vertex Web SSIaaS · UNIFESP · Research funded by FAPESP
+            VeriFile · UNIFESP · Research funded by FAPESP
           </p>
 
         </div>
@@ -114,7 +114,7 @@ function templateInviteExternal({
 
           <hr style="border:none; border-top:1px solid #222; margin:32px 0;" />
           <p style="color:#525252; font-size:12px; margin:0;">
-            Vertex Web SSIaaS · UNIFESP · Research funded by FAPESP<br/>
+            VeriFile · UNIFESP · Research funded by FAPESP<br/>
             If you were not expecting this email, you can safely ignore it.
           </p>
 

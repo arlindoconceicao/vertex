@@ -33,11 +33,11 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-6">
-      <h2 className="text-lg font-bold text-white mb-2">
+    <div className="bg-surface border border-border rounded-2xl p-6 mt-6">
+      <h2 className="text-lg font-bold text-text-main mb-2">
         {t("settings.retention.title")}
       </h2>
-      <p className="text-sm text-gray-400 mb-8 leading-relaxed">
+      <p className="text-sm text-text-muted mb-8 leading-relaxed">
         {t("settings.retention.description")}
       </p>
 
@@ -48,9 +48,9 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
           max="15"
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+          className="w-full h-2 bg-border-hover rounded-lg appearance-none cursor-pointer"
         />
-        <span className="text-white font-mono font-medium text-lg w-16 text-center">
+        <span className="text-text-main font-mono font-medium text-lg w-16 text-center">
           {days} {days === 1 ? t("settings.retention.days").replace(/s$/, "") : t("settings.retention.days")}
         </span>
       </div>
@@ -60,7 +60,7 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
         <button
           onClick={handleSave}
           disabled={isPending || days === initialDays && !statusMsg}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-colors text-sm font-medium"
+          className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:bg-surface-hover disabled:text-text-subtle text-white rounded-lg transition-colors text-sm font-medium"
         >
           {isPending ? t("common.saving") : t("common.save")}
         </button>

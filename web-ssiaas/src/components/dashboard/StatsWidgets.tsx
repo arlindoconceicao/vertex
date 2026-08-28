@@ -45,7 +45,7 @@ export default function StatsWidgets({ stats }: Props) {
     },
     indigo: {
       bg: "bg-indigo-500/10",
-      text: "text-indigo-400",
+      text: "text-primary-text",
       detail: "text-indigo-500/60",
     },
     yellow: {
@@ -67,9 +67,9 @@ export default function StatsWidgets({ stats }: Props) {
         return (
           <div
             key={w.label}
-            className={`${c.bg} border border-gray-800 rounded-2xl px-5 py-4`}
+            className={`${c.bg} border border-border rounded-2xl px-5 py-4`}
           >
-            <p className="text-xs text-gray-400 mb-1">{w.label}</p>
+            <p className="text-xs text-text-muted mb-1">{w.label}</p>
             <p className={`text-2xl font-bold ${c.text}`}>{w.value}</p>
             <p className={`text-xs mt-1 ${c.detail}`}>{w.detail}</p>
           </div>

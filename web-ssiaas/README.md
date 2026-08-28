@@ -1,8 +1,8 @@
-# Vertex Web SSIaaS
+# VeriFile
 
-# Vertex Web SSIaaS
+# VeriFile
 
-O Vertex Web SSIaaS é uma plataforma de Identidade como Serviço (Identity-as-a-Service) de código aberto, projetada para simplificar a criação, emissão e gestão de Identidades Auto-Soberanas (SSI) e Credenciais Verificáveis (VCs).
+O VeriFile é uma plataforma de Identidade como Serviço (Identity-as-a-Service) de código aberto, projetada para simplificar a criação, emissão e gestão de Identidades Auto-Soberanas (SSI) e Credenciais Verificáveis (VCs).
 
 O sistema abstrai as complexidades subjacentes de assinaturas criptográficas e redes descentralizadas. Ele permite que os emissores (Issuers) foquem no design e na distribuição de credenciais por meio de uma interface intuitiva (No-Code), enquanto embute VCs criptográficas diretamente em arquivos PDF padrão. Essa abordagem híbrida permite a verificação offline e utiliza OIDC (Google) para uma autenticação segura de usuários.
 

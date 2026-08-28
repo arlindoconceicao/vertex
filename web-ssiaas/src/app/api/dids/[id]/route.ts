@@ -29,6 +29,9 @@ export async function GET(
       did: true,
       didDocument: true,
       didPublicKey: true,
+      didIpfsCid: true,
+      didPinataFileId: true,
+      didPublishedAt: true,
     },
   });
 
@@ -62,7 +65,14 @@ export async function GET(
           authentication: [`${user.did}#key-1`],
         };
 
-  // O content-type ideal seria "application/did+ld+json" conforme
-  // a spec W3C, mas usamos JSON padrão para simplicidade do MVP.
-  return NextResponse.json(didDocument, { status: 200 });
+  const gateway = process.env.GATEWAY_PINATA;
+  const ipfsUrl = user.didIpfsCid && gateway ? `https://${gateway}/ipfs/${user.didIpfsCid}` : null;
+
+  return NextResponse.json({
+    didDocument,
+    ipfsCid: user.didIpfsCid,
+    pinataFileId: user.didPinataFileId,
+    publishedAt: user.didPublishedAt,
+    ipfsUrl
+  }, { status: 200 });
 }

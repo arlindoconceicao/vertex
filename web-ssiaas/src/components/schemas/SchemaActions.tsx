@@ -60,7 +60,7 @@ export default function SchemaActions({
           <button
             onClick={handlePublish}
             disabled={isPending}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-hover disabled:bg-indigo-900 disabled:text-primary-text text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
@@ -73,7 +73,7 @@ export default function SchemaActions({
         <button
           onClick={handleToggleVisibility}
           disabled={isPending}
-          className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors border border-gray-700 cursor-pointer disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:bg-surface text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors border border-gray-700 cursor-pointer disabled:cursor-not-allowed"
         >
           {visibility === "PRIVATE" ? (
             <>

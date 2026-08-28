@@ -60,7 +60,7 @@ export default function CpfForm() {
           value={cpf}
           onChange={handleCpfChange}
           required
-          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring focus:border-transparent transition"
         />
       </div>
 
@@ -86,7 +86,7 @@ export default function CpfForm() {
       <button
         type="submit"
         disabled={isLoading || cpf.replace(/\D/g, "").length < 11}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 cursor-pointer"
+        className="w-full bg-primary hover:bg-primary-hover disabled:bg-indigo-900 disabled:text-primary-text disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 cursor-pointer"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">

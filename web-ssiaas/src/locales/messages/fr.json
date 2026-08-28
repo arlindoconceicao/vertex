@@ -33,7 +33,7 @@
     "userNotFound": "Utilisateur introuvable",
     "required": "Obligatoire",
     "optional": "facultatif",
-    "footerText": "Vertex Web SSIaaS · UNIFESP",
+    "footerText": "VeriFile · UNIFESP",
     "fundedBy": "Financé par la FAPESP"
   },
   "nav": {
@@ -346,5 +346,11 @@
     "question": "Vérification de sécurité : combien font {{a}} + {{b}} ?",
     "placeholder": "Votre réponse...",
     "solved": "Défi résolu !"
+  },
+  "themes": {
+    "dark": "Sombre (Indigo)",
+    "light": "Clair (Indigo)",
+    "darkEmerald": "Sombre (Émeraude)",
+    "lightEmerald": "Clair (Émeraude)"
   }
 }

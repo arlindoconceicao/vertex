@@ -45,7 +45,7 @@ export default function UserSearch() {
       {/* Input com máscara de CPF */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -63,11 +63,11 @@ export default function UserSearch() {
           value={cpf}
           onChange={handleCpfChange}
           placeholder={t("dashboard.tabs.searchUserPlaceholder")}
-          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition"
         />
         {isPending && (
           <svg
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 animate-spin"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary-text animate-spin"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -93,7 +93,7 @@ export default function UserSearch() {
 
       {/* Resultado encontrado */}
       {results.length > 0 && (
-        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute z-10 w-full mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden">
           {results.map((user) => (
             <div
               key={user.id}
@@ -117,20 +117,20 @@ export default function UserSearch() {
                 <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
                   {user.name ?? "No name"}
                   {user.isSelf && (
-                    <span className="text-[10px] font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-medium bg-indigo-500/20 text-primary-text border border-primary/30 px-1.5 py-0.5 rounded-md">
                       ({t("credentials.you")})
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-text-muted truncate">{user.email}</p>
+                <p className="text-xs text-text-subtle">
                   {t("common.cpfLabel")} {user.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
                 </p>
               </div>
 
               <Link
                 href={`/credentials/issue?holder=${encodeURIComponent(user.email || "")}`}
-                className="ml-auto text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors shrink-0 bg-indigo-950/80 border border-indigo-800 px-3 py-1.5 rounded-lg"
+                className="ml-auto text-xs font-medium text-primary-text hover:text-indigo-300 transition-colors shrink-0 bg-indigo-950/80 border border-indigo-800 px-3 py-1.5 rounded-lg"
               >
                 {t("dashboard.tabs.issueCredential")} →
               </Link>
@@ -144,8 +144,8 @@ export default function UserSearch() {
         cpf.replace(/\D/g, "").length === 11 &&
         results.length === 0 &&
         !error && (
-          <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl px-4 py-6 text-center">
-            <p className="text-gray-500 text-sm">{t("common.userNotFound")}</p>
+          <div className="absolute z-10 w-full mt-2 bg-surface border border-border rounded-xl px-4 py-6 text-center">
+            <p className="text-text-subtle text-sm">{t("common.userNotFound")}</p>
           </div>
         )}
     </div>

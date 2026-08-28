@@ -125,7 +125,7 @@ export default function DidPairingComponent({
   if (isPaired) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2 bg-emerald-950/60 border border-emerald-800/80 rounded-xl px-4 py-3 text-emerald-400">
+        <div className="flex items-center gap-2 bg-emerald-950/60 border border-emerald-800/80 rounded-xl px-4 py-3 text-text-main">
           <svg
             className="w-5 h-5 flex-shrink-0"
             fill="none"
@@ -144,43 +144,43 @@ export default function DidPairingComponent({
           </span>
         </div>
 
-        <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+        <div className="bg-surface-hover border border-border rounded-xl px-4 py-3 space-y-1">
+          <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
             {t("didPairing.didLabel")}
           </p>
-          <p className="text-sm text-indigo-400 font-mono break-all select-all">
+          <p className="text-sm text-primary-text font-mono break-all select-all">
             {initialDid}
           </p>
         </div>
 
         {initialIssuerIdentifier && (
-          <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+          <div className="bg-surface-hover border border-border rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
               {t("didPairing.issuerIdentifierLabel")}
             </p>
-            <p className="text-sm text-emerald-400 font-mono break-all select-all">
+            <p className="text-sm text-text-main font-mono break-all select-all">
               {initialIssuerIdentifier}
             </p>
           </div>
         )}
 
         {initialPublicKey && (
-          <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+          <div className="bg-surface-hover border border-border rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
               {t("didPairing.dsaKeyLabel")}
             </p>
-            <p className="text-sm text-gray-300 font-mono break-all select-all">
+            <p className="text-sm text-text-main font-mono break-all select-all">
               {initialPublicKey}
             </p>
           </div>
         )}
 
         {initialMlkemKey && (
-          <div className="bg-gray-800/60 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+          <div className="bg-surface-hover border border-border rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
               {t("didPairing.mlkemKeyLabel")}
             </p>
-            <p className="text-sm text-amber-300/90 font-mono break-all select-all">
+            <p className="text-sm text-text-main font-mono break-all select-all">
               {initialMlkemKey}
             </p>
           </div>
@@ -188,9 +188,9 @@ export default function DidPairingComponent({
 
 
         {initialPairedAt && (
-          <div className="bg-gray-800/60 rounded-xl px-4 py-3 flex justify-between items-center text-xs">
-            <span className="text-gray-400">{t("didPairing.pairedAt")}</span>
-            <span className="text-gray-300 font-mono">
+          <div className="bg-surface-hover border border-border rounded-xl px-4 py-3 flex justify-between items-center text-xs">
+            <span className="text-text-muted">{t("didPairing.pairedAt")}</span>
+            <span className="text-text-main font-mono">
               {new Date(initialPairedAt).toLocaleString(
                 locale === "pt" ? "pt-BR" : "en-US",
                 {
@@ -215,14 +215,14 @@ export default function DidPairingComponent({
 
       {!challenge ? (
         <div className="space-y-4">
-          <p className="text-sm text-gray-400 leading-relaxed">
+          <p className="text-sm text-text-muted leading-relaxed">
             {t("didPairing.unpairedIntro")}
           </p>
 
           <button
             type="button"
             onClick={handleStartPairing}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-primary-hover text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             <svg
               className="w-5 h-5"
@@ -241,7 +241,7 @@ export default function DidPairingComponent({
           </button>
         </div>
       ) : (
-        <div className="bg-gray-800/40 border border-gray-700/60 rounded-2xl p-6 space-y-6">
+        <div className="bg-surface border border-border/60 rounded-2xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
@@ -249,17 +249,17 @@ export default function DidPairingComponent({
                 {t("didPairing.awaitingTitle")}
               </span>
             </div>
-            <span className="text-xs text-gray-500 font-mono">
+            <span className="text-xs text-text-subtle font-mono">
               {t("didPairing.expiresIn")}
             </span>
           </div>
 
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-xs text-text-muted leading-relaxed">
             {t("didPairing.instructions", { email: userEmail })}
           </p>
 
           {/* QR Code and Payload container */}
-          <div className="flex flex-col sm:flex-row items-center gap-6 bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="flex flex-col sm:flex-row items-center gap-6 bg-surface border border-border rounded-xl p-5">
             <div className="bg-white p-3 rounded-xl shadow-lg flex-shrink-0">
               <QRCodeSVG
                 value={pairingPayload}
@@ -271,17 +271,17 @@ export default function DidPairingComponent({
 
             <div className="flex-1 w-full space-y-3 min-w-0">
               <div>
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
                   {t("didPairing.endpointUrlLabel")}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-indigo-400 font-mono truncate bg-gray-950 px-3 py-2 rounded-lg border border-gray-800 flex-1 select-all">
+                  <p className="text-xs text-primary-text font-mono truncate bg-base px-3 py-2 rounded-lg border border-border flex-1 select-all">
                     {endpointUrl}
                   </p>
                   <button
                     type="button"
                     onClick={handleCopyEndpoint}
-                    className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-2 rounded-lg border border-gray-700 transition-colors flex-shrink-0 cursor-pointer"
+                    className="bg-surface-hover hover:bg-border border-border text-text-main text-xs px-3 py-2 rounded-lg border border-border transition-colors flex-shrink-0 cursor-pointer"
                   >
                     {copiedEndpoint ? t("common.copied") : t("didPairing.copyUrlButton")}
                   </button>
@@ -289,19 +289,19 @@ export default function DidPairingComponent({
               </div>
 
               <div>
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
                   {t("didPairing.pairingIdLabel")}
                 </p>
-                <p className="text-xs text-gray-300 font-mono break-all mt-0.5 select-all">
+                <p className="text-xs text-text-main font-mono break-all mt-0.5 select-all">
                   {challenge.pairingId}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                <p className="text-xs text-text-subtle font-medium uppercase tracking-wider">
                   {t("didPairing.nonceLabel")}
                 </p>
-                <p className="text-xs text-gray-400 font-mono break-all mt-0.5 select-all">
+                <p className="text-xs text-text-muted font-mono break-all mt-0.5 select-all">
                   {challenge.nonce}
                 </p>
               </div>
@@ -312,7 +312,7 @@ export default function DidPairingComponent({
             <button
               type="button"
               onClick={handleCopyPayload}
-              className="flex-1 bg-indigo-600/90 hover:bg-indigo-600 text-white text-xs font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              className="flex-1 bg-primary/90 hover:bg-primary text-white text-xs font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               <svg
                 className="w-4 h-4"
@@ -333,7 +333,7 @@ export default function DidPairingComponent({
             <button
               type="button"
               onClick={handleStartPairing}
-              className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-xs font-medium py-3 px-4 rounded-xl border border-gray-700 transition-colors cursor-pointer"
+              className="bg-surface-hover hover:bg-border border-border text-text-muted hover:text-text-main text-xs font-medium py-3 px-4 rounded-xl border border-border transition-colors cursor-pointer"
               title={t("didPairing.restartButton")}
             >
               {t("didPairing.restartButton")}

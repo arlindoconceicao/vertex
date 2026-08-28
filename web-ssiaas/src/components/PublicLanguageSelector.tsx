@@ -23,10 +23,10 @@ export default function PublicLanguageSelector() {
         onChange={(e) => handleSelectLanguage(e.target.value)}
         disabled={isChanging}
         aria-label="Select language"
-        className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer disabled:opacity-50 transition-colors"
+        className="bg-gray-800 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-ring cursor-pointer disabled:opacity-50 transition-colors"
       >
         {availableLanguages.map((lang) => (
-          <option key={lang.code} value={lang.code} className="bg-gray-900 text-white">
+          <option key={lang.code} value={lang.code} className="bg-surface text-white">
             {lang.flag ? `${lang.flag} ` : ""}{lang.name}
           </option>
         ))}

@@ -71,7 +71,7 @@ export default function CredentialActions({
       {/* Pop-up Modal de Confirmação de Revogação */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-200">
+          <div className="bg-surface border border-border rounded-3xl max-w-xl w-full p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-200">
             {/* Ícone e Título */}
             <div className="flex items-center gap-4 text-red-400">
               <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -81,7 +81,7 @@ export default function CredentialActions({
               </div>
               <div>
                 <h3 className="text-2xl font-extrabold text-white">{t("credentials.revokeModalTitle")}</h3>
-                <p className="text-sm text-gray-400 font-mono mt-1 break-all">ID: {credentialId}</p>
+                <p className="text-sm text-text-muted font-mono mt-1 break-all">ID: {credentialId}</p>
               </div>
             </div>
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useTranslation } from "@/locales/LanguageContext";
+import ThemeSelector from "@/components/ThemeSelector";
 
 type NavbarProps = {
   userName?: string | null;
@@ -13,10 +14,10 @@ export default function Navbar({ userName, userImage }: NavbarProps) {
   const { t, locale } = useTranslation();
 
   return (
-    <header className="border-b border-gray-800 bg-gray-900">
+    <header className="border-b border-border bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
             <svg
               className="w-4 h-4 text-white"
               fill="none"
@@ -31,7 +32,7 @@ export default function Navbar({ userName, userImage }: NavbarProps) {
               />
             </svg>
           </div>
-          <span className="font-semibold tracking-tight text-white">
+          <span className="font-semibold tracking-tight text-text-main">
             {t("common.appName")}
           </span>
         </Link>
@@ -47,13 +48,13 @@ export default function Navbar({ userName, userImage }: NavbarProps) {
                   className="w-8 h-8 rounded-full"
                 />
               )}
-              <span className="text-sm text-gray-300">{userName}</span>
+              <span className="text-sm text-text-muted">{userName}</span>
             </div>
           )}
 
           <Link
             href="/settings"
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="text-sm text-text-muted hover:text-text-main transition-colors"
           >
             {t("nav.settings")}
           </Link>
@@ -61,12 +62,14 @@ export default function Navbar({ userName, userImage }: NavbarProps) {
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
+            className="text-sm text-text-muted hover:text-text-main transition-colors cursor-pointer"
           >
             {t("nav.logout")}
           </button>
 
-          <span className="text-xs font-semibold text-indigo-400 px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800 uppercase">
+          <ThemeSelector />
+
+          <span className="text-xs font-semibold text-primary px-2 py-0.5 rounded border border-border uppercase">
             {locale}
           </span>
         </div>

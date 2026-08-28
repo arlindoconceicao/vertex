@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { issueCredential } from "@/app/actions/credential-actions";
 import { useTranslation } from "@/locales/LanguageContext";
+import SearchableSelect from "@/components/common/SearchableSelect";
 
 type SchemaOption = {
   id: string;
@@ -130,32 +131,26 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
 
       {/* Seleção do schema */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-text-main mb-2">
           {t("credentials.selectSchema")}
         </label>
         {schemas.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-subtle">
             {t("schemas.emptySchemas")}
           </p>
         ) : (
-          <select
+          <SearchableSelect
+            options={schemas.map((s) => ({ id: s.id, name: s.name, version: s.version }))}
             value={selectedSchemaId}
-            onChange={(e) => handleSchemaChange(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-          >
-            <option value="">{t("credentials.selectSchemaPlaceholder")}</option>
-            {schemas.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} (v{s.version})
-              </option>
-            ))}
-          </select>
+            onChange={handleSchemaChange}
+            placeholder={t("credentials.selectSchemaPlaceholder") || undefined}
+          />
         )}
       </div>
 
       {/* Email do Holder */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-text-main mb-2">
           {t("credentials.holderEmail")}
         </label>
         <input
@@ -163,13 +158,13 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
           value={holderEmail}
           onChange={(e) => setHolderEmail(e.target.value)}
           placeholder={t("credentials.holderEmailPlaceholder")}
-          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          className="w-full bg-surface border border-border text-text-main placeholder-text-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition"
         />
       </div>
 
       {/* Data de expiração (opcional) */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-text-main mb-2">
           {t("credentials.expirationDate")}
         </label>
         <input
@@ -177,25 +172,25 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
           value={expiresAt}
           onChange={(e) => setExpiresAt(e.target.value)}
           min={new Date().toISOString().split("T")[0]}
-          className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          className="w-full bg-surface border border-border text-text-main rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition"
         />
       </div>
 
       {/* Campos dinâmicos do schema selecionado */}
       {selectedSchema && selectedSchema.fields.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-gray-300 mb-3">
+          <h3 className="text-sm font-medium text-text-main mb-3">
             {t("schemas.credentialFields")}
           </h3>
           <div className="space-y-3">
             {selectedSchema.fields.map((field) => (
               <div key={field.name}>
-                <label className="block text-xs text-gray-400 mb-1">
+                <label className="block text-xs text-text-muted mb-1">
                   {field.name}
                   {field.required && (
                     <span className="text-yellow-400 ml-1">*</span>
                   )}
-                  <span className="text-gray-600 ml-1">({field.type})</span>
+                  <span className="text-text-muted ml-1">({field.type})</span>
                 </label>
                 {field.type === "boolean" ? (
                   <select
@@ -203,7 +198,7 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
                     onChange={(e) =>
                       setFieldValues({ ...fieldValues, [field.name]: e.target.value })
                     }
-                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full bg-surface border border-border text-text-main rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring cursor-pointer"
                   >
                     <option value="">{t("common.select")}</option>
                     <option value="true">{t("common.trueVal")}</option>
@@ -217,7 +212,7 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
                       setFieldValues({ ...fieldValues, [field.name]: e.target.value })
                     }
                     placeholder={t("credentials.enterFieldPlaceholder", { field: field.name })}
-                    className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full bg-surface border border-border text-text-main placeholder-text-muted rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring transition"
                   />
                 )}
               </div>
@@ -231,7 +226,7 @@ export default function IssueCredentialForm({ schemas, initialHolderEmail }: Pro
         type="button"
         onClick={handleSubmit}
         disabled={isPending || schemas.length === 0}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
+        className="w-full bg-primary hover:bg-primary-hover disabled:bg-indigo-900 disabled:text-primary-text disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-colors cursor-pointer"
       >
         {isPending ? t("credentials.issuing") : t("credentials.issueButton")}
       </button>

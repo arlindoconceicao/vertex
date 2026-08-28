@@ -10,12 +10,12 @@ export default function VerifyClientView() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between">
+    <div data-theme="dark" className="min-h-screen bg-base text-text-main flex flex-col justify-between">
       <div>
-        <header className="border-b border-gray-800 bg-gray-900">
+        <header className="border-b border-border bg-surface">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
                 <svg
                   className="w-4 h-4 text-white"
                   fill="none"
@@ -38,7 +38,7 @@ export default function VerifyClientView() {
               <PublicLanguageSelector />
               <Link
                 href="/login"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+                className="text-sm text-text-muted hover:text-text-main transition-colors"
               >
                 {t("common.login")}
               </Link>
@@ -48,9 +48,9 @@ export default function VerifyClientView() {
 
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600/20 mb-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/20 mb-4">
               <svg
-                className="w-7 h-7 text-indigo-400"
+                className="w-7 h-7 text-primary-text"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -64,12 +64,12 @@ export default function VerifyClientView() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold">{t("verify.title")}</h1>
-            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">
+            <p className="text-text-muted text-sm mt-2 max-w-md mx-auto">
               {t("verify.subtitle")}
             </p>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8">
+          <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8">
             <VerifierForm />
           </div>
         </main>

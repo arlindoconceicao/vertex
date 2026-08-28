@@ -1,4 +1,4 @@
-# Vertex Web SSIaaS — API Architecture
+# VeriFile — API Architecture
 
 > **Stack:** Next.js App Router · REST · TypeScript · Post-Quantum Cryptography (ML-DSA-65 & ML-KEM-768)  
 > **Base URL (dev):** `http://localhost:3000/api`  
@@ -820,4 +820,4 @@ DATABASE_URL="postgresql://user:password@localhost:5432/vertex_ssi?schema=public
 
 ---
 
-*Vertex Web SSIaaS · UNIFESP · FAPESP Research*
+*VeriFile · UNIFESP · FAPESP Research*
