@@ -28,7 +28,7 @@ Cria um lote de credenciais de teste vinculadas à sua conta. Todas as credencia
 
 ```bash
 # Gerar 15 credenciais de teste para o e-mail padrão:
-node lib/generate-fake-credentials.js 15 teste@gmail.com
+node lib/generate-fake-credentials.js --count=15 --email=teste@gmail.com
 ```
 
 - Alterna os status entre `ACTIVE`, `PENDING` e `REVOKED`.
@@ -50,7 +50,7 @@ node lib/cleanup-fake-credentials.js
 
 1. Gerar 15 credenciais de teste no banco:
    ```bash
-   node lib/generate-fake-credentials.js 15 teste@gmail.com
+   node lib/generate-fake-credentials.js --count=15 --email=teste@gmail.com
    ```
 2. Acesse `http://localhost:3000/dashboard`.
 3. Navegue entre as páginas na aba "Credenciais Recebidas".

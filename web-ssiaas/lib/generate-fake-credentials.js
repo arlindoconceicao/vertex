@@ -9,8 +9,20 @@ const prisma = new PrismaClient({ adapter });
 const PREFIX = "T1000T";
 
 async function main() {
-  const countArg = parseInt(process.argv[2], 10) || 15;
-  const emailArg = process.argv[3] || "teste@gmail.com";
+  let countArg = 15;
+  let emailArg = "teste@gmail.com";
+
+  process.argv.forEach((arg, index) => {
+    if (arg.startsWith("--count=")) {
+      countArg = parseInt(arg.split("=")[1], 10) || 15;
+    } else if (arg.startsWith("--email=")) {
+      emailArg = arg.split("=")[1];
+    } else if (index === 2 && !arg.startsWith("--")) {
+      countArg = parseInt(arg, 10) || countArg;
+    } else if (index === 3 && !arg.startsWith("--")) {
+      emailArg = arg;
+    }
+  });
 
   let user = await prisma.user.findUnique({ where: { email: emailArg } });
   if (!user) {

@@ -132,7 +132,6 @@ type CredentialGridProps = {
   emptyMessage: string;
 };
 
-const ITEMS_PER_PAGE = 6;
 
 function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGridProps) {
   const { t } = useTranslation();
@@ -140,6 +139,7 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "PENDING" | "REVOKED">("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
 
   // Filtragem reativa por contraparte, esquema, tipo, ID ou status
   const filteredCredentials = useMemo(() => {
@@ -180,11 +180,11 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(filteredCredentials.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.ceil(filteredCredentials.length / itemsPerPage) || 1;
   const paginatedCredentials = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredCredentials.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredCredentials, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredCredentials.slice(start, start + itemsPerPage);
+  }, [filteredCredentials, currentPage, itemsPerPage]);
 
   if (credentials.length === 0) {
     return (
@@ -290,8 +290,27 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
           </div>
 
           {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-surface border border-border rounded-2xl px-5 py-3.5 text-sm">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface border border-border rounded-2xl px-5 py-3.5 text-sm">
+            {/* Esquerda: Itens por página */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-muted font-medium">{t("dashboard.itemsPerPage")}</span>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => {
+                   setItemsPerPage(Number(e.target.value));
+                   setCurrentPage(1);
+                }}
+                className="bg-surface border border-border text-text-main rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-ring cursor-pointer"
+              >
+                 <option value={6}>6</option>
+                 <option value={12}>12</option>
+                 <option value={24}>24</option>
+                 <option value={48}>48</option>
+              </select>
+            </div>
+            
+            {/* Centro: Navegação */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
@@ -300,10 +319,10 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
-                {t("dashboard.paginationPrevious")}
+                <span className="hidden sm:inline">{t("dashboard.paginationPrevious")}</span>
               </button>
 
-              <span className="text-xs text-text-muted">
+              <span className="text-xs text-text-muted font-medium px-2">
                 {t("dashboard.paginationPage", { current: currentPage, total: totalPages })}
               </span>
 
@@ -312,13 +331,37 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
                 disabled={currentPage === totalPages}
                 className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-surface-hover hover:bg-border disabled:opacity-40 disabled:hover:bg-surface-hover transition-colors cursor-pointer disabled:cursor-not-allowed"
               >
-                {t("dashboard.paginationNext")}
+                <span className="hidden sm:inline">{t("dashboard.paginationNext")}</span>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="8.25 4.5l7.5 7.5-7.5 7.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
             </div>
-          )}
+
+            {/* Direita: Ir para página */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-muted font-medium">{t("dashboard.goToPage")}</span>
+              <input
+                 type="number"
+                 min={1}
+                 max={totalPages}
+                 defaultValue={currentPage}
+                 key={currentPage}
+                 onBlur={(e) => {
+                   let page = parseInt(e.target.value, 10);
+                   if (isNaN(page) || page < 1) page = 1;
+                   if (page > totalPages) page = totalPages;
+                   setCurrentPage(page);
+                 }}
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter') {
+                     e.currentTarget.blur();
+                   }
+                 }}
+                 className="w-16 bg-surface border border-border text-text-main rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-ring text-center"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

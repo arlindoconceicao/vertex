@@ -95,7 +95,9 @@
     "filterStatusAll": "All Statuses",
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
-    "paginationPage": "Page {{current}} of {{total}}"
+    "paginationPage": "Page {{current}} of {{total}}",
+    "itemsPerPage": "Items per page:",
+    "goToPage": "Go to page:"
   },
   "schemas": {
     "v": "v",

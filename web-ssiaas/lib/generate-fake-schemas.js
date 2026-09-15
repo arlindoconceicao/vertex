@@ -9,8 +9,20 @@ const prisma = new PrismaClient({ adapter });
 const PREFIX = "T1000T";
 
 async function main() {
-  const countArg = parseInt(process.argv[2], 10) || 20;
-  const emailArg = process.argv[3];
+  let countArg = 20;
+  let emailArg;
+
+  process.argv.forEach((arg, index) => {
+    if (arg.startsWith("--count=")) {
+      countArg = parseInt(arg.split("=")[1], 10) || 20;
+    } else if (arg.startsWith("--email=")) {
+      emailArg = arg.split("=")[1];
+    } else if (index === 2 && !arg.startsWith("--")) {
+      countArg = parseInt(arg, 10) || countArg;
+    } else if (index === 3 && !arg.startsWith("--")) {
+      emailArg = arg;
+    }
+  });
 
   let creator;
   if (emailArg) {

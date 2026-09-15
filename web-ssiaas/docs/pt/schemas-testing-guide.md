@@ -29,10 +29,10 @@ Este script cria um lote de esquemas de teste no banco de dados. Todos os esquem
 **Comando de Execução:**
 ```bash
 # Criar 20 esquemas de teste para o primeiro usuário do banco:
-node lib/generate-fake-schemas.js 20
+node lib/generate-fake-schemas.js --count=20
 
 # Criar 25 esquemas de teste para um usuário específico:
-node lib/generate-fake-schemas.js 25 teste@gmail.com
+node lib/generate-fake-schemas.js --count=25 --email=teste@gmail.com
 ```
 
 **Comportamento:**
@@ -61,7 +61,7 @@ node lib/cleanup-fake-schemas.js
 
 1. Execute o script de geração:
    ```bash
-   node lib/generate-fake-schemas.js 25 teste@gmail.com
+   node lib/generate-fake-schemas.js --count=25 --email=teste@gmail.com
    ```
 2. Acesse a rota: `http://localhost:3000/schemas`.
 3. Verifique a paginação gerada (3 páginas). Navegue entre elas usando "Próximo" e "Anterior".

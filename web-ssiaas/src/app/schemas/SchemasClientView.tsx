@@ -22,7 +22,6 @@ type Props = {
 
 type FilterScope = "ALL" | "MINE" | "PUBLIC" | "PRIVATE";
 
-const ITEMS_PER_PAGE = 9;
 
 export default function SchemasClientView({ schemas, userId }: Props) {
   const { t, locale } = useTranslation();
@@ -31,6 +30,7 @@ export default function SchemasClientView({ schemas, userId }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterScope, setFilterScope] = useState<FilterScope>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   // Filtragem dinâmica por Nome/ID e Escopo de Visibilidade/Posse
   const filteredSchemas = useMemo(() => {
@@ -61,11 +61,11 @@ export default function SchemasClientView({ schemas, userId }: Props) {
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(filteredSchemas.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.ceil(filteredSchemas.length / itemsPerPage) || 1;
   const paginatedSchemas = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredSchemas.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredSchemas, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredSchemas.slice(start, start + itemsPerPage);
+  }, [filteredSchemas, currentPage, itemsPerPage]);
 
   return (
     <div className="min-h-screen bg-base text-text-main">
@@ -238,8 +238,27 @@ export default function SchemasClientView({ schemas, userId }: Props) {
             </div>
 
             {/* Paginação */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between bg-surface border border-border rounded-2xl px-5 py-3.5 mt-6 text-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface border border-border rounded-2xl px-5 py-3.5 mt-6 text-sm">
+              {/* Esquerda: Itens por página */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted font-medium">{t("dashboard.itemsPerPage")}</span>
+                <select 
+                  value={itemsPerPage} 
+                  onChange={(e) => {
+                     setItemsPerPage(Number(e.target.value));
+                     setCurrentPage(1);
+                  }}
+                  className="bg-surface border border-border text-text-main rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-ring cursor-pointer"
+                >
+                   <option value={9}>9</option>
+                   <option value={18}>18</option>
+                   <option value={36}>36</option>
+                   <option value={72}>72</option>
+                </select>
+              </div>
+
+              {/* Centro: Navegação */}
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                   disabled={currentPage === 1}
@@ -248,10 +267,10 @@ export default function SchemasClientView({ schemas, userId }: Props) {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
-                  {t("schemas.paginationPrevious")}
+                  <span className="hidden sm:inline">{t("schemas.paginationPrevious")}</span>
                 </button>
 
-                <span className="text-xs text-text-muted">
+                <span className="text-xs text-text-muted font-medium px-2">
                   {t("schemas.paginationPage", { current: currentPage, total: totalPages })}
                 </span>
 
@@ -260,13 +279,37 @@ export default function SchemasClientView({ schemas, userId }: Props) {
                   disabled={currentPage === totalPages}
                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-surface-hover hover:bg-border disabled:opacity-40 disabled:hover:bg-surface-hover transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {t("schemas.paginationNext")}
+                  <span className="hidden sm:inline">{t("schemas.paginationNext")}</span>
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </button>
               </div>
-            )}
+
+              {/* Direita: Ir para página */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted font-medium">{t("dashboard.goToPage")}</span>
+                <input
+                   type="number"
+                   min={1}
+                   max={totalPages}
+                   defaultValue={currentPage}
+                   key={currentPage}
+                   onBlur={(e) => {
+                     let page = parseInt(e.target.value, 10);
+                     if (isNaN(page) || page < 1) page = 1;
+                     if (page > totalPages) page = totalPages;
+                     setCurrentPage(page);
+                   }}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter') {
+                       e.currentTarget.blur();
+                     }
+                   }}
+                   className="w-16 bg-surface border border-border text-text-main rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-ring text-center"
+                />
+              </div>
+            </div>
           </div>
         )}
       </main>

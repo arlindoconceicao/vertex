@@ -28,7 +28,7 @@ Creates a batch of test credentials linked to your account. All generated creden
 
 ```bash
 # Generate 15 test credentials for the default email:
-node lib/generate-fake-credentials.js 15 teste@gmail.com
+node lib/generate-fake-credentials.js --count=15 --email=teste@gmail.com
 ```
 
 - Alternates statuses between `ACTIVE`, `PENDING`, and `REVOKED`.
@@ -50,7 +50,7 @@ node lib/cleanup-fake-credentials.js
 
 1. Generate 15 test credentials in the database:
    ```bash
-   node lib/generate-fake-credentials.js 15 teste@gmail.com
+   node lib/generate-fake-credentials.js --count=15 --email=teste@gmail.com
    ```
 2. Access `http://localhost:3000/dashboard`.
 3. Navigate between pages on the "Received Credentials" tab.

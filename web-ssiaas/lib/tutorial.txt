@@ -1,0 +1,40 @@
+1) Resetar o banco:
+
+    docker start vertex_postgres
+    npx prisma migrate reset
+    npx prisma generate
+    npm run dev
+    Veja rodando em http://localhost:3000
+    Em caso de erro use: npx prisma db push --force-reset
+
+2) Pareamento: node lib/complete-pairing.js 'PAYLOAD'
+
+3) Na plataforma, crie um esquema e emita uma credencial. Na listagem de credenciais emitidas ela vai aparecer como "PENDENTE",
+   ou seja, ela ainda não foi assinada pelo aplicativo MOBILE.
+
+4) Execute o script abaixo. Ele vai listar as credenciais pendentes de assinatura do usuário do app.
+
+    node lib/get-pending-signatures.js
+
+5) Execute o script abaixo. Ele vai gerar os PDFs, ou seja, as credenciais e assiná-las.
+
+    node lib/generate-pending-pdfs.js
+
+6) Se quiser testar a validação via Hash mais tarde na tela pública, você pode extrair o SHA-256 exato deste PDF em claro agora. 
+
+    node lib/get-pdf-hash.js lib/credential_XXXXXXXX.pdf 
+
+7) Para fazer o UPLOD do PDF cifrado para a plataforma:
+
+    node lib/upload-pdfs.js
+
+8) Para fazer o downlod pelo app use:
+
+    node lib/simulate-mobile-download.js
+
+    Este script simula o App fazendo a chamada API de download do arquivo .enc, abrindo a
+    mobile_wallet.db e realizando a decapsulação (ML-KEM + AES-GCM) para gerar o PDF em claro localmente.
+
+9) Validação:
+    Acesse localhost:3000/verify:
+

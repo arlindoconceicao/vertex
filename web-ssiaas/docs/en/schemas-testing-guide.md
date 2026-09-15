@@ -29,10 +29,10 @@ This script creates a batch of test schemas in the database. All generated schem
 **Execution Command:**
 ```bash
 # Create 20 test schemas for the first user in the database:
-node lib/generate-fake-schemas.js 20
+node lib/generate-fake-schemas.js --count=20
 
 # Create 25 test schemas for a specific user:
-node lib/generate-fake-schemas.js 25 teste@gmail.com
+node lib/generate-fake-schemas.js --count=25 --email=teste@gmail.com
 ```
 
 **Behavior:**
@@ -61,7 +61,7 @@ node lib/cleanup-fake-schemas.js
 
 1. Run the generation script:
    ```bash
-   node lib/generate-fake-schemas.js 25 teste@gmail.com
+   node lib/generate-fake-schemas.js --count=25 --email=teste@gmail.com
    ```
 2. Access the route: `http://localhost:3000/schemas`.
 3. Check the generated pagination (3 pages). Navigate between them using "Next" and "Previous".
