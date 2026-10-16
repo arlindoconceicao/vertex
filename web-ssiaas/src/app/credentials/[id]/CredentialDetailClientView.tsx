@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/locales/LanguageContext";
 import CredentialActions from "@/components/credentials/CredentialActions";
 
@@ -10,7 +11,7 @@ type User = { id: string; name: string | null; email: string | null; image: stri
 type CredentialDetailProps = {
   credential: {
     id: string;
-    status: "ACTIVE" | "PENDING" | "REVOKED";
+    status: "ACTIVE" | "PENDING" | "REVOKED" | "OFFERED" | "REJECTED";
     issuedAt: Date;
     expiresAt: Date | null;
     vcPayload: unknown;
@@ -32,11 +33,27 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
   const dateLocale = locale === "pt" ? "pt-BR" : locale === "es" ? "es-ES" : "en-US";
 
   const [showData, setShowData] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const router = useRouter();
+
+  async function handleAccept() {
+    setIsUpdating(true);
+    await fetch(`/api/credentials/${credential.id}/accept`, { method: "POST" });
+    router.push("/dashboard");
+  }
+
+  async function handleReject() {
+    setIsUpdating(true);
+    await fetch(`/api/credentials/${credential.id}/reject`, { method: "POST" });
+    router.push("/dashboard");
+  }
 
   const statusStyles = {
     ACTIVE: { label: t("dashboard.tabs.status.active"), classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
     PENDING: { label: t("dashboard.tabs.status.pending"), classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
     REVOKED: { label: t("dashboard.tabs.status.revoked"), classes: "bg-red-500/10 text-red-400 border-red-500/20" },
+    OFFERED: { label: t("dashboard.tabs.status.offered"), classes: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+    REJECTED: { label: t("dashboard.tabs.status.rejected"), classes: "bg-gray-500/10 text-gray-400 border-gray-500/20" },
   } as const;
 
   const { label, classes } = statusStyles[credential.status];
@@ -120,6 +137,34 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
             <PartyCard label={t("dashboard.tabs.issuedTo")} user={credential.holder} isYou={isHolder} t={t} />
           </div>
 
+          {/* Estado de Aceite do Holder */}
+          {credential.status === "OFFERED" && isHolder && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5 mt-4">
+              <h2 className="text-sm font-semibold text-blue-400 mb-2">
+                {t("credentials.acceptance.title")}
+              </h2>
+              <p className="text-xs text-text-subtle mb-4">
+                {t("credentials.acceptance.description")} 
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAccept}
+                  disabled={isUpdating}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {t("credentials.acceptance.acceptButton")}
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={isUpdating}
+                  className="px-4 py-2 bg-surface-hover hover:bg-surface border border-border text-text-main rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {t("credentials.acceptance.rejectButton")}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Estado de PDF / Metadata */}
           {!isPending && (
             <div className="bg-surface border border-border rounded-2xl p-5">
@@ -141,13 +186,23 @@ export default function CredentialDetailClientView({ credential, isIssuer, isHol
                   <div className="mt-4 pt-4 border-t border-border">
                     {!isPdfExpired ? (
                       <>
-                        <a
-                          href={`/api/credentials/${credential.id}/pdf`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors text-sm font-medium"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          {t("credentials.downloadEncryptedPdf")}
-                        </a>
+                        {credential.status === "ACTIVE" || credential.status === "REVOKED" ? (
+                          <a
+                            href={`/api/credentials/${credential.id}/pdf`}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors text-sm font-medium"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            {t("credentials.downloadEncryptedPdf")}
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-500/50 text-white/50 rounded-lg transition-colors text-sm font-medium cursor-not-allowed"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            {t("credentials.downloadEncryptedPdf")}
+                          </button>
+                        )}
                         <p className="text-xs text-text-subtle mt-2">
                           {t("credentials.pdfReadDisclaimer")}
                         </p>

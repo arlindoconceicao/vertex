@@ -105,14 +105,28 @@ async function main() {
        continue;
     }
 
-    // A estrutura do Buffer gerado em upload-pdfs.js é:
+    // A estrutura do Buffer gerado em upload-pdfs.js / upload-batch-credentials.js é:
     // [tamanhoCapsula 4 bytes][capsula][nonce 12 bytes][authTag 16 bytes][ciphertext]
     if (encryptedPdfBuffer.length < 4) {
-       console.error(`❌ [ERRO] Arquivo baixado muito pequeno.`);
+       console.error(`❌ [ERRO] Arquivo baixado muito pequeno (${encryptedPdfBuffer.length} bytes).`);
        continue;
     }
 
+    // Se o arquivo baixado já estiver em claro (começa com %PDF-)
+    if (encryptedPdfBuffer.length >= 5 && encryptedPdfBuffer.subarray(0, 5).toString() === "%PDF-") {
+      const outPath = path.join(__dirname, `decrypted_${cred.credentialId}.pdf`);
+      fs.writeFileSync(outPath, encryptedPdfBuffer);
+      console.log(`ℹ️ Arquivo baixado já está em formato PDF sem cifra (${(encryptedPdfBuffer.length / 1024).toFixed(1)} KB). Salvo em: ${outPath}`);
+      continue;
+    }
+
     const capsulaLength = encryptedPdfBuffer.readUInt32BE(0);
+    const minEnvelopeLength = 4 + capsulaLength + 12 + 16;
+    if (encryptedPdfBuffer.length < minEnvelopeLength) {
+       console.error(`❌ [ERRO] Envelope criptográfico incompleto ou corrompido (tamanho: ${encryptedPdfBuffer.length}, mínimo esperado: ${minEnvelopeLength}).`);
+       continue;
+    }
+
     const capsula = encryptedPdfBuffer.subarray(4, 4 + capsulaLength);
     const nonce = encryptedPdfBuffer.subarray(4 + capsulaLength, 4 + capsulaLength + 12);
     const authTag = encryptedPdfBuffer.subarray(4 + capsulaLength + 12, 4 + capsulaLength + 28);
@@ -134,7 +148,17 @@ async function main() {
        const decryptedBytes = core.aes256GcmDecrypt(sharedSecret, ciphertext, nonce, authTag);
        const outPath = path.join(__dirname, `decrypted_${cred.credentialId}.pdf`);
        fs.writeFileSync(outPath, decryptedBytes);
-       console.log(`✅ Sucesso! Arquivo decifrado salvo em: ${outPath}`);
+
+       const isPdf = decryptedBytes.length >= 5 && decryptedBytes.subarray(0, 5).toString() === "%PDF-";
+       const isTooSmall = decryptedBytes.length < 200;
+
+       if (isTooSmall) {
+         console.warn(`⚠️ [AVISO] Arquivo decifrado possui apenas ${decryptedBytes.length} bytes (stub/mock). Salvo em: ${outPath}`);
+       } else if (isPdf) {
+         console.log(`✅ Sucesso! PDF válido decifrado (${(decryptedBytes.length / 1024).toFixed(1)} KB) salvo em: ${outPath}`);
+       } else {
+         console.log(`✅ Sucesso! Arquivo decifrado (${decryptedBytes.length} bytes) salvo em: ${outPath}`);
+       }
     } catch(err) {
        console.error(`❌ [ERRO] Falha ao decifrar o PDF: ${err.message}`);
     }

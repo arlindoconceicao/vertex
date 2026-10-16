@@ -18,6 +18,8 @@
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
     "copied": "Copied!",
+    "close": "Close",
+    "csvLoaded": "CSV loaded successfully",
     "copy": "Copy",
     "save": "Save",
     "saving": "Saving...",
@@ -76,7 +78,10 @@
       "status": {
         "active": "Active",
         "pending": "Pending",
-        "revoked": "Revoked"
+        "revoked": "Revoked",
+        "offered": "Offered",
+        "batchOffered": "Batch Offered",
+        "rejected": "Rejected"
       }
     },
     "card": {
@@ -156,6 +161,12 @@
     "filterPrivate": "My Private Schemas"
   },
   "credentials": {
+    "acceptance": {
+      "title": "Action Required: Credential Acceptance",
+      "description": "The issuer has offered this credential to you. It will only officially enter your wallet after your acceptance.",
+      "acceptButton": "Accept Credential",
+      "rejectButton": "Reject"
+    },
     "credentialSummary": "Credential Summary",
     "originalPdfHash": "Original PDF SHA-256 Hash",
     "signatureDate": "Signature Date",
@@ -170,6 +181,14 @@
     "subtitle": "Select a schema and fill in the fields to issue a W3C Verifiable Credential to a holder.",
     "issueTitle": "Issue Verifiable Credential",
     "issueSubtitle": "Select a schema and fill in the fields to issue a W3C Verifiable Credential to a holder.",
+    "issueModeSingle": "Standard Issuance",
+    "issueModeBatch": "Batch Issuance",
+    "batchUploadTitle": "CSV Upload",
+    "batchUploadDesc": "Download the CSV template, fill in the data according to the schema, and upload the file.",
+    "downloadCsv": "Download CSV",
+    "uploadCsv": "Upload CSV",
+    "viewCsv": "View CSV",
+    "csvPreviewTitle": "CSV Preview",
     "selectSchema": "Select Credential Schema",
     "selectSchemaPlaceholder": "Select a schema...",
     "noSchemas": "No schemas available. Create one first.",
@@ -259,6 +278,16 @@
       "title": "PDF Retention",
       "description": "Configure how many days the platform will keep the encrypted PDF available for download by the recipient (between 1 and 15 days). After this period, the file will be permanently deleted, leaving only metadata.",
       "days": "days"
+    },
+    "platform": {
+      "offerRetention": {
+        "title": "Offer Retention",
+        "description": "Maximum time in days that a credential offer remains pending waiting for the holder's acceptance before being permanently deleted."
+      },
+      "rejectionRetention": {
+        "title": "Rejection Retention",
+        "description": "Maximum time in days that a rejected credential record is kept in the system history."
+      }
     },
     "issuerIdentifier": "Issuer Identifier",
     "title": "Settings",

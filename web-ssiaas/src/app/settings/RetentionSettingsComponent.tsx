@@ -4,10 +4,20 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/locales/LanguageContext";
 
-export default function RetentionSettingsComponent({ initialDays }: { initialDays: number }) {
+export default function RetentionSettingsComponent({ 
+  initialDays, 
+  initialOfferDays, 
+  initialRejectionDays 
+}: { 
+  initialDays: number;
+  initialOfferDays: number;
+  initialRejectionDays: number;
+}) {
   const { t } = useTranslation();
   const router = useRouter();
   const [days, setDays] = useState(initialDays);
+  const [offerDays, setOfferDays] = useState(initialOfferDays);
+  const [rejectionDays, setRejectionDays] = useState(initialRejectionDays);
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState("");
 
@@ -18,7 +28,11 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
         const res = await fetch("/api/settings/retention", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfRetentionDays: days }),
+          body: JSON.stringify({ 
+            pdfRetentionDays: days,
+            offerRetentionDays: offerDays,
+            rejectionRetentionDays: rejectionDays 
+          }),
         });
         if (res.ok) {
           setStatusMsg("Configurações de retenção salvas com sucesso!");
@@ -55,11 +69,57 @@ export default function RetentionSettingsComponent({ initialDays }: { initialDay
         </span>
       </div>
 
+      <div className="mt-8 border-t border-border pt-6">
+        <h2 className="text-lg font-bold text-text-main mb-2">
+          {t("settings.platform.offerRetention.title")}
+        </h2>
+        <p className="text-sm text-text-muted mb-8 leading-relaxed">
+          {t("settings.platform.offerRetention.description")}
+        </p>
+
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min="1"
+            max="15"
+            value={offerDays}
+            onChange={(e) => setOfferDays(Number(e.target.value))}
+            className="w-full h-2 bg-border-hover rounded-lg appearance-none cursor-pointer"
+          />
+          <span className="text-text-main font-mono font-medium text-lg w-16 text-center">
+            {offerDays} {offerDays === 1 ? t("settings.retention.days").replace(/s$/, "") : t("settings.retention.days")}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-8 border-t border-border pt-6">
+        <h2 className="text-lg font-bold text-text-main mb-2">
+          {t("settings.platform.rejectionRetention.title")}
+        </h2>
+        <p className="text-sm text-text-muted mb-8 leading-relaxed">
+          {t("settings.platform.rejectionRetention.description")}
+        </p>
+
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min="1"
+            max="15"
+            value={rejectionDays}
+            onChange={(e) => setRejectionDays(Number(e.target.value))}
+            className="w-full h-2 bg-border-hover rounded-lg appearance-none cursor-pointer"
+          />
+          <span className="text-text-main font-mono font-medium text-lg w-16 text-center">
+            {rejectionDays} {rejectionDays === 1 ? t("settings.retention.days").replace(/s$/, "") : t("settings.retention.days")}
+          </span>
+        </div>
+      </div>
+
       <div className="mt-6 flex items-center justify-between">
         <span className="text-sm text-emerald-400">{statusMsg}</span>
         <button
           onClick={handleSave}
-          disabled={isPending || days === initialDays && !statusMsg}
+          disabled={isPending || (days === initialDays && offerDays === initialOfferDays && rejectionDays === initialRejectionDays && !statusMsg)}
           className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:bg-surface-hover disabled:text-text-subtle text-white rounded-lg transition-colors text-sm font-medium"
         >
           {isPending ? t("common.saving") : t("common.save")}

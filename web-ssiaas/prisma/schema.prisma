@@ -8,8 +8,10 @@ datasource db {
 
 // Ciclo de vida de uma VC (baseado no W3C VC Status List)
 enum VCStatus {
-  PENDING   // Oferta enviada, aguardando aceite do Holder
+  OFFERED   // Nova oferta criada pelo emissor, aguardando aceite do Holder
+  PENDING   // Oferta aceita pelo Holder, aguardando assinatura do Issuer no app
   ACTIVE    // Aceita e válida
+  REJECTED  // Rejeitada pelo Holder
   REVOKED   // Revogada pelo Issuer
 }
 
@@ -78,6 +80,12 @@ model User {
   // Quantidade de dias que a plataforma deve reter o PDF após assinatura
   // configurado pelo emissor (1 a 15)
   pdfRetentionDays Int    @default(7)
+
+  // Quantidade de dias que a oferta de credencial fica válida
+  offerRetentionDays     Int @default(15)
+
+  // Quantidade de dias que o histórico da credencial rejeitada é mantido
+  rejectionRetentionDays Int @default(15)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -149,11 +157,14 @@ model VerifiableCredential {
   // Hash SHA-256 do arquivo original decifrado
   pdfHash   String?
 
-  status    VCStatus @default(PENDING)
+  status    VCStatus @default(OFFERED)
   issuedAt  DateTime @default(now())
   expiresAt DateTime?
   pdfDownloadedAt DateTime?
   revokedAt DateTime?
+  
+  // Agrupador para emissão em lote. Nulo se for emissão individual.
+  batchId   String?
 
   issuerId  String
   issuer    User     @relation("IssuerRelation", fields: [issuerId], references: [id])

@@ -213,7 +213,11 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
         />
       ) : activeTab === "platform" ? (
         <div className="space-y-8">
-          <RetentionSettingsComponent initialDays={user.pdfRetentionDays} />
+          <RetentionSettingsComponent 
+            initialDays={user.pdfRetentionDays} 
+            initialOfferDays={user.offerRetentionDays}
+            initialRejectionDays={user.rejectionRetentionDays}
+          />
         </div>
       ) : null}
     </div>

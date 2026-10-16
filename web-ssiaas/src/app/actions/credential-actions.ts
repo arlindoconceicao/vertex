@@ -104,7 +104,7 @@ export async function issueCredential(
     const credential = await prisma.verifiableCredential.create({
       data: {
         vcPayload: unsignedPayload,
-        status: "PENDING",
+        status: "OFFERED",
         expiresAt: parsedExpires,
         issuerId: issuer.id,
         holderId: holder.id,

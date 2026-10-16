@@ -18,6 +18,8 @@
     "back": "Retour",
     "backToDashboard": "Retour au tableau de bord",
     "copied": "Copié !",
+    "close": "Fermer",
+    "csvLoaded": "CSV chargé avec succès",
     "copy": "Copier",
     "save": "Enregistrer",
     "saving": "Enregistrement...",
@@ -76,7 +78,10 @@
       "status": {
         "active": "Active",
         "pending": "En attente",
-        "revoked": "Révoquées"
+        "revoked": "Révoquées",
+        "offered": "Offerte",
+        "batchOffered": "Offerte en Lot",
+        "rejected": "Rejetée"
       }
     },
     "card": {
@@ -154,6 +159,12 @@
     "consultaIpfs": "View in IPFS"
   },
   "credentials": {
+    "acceptance": {
+      "title": "Action Requise : Acceptation du Justificatif",
+      "description": "L'émetteur vous a offert ce justificatif. Il n'entrera officiellement dans votre portefeuille qu'après votre acceptation.",
+      "acceptButton": "Accepter le Justificatif",
+      "rejectButton": "Rejeter"
+    },
     "credentialSummary": "Résumé de l'attestation",
     "originalPdfHash": "Empreinte SHA-256 du PDF original",
     "signatureDate": "Date de signature",
@@ -168,6 +179,14 @@
     "subtitle": "Sélectionnez un schéma et remplissez les champs pour émettre une attestation vérifiable W3C à un titulaire.",
     "issueTitle": "Émettre une attestation vérifiable",
     "issueSubtitle": "Sélectionnez un schéma et remplissez les champs pour émettre une attestation vérifiable W3C à un titulaire.",
+    "issueModeSingle": "Émission Standard",
+    "issueModeBatch": "Émission en Lot",
+    "batchUploadTitle": "Téléchargement CSV",
+    "batchUploadDesc": "Téléchargez le modèle CSV, remplissez les données selon le schéma et importez le fichier.",
+    "downloadCsv": "Télécharger le modèle CSV",
+    "uploadCsv": "Importer CSV",
+    "viewCsv": "Voir CSV",
+    "csvPreviewTitle": "Aperçu CSV",
     "selectSchema": "Sélectionner un schéma d'attestation",
     "selectSchemaPlaceholder": "Sélectionner un schéma...",
     "noSchemas": "Aucun schéma disponible. Créez-en un d'abord.",
@@ -257,6 +276,16 @@
       "title": "Conservation des PDF",
       "description": "Configurez le nombre de jours pendant lesquels la plateforme conservera le PDF chiffré disponible au téléchargement par le destinataire (entre 1 et 15 jours). Après cette période, le fichier sera définitivement supprimé et seules les métadonnées seront conservées.",
       "days": "jours"
+    },
+    "platform": {
+      "offerRetention": {
+        "title": "Conservation des Offres",
+        "description": "Durée maximale en jours pendant laquelle une offre de certificat reste en attente d'acceptation du titulaire avant d'être définitivement supprimée."
+      },
+      "rejectionRetention": {
+        "title": "Conservation des Rejets",
+        "description": "Durée maximale en jours pendant laquelle l'enregistrement d'un certificat rejeté est conservé dans l'historique du système."
+      }
     },
     "issuerIdentifier": "Identifiant de l'émetteur",
     "title": "Paramètres",

@@ -18,6 +18,8 @@
     "back": "Voltar",
     "backToDashboard": "Voltar ao Painel",
     "copied": "Copiado!",
+    "close": "Fechar",
+    "csvLoaded": "CSV carregado com sucesso",
     "copy": "Copiar",
     "save": "Salvar",
     "saving": "Salvando...",
@@ -76,7 +78,10 @@
       "status": {
         "active": "Ativa",
         "pending": "Pendente",
-        "revoked": "Revogada"
+        "revoked": "Revogada",
+        "offered": "Oferecida",
+        "batchOffered": "Oferecida em Lote",
+        "rejected": "Rejeitada"
       }
     },
     "card": {
@@ -156,6 +161,12 @@
     "consultaIpfs": "Consulta IPFS"
   },
   "credentials": {
+    "acceptance": {
+      "title": "Ação Necessária: Aceite de Credencial",
+      "description": "O emissor ofereceu esta credencial para você. Ela só entrará oficialmente na sua carteira após o seu aceite.",
+      "acceptButton": "Aceitar Credencial",
+      "rejectButton": "Rejeitar"
+    },
     "credentialSummary": "Resumo da Credencial",
     "originalPdfHash": "Hash SHA-256 do PDF Original",
     "signatureDate": "Data da Assinatura",
@@ -170,6 +181,14 @@
     "subtitle": "Selecione um esquema e preencha os campos para emitir uma Credencial Verificável W3C.",
     "issueTitle": "Emitir Credencial Verificável",
     "issueSubtitle": "Selecione um esquema e preencha os campos para emitir uma Credencial Verificável W3C para um titular.",
+    "issueModeSingle": "Emissão Padrão",
+    "issueModeBatch": "Emissão em Lote",
+    "batchUploadTitle": "Upload de CSV",
+    "batchUploadDesc": "Faça o download do template CSV, preencha os dados de acordo com o esquema e envie o arquivo.",
+    "downloadCsv": "Download CSV",
+    "uploadCsv": "Upload CSV",
+    "viewCsv": "Visualizar CSV",
+    "csvPreviewTitle": "Pré-visualização do CSV",
     "selectSchema": "Selecionar esquema de credencial",
     "selectSchemaPlaceholder": "Selecione um esquema...",
     "noSchemas": "Nenhum esquema disponível. Crie um primeiro.",
@@ -259,6 +278,16 @@
       "title": "Retenção de PDFs",
       "description": "Configure por quantos dias a plataforma manterá o PDF criptografado disponível para download do destinatário (entre 1 e 15 dias). Após este prazo, o arquivo será excluído permanentemente, restando apenas os metadados.",
       "days": "dias"
+    },
+    "platform": {
+      "offerRetention": {
+        "title": "Retenção de Ofertas",
+        "description": "Tempo máximo em dias que uma oferta de credencial fica pendente aguardando o aceite do titular antes de ser permanentemente excluída."
+      },
+      "rejectionRetention": {
+        "title": "Retenção de Rejeições",
+        "description": "Tempo máximo em dias que o registro de uma credencial rejeitada é mantido no histórico do sistema."
+      }
     },
     "issuerIdentifier": "Identificador do Emissor",
     "title": "Configurações",

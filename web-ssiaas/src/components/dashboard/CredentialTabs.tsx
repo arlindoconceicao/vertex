@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { DashboardCredential } from "@/lib/types";
 import CredentialCard from "./CredentialCard";
+import BatchCard from "./BatchCard";
 import UserSearch from "@/components/UserSearch";
 import { useTranslation } from "@/locales/LanguageContext";
 
@@ -137,13 +138,39 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
   const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "PENDING" | "REVOKED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
 
   // Filtragem reativa por contraparte, esquema, tipo, ID ou status
-  const filteredCredentials = useMemo(() => {
-    return credentials.filter((vc) => {
+  const filteredItems = useMemo(() => {
+    // Se for filtro especial BATCH_OFFERED, agrupamos
+    if (statusFilter === "BATCH_OFFERED") {
+      const batchMap = new Map<string, DashboardCredential[]>();
+      credentials.forEach(vc => {
+        if (vc.batchId) {
+          if (!batchMap.has(vc.batchId)) batchMap.set(vc.batchId, []);
+          batchMap.get(vc.batchId)!.push(vc);
+        }
+      });
+      // Converter para array de grupos
+      const batchGroups = Array.from(batchMap.values());
+      // Filtro de busca pode aplicar ao nome do schema
+      if (searchTerm.trim()) {
+         const term = searchTerm.toLowerCase().trim();
+         return batchGroups.filter(group => {
+           const schemaName = group[0]?.schemaSnapshot?.name || "";
+           return schemaName.toLowerCase().includes(term);
+         });
+      }
+      return batchGroups;
+    }
+
+    // Modo normal
+    const filtered = credentials.filter((vc) => {
+      // Omitimos credenciais em lote do "ALL" para não poluir se estiver no emissor?
+      // O requisito diz "nova opção", então elas continuam aparecendo em ALL e OFFERED,
+      // mas se o usuário quiser ver consolidado ele usa BATCH_OFFERED.
       if (statusFilter !== "ALL" && vc.status !== statusFilter) {
         return false;
       }
@@ -168,6 +195,7 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
       }
       return true;
     });
+    return filtered;
   }, [credentials, searchTerm, statusFilter, perspective]);
 
   const handleSearchChange = (val: string) => {
@@ -180,11 +208,11 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(filteredCredentials.length / itemsPerPage) || 1;
-  const paginatedCredentials = useMemo(() => {
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+  const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredCredentials.slice(start, start + itemsPerPage);
-  }, [filteredCredentials, currentPage, itemsPerPage]);
+    return filteredItems.slice(start, start + itemsPerPage);
+  }, [filteredItems, currentPage, itemsPerPage]);
 
   if (credentials.length === 0) {
     return (
@@ -215,7 +243,7 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
         <div className="relative shrink-0">
           <select
             value={statusFilter}
-            onChange={(e) => handleStatusChange(e.target.value as "ALL" | "ACTIVE" | "PENDING" | "REVOKED")}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="w-full sm:w-auto bg-surface border border-border text-text-main rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-ring cursor-pointer transition-all"
           >
             <option value="ALL">{t("dashboard.filterStatusAll")}</option>
@@ -223,6 +251,11 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
             {perspective === "issued" && (
               <option value="PENDING">{t("dashboard.tabs.status.pending")}</option>
             )}
+            <option value="OFFERED">{t("dashboard.tabs.status.offered")}</option>
+            {perspective === "issued" && (
+              <option value="BATCH_OFFERED">{t("dashboard.tabs.status.batchOffered") || "Oferecida em Lote"}</option>
+            )}
+            <option value="REJECTED">{t("dashboard.tabs.status.rejected")}</option>
             <option value="REVOKED">{t("dashboard.tabs.status.revoked")}</option>
           </select>
         </div>
@@ -256,7 +289,7 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
       </div>
 
       {/* ── Resultado da Busca ── */}
-      {filteredCredentials.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-border rounded-2xl">
           <svg className="w-9 h-9 text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -284,9 +317,15 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {paginatedCredentials.map((vc) => (
-              <CredentialCard key={vc.id} credential={vc} perspective={perspective} />
-            ))}
+            {paginatedItems.map((item, idx) => {
+              if (statusFilter === "BATCH_OFFERED") {
+                const group = item as DashboardCredential[];
+                return <BatchCard key={group[0].batchId || idx} batchId={group[0].batchId!} credentials={group} />;
+              } else {
+                const vc = item as DashboardCredential;
+                return <CredentialCard key={vc.id} credential={vc} perspective={perspective} />;
+              }
+            })}
           </div>
 
           {/* Paginação */}

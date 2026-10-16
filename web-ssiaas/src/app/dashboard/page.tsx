@@ -49,6 +49,7 @@ export default async function DashboardPage() {
           issuedAt: true,
           expiresAt: true,
           vcPayload: true,
+          batchId: true,
           issuer: { select: { id: true, name: true, email: true } },
           holder: { select: { id: true, name: true, email: true } },
         },
@@ -65,6 +66,7 @@ export default async function DashboardPage() {
           issuedAt: true,
           expiresAt: true,
           vcPayload: true,
+          batchId: true,
           issuer: { select: { id: true, name: true, email: true } },
           holder: { select: { id: true, name: true, email: true } },
         },
@@ -115,6 +117,7 @@ export default async function DashboardPage() {
         holder: vc.holder,
         schemaSnapshot: schema ?? null,
         credentialType,
+        batchId: vc.batchId,
       };
     });
   }
@@ -122,7 +125,7 @@ export default async function DashboardPage() {
   const issued = mapCredentials(issuedRaw);
   const received = mapCredentials(receivedRaw);
 
-  const emptyBreakdown = { PENDING: 0, ACTIVE: 0, REVOKED: 0 };
+  const emptyBreakdown = { PENDING: 0, ACTIVE: 0, REVOKED: 0, OFFERED: 0, REJECTED: 0 };
 
   const issuedByStatus = { ...emptyBreakdown };
   let issuedCount = 0;

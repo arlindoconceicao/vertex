@@ -91,6 +91,7 @@ export async function GET(request: Request) {
         holder: {
           select: { did: true },
         },
+        batchId: true,
       },
       orderBy: { issuedAt: "asc" },
     });
@@ -112,6 +113,7 @@ export async function GET(request: Request) {
           name: vc.issuer.name,
         },
         unsignedPayload: payload,
+        batchId: vc.batchId,
       };
     });
 

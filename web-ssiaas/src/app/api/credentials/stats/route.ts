@@ -11,7 +11,7 @@ type StatusBreakdown = Record<VCStatus, number>;
 // garante que o JSON de retorno sempre contém as três chaves,
 // mesmo que o banco não tenha nenhuma VC daquele status.
 function emptyBreakdown(): StatusBreakdown {
-  return { PENDING: 0, ACTIVE: 0, REVOKED: 0 };
+  return { PENDING: 0, ACTIVE: 0, REVOKED: 0, OFFERED: 0, REJECTED: 0 };
 }
 
 // GET /api/credentials/stats

@@ -3,7 +3,8 @@
 
 export type DashboardCredential = {
   id: string;
-  status: "PENDING" | "ACTIVE" | "REVOKED";
+  status: "OFFERED" | "PENDING" | "ACTIVE" | "REJECTED" | "REVOKED";
+  batchId?: string | null;
   issuedAt: string;
   expiresAt: string | null;
   issuer: {
@@ -32,7 +33,9 @@ export type CredentialStats = {
 };
 
 type StatusBreakdown = {
+  OFFERED: number;
   PENDING: number;
   ACTIVE: number;
+  REJECTED: number;
   REVOKED: number;
 };

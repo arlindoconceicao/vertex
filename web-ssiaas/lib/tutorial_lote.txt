@@ -1,0 +1,85 @@
+Aqui está um tutorial passo a passo, no mesmo formato e estilo do seu guia original, adaptado especificamente para testar o fluxo de emissão de credenciais em lote e os scripts de simulação móvel:
+
+1) Resetar o banco e iniciar a aplicação:
+bash
+
+    docker start vertex_postgres
+    npx prisma migrate reset
+    npx prisma generate
+    npm run dev
+
+Veja rodando em: http://localhost:3000
+Em caso de erro use: npx prisma db push --force-reset
+
+2) Pareamento do Emissor (Mobile Signer):
+Acesse as configurações da plataforma em http://localhost:3000/settings.
+Na seção de pareamento, clique em "Iniciar Pareamento" e depois em "Copiar Payload Completo JSON".
+Execute o script complete-pairing.js substituindo 'PAYLOAD' pelo JSON copiado:
+
+    node lib/complete-pairing.js 'PAYLOAD'
+
+Nota: A tela de configurações na plataforma web atualizará automaticamente para o estado PAREADO.
+
+3) Criar Esquema e Preparar o Arquivo CSV:
+Acesse http://localhost:3000/schemas e crie um esquema (exemplo: nome Certificado com atributos nome, curso, cargaHoraria).
+Acesse a tela de emissão em http://localhost:3000/credentials/issue e clique na aba "Emissão em Lote".
+Selecione o esquema criado e clique no botão "Download Template CSV" para obter o arquivo template_Certificado.csv.
+Abra o CSV e preencha as linhas com os dados dos titulares:
+A coluna HolderEmail deve conter o e-mail de usuários cadastrados na plataforma (você pode utilizar o e-mail do seu próprio usuário logado para testes).
+Exemplo de conteúdo do CSV:
+
+csv
+HolderEmail,nome,curso,cargaHoraria
+seu_email@dominio.com,Carlos Silva,Seguranca Pos-Quantica,40
+seu_email@dominio.com,Mariana Souza,Identidade Auto-Soberana,20
+
+4) Realizar a Emissão em Lote na Plataforma:
+Na mesma aba de Emissão em Lote, envie o CSV preenchido no campo de upload.
+A plataforma validará os e-mails automaticamente contra a base de dados via validate-emails.
+Clique em "Emitir Credencial" (ou Emitir Lote).
+
+No Dashboard (http://localhost:3000/dashboard), no filtro de status, selecione "Oferecida em Lote":
+O card agrupador BatchCard.tsx exibirá o total de credenciais e quantas já foram aceitas.
+Clique em "Visualização consolidada" para abrir a página detalhada do lote (/credentials/batch/[batchId]), onde as credenciais recém-criadas estarão no status OFERECIDA (OFFERED).
+
+5) Consultar Lotes Oferecidos pelo Aplicativo Móvel:
+Execute o script get-batch-credentials.js para simular o app consultando as ofertas pendentes agrupadas pelo identificador do lote:
+
+    node lib/get-batch-credentials.js
+
+O script listará os lotes encontrados, o número de credenciais de cada um e o payload W3C não assinado de exemplo.
+
+6) Simular o Aceite do Titular (Consentimento do Holder):
+No fluxo SSI, a credencial só é liberada para assinatura do emissor após o aceite explícito do titular. Execute o script simulate-holder-acceptance.js:
+
+    node lib/simulate-holder-acceptance.js
+
+Esse comando aceita as credenciais com status OFFERED e as avança para PENDING (prontas para a assinatura móvel do emissor).
+
+7) Assinatura do Lote pelo Aplicativo Móvel:
+Você pode testar a assinatura por dois métodos diferentes:
+
+    # 1. Simula o app móvel assinando o lote e guardando no dispositivo
+    node lib/sign-batch-credentials.js
+
+    # 2. Simula o app móvel sincronizando e enviando para a plataforma
+    node lib/upload-batch-credentials.js
+
+Para fazer os 2 ao mesmo tempo use:
+
+    node lib/sign-batch-credentials.js --upload
+
+
+8) Conferência na Plataforma Web:
+Atualize a página do lote em http://localhost:3000/credentials/batch/[batchId] ou o Dashboard.
+Todas as credenciais do lote estarão agora no status ATIVO (ACTIVE) e o contador de "Aceitas / Ativas" mostrará o total concluído com sucesso.
+
+9) Download pelo App e Verificação:
+Para simular o titular baixando e decapsulando a credencial criptografada (ML-KEM + AES-GCM) em sua carteira móvel:
+
+    node lib/simulate-mobile-download.js
+
+Acesse a tela pública de verificação em http://localhost:3000/verify para validar a autenticidade da credencial emitida tanto por Upload do PDF quanto pela aba de PDF Hash.
+
+
+

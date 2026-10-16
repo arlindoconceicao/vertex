@@ -12,6 +12,10 @@
 3) Na plataforma, crie um esquema e emita uma credencial. Na listagem de credenciais emitidas ela vai aparecer como "PENDENTE",
    ou seja, ela ainda não foi assinada pelo aplicativo MOBILE.
 
+3b) Esse script vai simular o aplicativo mobile do Holder consultando o backend, e vai imprimir no terminal todos os detalhes da oferta não assinada para o Holder revisar.
+
+    node lib/get-offered-credentials.js
+
 4) Execute o script abaixo. Ele vai listar as credenciais pendentes de assinatura do usuário do app.
 
     node lib/get-pending-signatures.js
