@@ -67,14 +67,14 @@ class NativeSsiPqModule(
         bytesBase64: String,
         promise: Promise,
     ) {
-        runAsync(promise) { ffi.sha3_256Base64url(decodeBase64(bytesBase64)) }
+        runAsync(promise) { ffi.sha3256Base64url(decodeBase64(bytesBase64)) }
     }
 
     override fun sha3_256Hex(
         bytesBase64: String,
         promise: Promise,
     ) {
-        runAsync(promise) { ffi.sha3_256Hex(decodeBase64(bytesBase64)) }
+        runAsync(promise) { ffi.sha3256Hex(decodeBase64(bytesBase64)) }
     }
 
     override fun base64urlEncode(
@@ -138,6 +138,90 @@ class NativeSsiPqModule(
                 ffi.verifySignedGenericPdfFile(resolvedInputUri, signerDidDocumentJson)
             }
         }
+    }
+
+    override fun createDidJson(
+        optionsJson: String?,
+        promise: Promise,
+    ) {
+        runAsync(promise) { ffi.createDidJson(optionsJson) }
+    }
+
+    override fun mldsaSign(
+        profile: String,
+        privateKey: String,
+        messageBase64: String,
+        context: String,
+        promise: Promise,
+    ) {
+        runAsync(promise) {
+            val signature =
+                ffi.mldsaSign(profile, ffi.base64urlDecode(privateKey), decodeBase64(messageBase64), context)
+            ffi.base64urlEncode(signature)
+        }
+    }
+
+    override fun issueCredentialFromSchemaJson(
+        schemaJson: String,
+        attributesJson: String,
+        issuerDidDocumentJson: String,
+        issuerPrivateKey: String,
+        optionsJson: String?,
+        promise: Promise,
+    ) {
+        runAsync(promise) {
+            ffi.issueCredentialFromSchemaJson(
+                schemaJson,
+                attributesJson,
+                issuerDidDocumentJson,
+                issuerPrivateKey,
+                optionsJson,
+            )
+        }
+    }
+
+    override fun signedCredentialToPdf(
+        signedCredentialJson: String,
+        renderOptionsJson: String?,
+        promise: Promise,
+    ) {
+        runAsync(promise) { encodeBase64(ffi.signedCredentialToPdf(signedCredentialJson, renderOptionsJson)) }
+    }
+
+    override fun embedSignedCredentialInPdfBytes(
+        pdfBaseBase64: String,
+        signedCredentialJson: String,
+        issuerDidDocumentJson: String,
+        issuerPrivateKey: String,
+        optionsJson: String?,
+        promise: Promise,
+    ) {
+        runAsync(promise) {
+            encodeBase64(
+                ffi.embedSignedCredentialInPdf(
+                    decodeBase64(pdfBaseBase64),
+                    signedCredentialJson,
+                    issuerDidDocumentJson,
+                    issuerPrivateKey,
+                    optionsJson,
+                ),
+            )
+        }
+    }
+
+    override fun extractCredentialManifestFromPdf(
+        pdfBase64: String,
+        promise: Promise,
+    ) {
+        runAsync(promise) { ffi.extractCredentialManifestFromPdf(decodeBase64(pdfBase64)) }
+    }
+
+    override fun verifySignedCredentialPdfBytes(
+        pdfBase64: String,
+        issuerDidDocumentJson: String,
+        promise: Promise,
+    ) {
+        runAsync(promise) { ffi.verifySignedCredentialPdf(decodeBase64(pdfBase64), issuerDidDocumentJson) }
     }
 
     override fun walletCreateJson(

@@ -28,6 +28,37 @@ export interface Spec extends TurboModule {
     signerDidDocumentJson: string,
   ): Promise<string>;
 
+  createDidJson(optionsJson?: string | null): Promise<string>;
+  mldsaSign(
+    profile: string,
+    privateKey: string,
+    messageBase64: string,
+    context: string,
+  ): Promise<string>;
+  issueCredentialFromSchemaJson(
+    schemaJson: string,
+    attributesJson: string,
+    issuerDidDocumentJson: string,
+    issuerPrivateKey: string,
+    optionsJson?: string | null,
+  ): Promise<string>;
+  signedCredentialToPdf(
+    signedCredentialJson: string,
+    renderOptionsJson?: string | null,
+  ): Promise<string>;
+  embedSignedCredentialInPdfBytes(
+    pdfBaseBase64: string,
+    signedCredentialJson: string,
+    issuerDidDocumentJson: string,
+    issuerPrivateKey: string,
+    optionsJson?: string | null,
+  ): Promise<string>;
+  extractCredentialManifestFromPdf(pdfBase64: string): Promise<string>;
+  verifySignedCredentialPdfBytes(
+    pdfBase64: string,
+    issuerDidDocumentJson: string,
+  ): Promise<string>;
+
   walletCreateJson(
     walletName: string,
     password: string,

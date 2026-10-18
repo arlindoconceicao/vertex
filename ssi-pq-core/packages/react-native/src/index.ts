@@ -111,6 +111,95 @@ export async function verifySignedCredential(
   );
 }
 
+// Funções "raw": operam com chaves privadas fornecidas pelo chamador (base64url),
+// sem passar pela wallet cifrada do core. Bytes de PDF cruzam a ponte em base64.
+
+export async function createDidRaw(
+  options?: {mldsa?: string; mlkem?: string; createdAt: string} | string | null,
+): Promise<JsonObject> {
+  return parseJson(
+    await NativeSsiPq.createDidJson(optionalJsonToString(options, 'DID options')),
+    'DID creation result',
+  );
+}
+
+/** Assina `messageBase64` com ML-DSA; retorna a assinatura em base64url. */
+export function mldsaSign(
+  profile: string,
+  privateKey: string,
+  messageBase64: string,
+  context: string,
+): Promise<string> {
+  return NativeSsiPq.mldsaSign(profile, privateKey, messageBase64, context);
+}
+
+export async function issueCredentialFromSchemaRaw(
+  schema: JsonInput,
+  attributes: JsonInput,
+  issuerDidDocument: JsonInput,
+  issuerPrivateKey: string,
+  options: CredentialIssueOptions | string,
+): Promise<JsonObject> {
+  return parseJson(
+    await NativeSsiPq.issueCredentialFromSchemaJson(
+      jsonToString(schema, 'schema'),
+      jsonToString(attributes, 'attributes'),
+      jsonToString(issuerDidDocument, 'issuerDidDocument'),
+      issuerPrivateKey,
+      jsonToString(options, 'credential issue options'),
+    ),
+    'signed credential',
+  );
+}
+
+/** Renderiza o PDF visual da credencial; retorna os bytes em base64. */
+export function signedCredentialToPdf(
+  signedCredential: JsonInput,
+  renderOptions?: JsonInput | null,
+): Promise<string> {
+  return NativeSsiPq.signedCredentialToPdf(
+    jsonToString(signedCredential, 'signedCredential'),
+    optionalJsonToString(renderOptions, 'PDF render options'),
+  );
+}
+
+/** Embute o manifesto SSI no PDF (base64); retorna o PDF final em base64. */
+export function embedSignedCredentialInPdfBytes(
+  pdfBaseBase64: string,
+  signedCredential: JsonInput,
+  issuerDidDocument: JsonInput,
+  issuerPrivateKey: string,
+  options: PdfBindingOptions | string,
+): Promise<string> {
+  return NativeSsiPq.embedSignedCredentialInPdfBytes(
+    pdfBaseBase64,
+    jsonToString(signedCredential, 'signedCredential'),
+    jsonToString(issuerDidDocument, 'issuerDidDocument'),
+    issuerPrivateKey,
+    jsonToString(options, 'PDF binding options'),
+  );
+}
+
+export async function extractCredentialManifestFromPdf(pdfBase64: string): Promise<JsonObject> {
+  return parseJson(
+    await NativeSsiPq.extractCredentialManifestFromPdf(pdfBase64),
+    'credential manifest',
+  );
+}
+
+export async function verifySignedCredentialPdfBytes(
+  pdfBase64: string,
+  issuerDidDocument: JsonInput,
+): Promise<PdfVerificationResult> {
+  return parseJson(
+    await NativeSsiPq.verifySignedCredentialPdfBytes(
+      pdfBase64,
+      jsonToString(issuerDidDocument, 'issuerDidDocument'),
+    ),
+    'credential PDF verification result',
+  );
+}
+
 export async function createWallet(
   walletName: string,
   password: string,

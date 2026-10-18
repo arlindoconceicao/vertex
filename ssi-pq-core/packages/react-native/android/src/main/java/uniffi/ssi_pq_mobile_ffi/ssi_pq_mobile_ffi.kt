@@ -17,20 +17,20 @@ package uniffi.ssi_pq_mobile_ffi
 // compile the Rust component. The easiest way to ensure this is to bundle the Kotlin
 // helpers directly inline like we're doing here.
 
-import com.sun.jna.Callback
-import com.sun.jna.IntegerType
 import com.sun.jna.Library
+import com.sun.jna.IntegerType
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
+import com.sun.jna.Callback
 import com.sun.jna.ptr.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -44,41 +44,29 @@ open class RustBuffer : Structure() {
     // Note: `capacity` and `len` are actually `ULong` values, but JVM only supports signed values.
     // When dealing with these fields, make sure to call `toULong()`.
     @JvmField var capacity: Long = 0
-
     @JvmField var len: Long = 0
-
     @JvmField var data: Pointer? = null
 
-    class ByValue :
-        RustBuffer(),
-        Structure.ByValue
+    class ByValue: RustBuffer(), Structure.ByValue
+    class ByReference: RustBuffer(), Structure.ByReference
 
-    class ByReference :
-        RustBuffer(),
-        Structure.ByReference
-
-    internal fun setValue(other: RustBuffer) {
+   internal fun setValue(other: RustBuffer) {
         capacity = other.capacity
         len = other.len
         data = other.data
     }
 
     companion object {
-        internal fun alloc(size: ULong = 0UL) =
-            uniffiRustCall { status ->
-                // Note: need to convert the size to a `Long` value to make this work with JVM.
-                UniffiLib.INSTANCE.ffi_ssi_pq_mobile_ffi_rustbuffer_alloc(size.toLong(), status)
-            }.also {
-                if (it.data == null) {
-                    throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=$size)")
-                }
-            }
+        internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
+            // Note: need to convert the size to a `Long` value to make this work with JVM.
+            UniffiLib.INSTANCE.ffi_ssi_pq_mobile_ffi_rustbuffer_alloc(size.toLong(), status)
+        }.also {
+            if(it.data == null) {
+               throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
+           }
+        }
 
-        internal fun create(
-            capacity: ULong,
-            len: ULong,
-            data: Pointer?,
-        ): RustBuffer.ByValue {
+        internal fun create(capacity: ULong, len: ULong, data: Pointer?): RustBuffer.ByValue {
             var buf = RustBuffer.ByValue()
             buf.capacity = capacity.toLong()
             buf.len = len.toLong()
@@ -86,10 +74,9 @@ open class RustBuffer : Structure() {
             return buf
         }
 
-        internal fun free(buf: RustBuffer.ByValue) =
-            uniffiRustCall { status ->
-                UniffiLib.INSTANCE.ffi_ssi_pq_mobile_ffi_rustbuffer_free(buf, status)
-            }
+        internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
+            UniffiLib.INSTANCE.ffi_ssi_pq_mobile_ffi_rustbuffer_free(buf, status)
+        }
     }
 
     @Suppress("TooGenericExceptionThrown")
@@ -142,14 +129,10 @@ class RustBufferByReference : ByReference(16) {
 @Structure.FieldOrder("len", "data")
 internal open class ForeignBytes : Structure() {
     @JvmField var len: Int = 0
-
     @JvmField var data: Pointer? = null
 
-    class ByValue :
-        ForeignBytes(),
-        Structure.ByValue
+    class ByValue : ForeignBytes(), Structure.ByValue
 }
-
 /**
  * The FfiConverter interface handles converter types to and from the FFI
  *
@@ -179,10 +162,7 @@ public interface FfiConverter<KotlinType, FfiType> {
     fun allocationSize(value: KotlinType): ULong
 
     // Write a Kotlin type to a `ByteBuffer`
-    fun write(
-        value: KotlinType,
-        buf: ByteBuffer,
-    )
+    fun write(value: KotlinType, buf: ByteBuffer)
 
     // Lower a value into a `RustBuffer`
     //
@@ -193,10 +173,9 @@ public interface FfiConverter<KotlinType, FfiType> {
     fun lowerIntoRustBuffer(value: KotlinType): RustBuffer.ByValue {
         val rbuf = RustBuffer.alloc(allocationSize(value))
         try {
-            val bbuf =
-                rbuf.data!!.getByteBuffer(0, rbuf.capacity).also {
-                    it.order(ByteOrder.BIG_ENDIAN)
-                }
+            val bbuf = rbuf.data!!.getByteBuffer(0, rbuf.capacity).also {
+                it.order(ByteOrder.BIG_ENDIAN)
+            }
             write(value, bbuf)
             rbuf.writeField("len", bbuf.position().toLong())
             return rbuf
@@ -213,11 +192,11 @@ public interface FfiConverter<KotlinType, FfiType> {
     fun liftFromRustBuffer(rbuf: RustBuffer.ByValue): KotlinType {
         val byteBuf = rbuf.asByteBuffer()!!
         try {
-            val item = read(byteBuf)
-            if (byteBuf.hasRemaining()) {
-                throw RuntimeException("junk remaining in buffer after lifting, something is very wrong!!")
-            }
-            return item
+           val item = read(byteBuf)
+           if (byteBuf.hasRemaining()) {
+               throw RuntimeException("junk remaining in buffer after lifting, something is very wrong!!")
+           }
+           return item
         } finally {
             RustBuffer.free(rbuf)
         }
@@ -229,9 +208,8 @@ public interface FfiConverter<KotlinType, FfiType> {
  *
  * @suppress
  */
-public interface FfiConverterRustBuffer<KotlinType> : FfiConverter<KotlinType, RustBuffer.ByValue> {
+public interface FfiConverterRustBuffer<KotlinType>: FfiConverter<KotlinType, RustBuffer.ByValue> {
     override fun lift(value: RustBuffer.ByValue) = liftFromRustBuffer(value)
-
     override fun lower(value: KotlinType) = lowerIntoRustBuffer(value)
 }
 // A handful of classes and functions to support the generated data structures.
@@ -244,24 +222,24 @@ internal const val UNIFFI_CALL_UNEXPECTED_ERROR = 2.toByte()
 @Structure.FieldOrder("code", "error_buf")
 internal open class UniffiRustCallStatus : Structure() {
     @JvmField var code: Byte = 0
-
     @JvmField var error_buf: RustBuffer.ByValue = RustBuffer.ByValue()
 
-    class ByValue :
-        UniffiRustCallStatus(),
-        Structure.ByValue
+    class ByValue: UniffiRustCallStatus(), Structure.ByValue
 
-    fun isSuccess(): Boolean = code == UNIFFI_CALL_SUCCESS
+    fun isSuccess(): Boolean {
+        return code == UNIFFI_CALL_SUCCESS
+    }
 
-    fun isError(): Boolean = code == UNIFFI_CALL_ERROR
+    fun isError(): Boolean {
+        return code == UNIFFI_CALL_ERROR
+    }
 
-    fun isPanic(): Boolean = code == UNIFFI_CALL_UNEXPECTED_ERROR
+    fun isPanic(): Boolean {
+        return code == UNIFFI_CALL_UNEXPECTED_ERROR
+    }
 
     companion object {
-        fun create(
-            code: Byte,
-            errorBuf: RustBuffer.ByValue,
-        ): UniffiRustCallStatus.ByValue {
+        fun create(code: Byte, errorBuf: RustBuffer.ByValue): UniffiRustCallStatus.ByValue {
             val callStatus = UniffiRustCallStatus.ByValue()
             callStatus.code = code
             callStatus.error_buf = errorBuf
@@ -270,9 +248,7 @@ internal open class UniffiRustCallStatus : Structure() {
     }
 }
 
-class InternalException(
-    message: String,
-) : kotlin.Exception(message)
+class InternalException(message: String) : kotlin.Exception(message)
 
 /**
  * Each top-level error class has a companion object that can lift the error from the call status's rust buffer
@@ -280,7 +256,7 @@ class InternalException(
  * @suppress
  */
 interface UniffiRustCallStatusErrorHandler<E> {
-    fun lift(error_buf: RustBuffer.ByValue): E
+    fun lift(error_buf: RustBuffer.ByValue): E;
 }
 
 // Helpers for calling Rust
@@ -288,10 +264,7 @@ interface UniffiRustCallStatusErrorHandler<E> {
 // synchronize itself
 
 // Call a rust function that returns a Result<>.  Pass in the Error class companion that corresponds to the Err
-private inline fun <U, E : kotlin.Exception> uniffiRustCallWithError(
-    errorHandler: UniffiRustCallStatusErrorHandler<E>,
-    callback: (UniffiRustCallStatus) -> U,
-): U {
+private inline fun <U, E: kotlin.Exception> uniffiRustCallWithError(errorHandler: UniffiRustCallStatusErrorHandler<E>, callback: (UniffiRustCallStatus) -> U): U {
     var status = UniffiRustCallStatus()
     val return_value = callback(status)
     uniffiCheckCallStatus(errorHandler, status)
@@ -299,10 +272,7 @@ private inline fun <U, E : kotlin.Exception> uniffiRustCallWithError(
 }
 
 // Check UniffiRustCallStatus and throw an error if the call wasn't successful
-private fun <E : kotlin.Exception> uniffiCheckCallStatus(
-    errorHandler: UniffiRustCallStatusErrorHandler<E>,
-    status: UniffiRustCallStatus,
-) {
+private fun<E: kotlin.Exception> uniffiCheckCallStatus(errorHandler: UniffiRustCallStatusErrorHandler<E>, status: UniffiRustCallStatus) {
     if (status.isSuccess()) {
         return
     } else if (status.isError()) {
@@ -326,7 +296,7 @@ private fun <E : kotlin.Exception> uniffiCheckCallStatus(
  *
  * @suppress
  */
-object UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorHandler<InternalException> {
+object UniffiNullRustCallStatusErrorHandler: UniffiRustCallStatusErrorHandler<InternalException> {
     override fun lift(error_buf: RustBuffer.ByValue): InternalException {
         RustBuffer.free(error_buf)
         return InternalException("Unexpected CALL_ERROR")
@@ -334,31 +304,32 @@ object UniffiNullRustCallStatusErrorHandler : UniffiRustCallStatusErrorHandler<I
 }
 
 // Call a rust function that returns a plain value
-private inline fun <U> uniffiRustCall(callback: (UniffiRustCallStatus) -> U): U =
-    uniffiRustCallWithError(UniffiNullRustCallStatusErrorHandler, callback)
+private inline fun <U> uniffiRustCall(callback: (UniffiRustCallStatus) -> U): U {
+    return uniffiRustCallWithError(UniffiNullRustCallStatusErrorHandler, callback)
+}
 
-internal inline fun <T> uniffiTraitInterfaceCall(
+internal inline fun<T> uniffiTraitInterfaceCall(
     callStatus: UniffiRustCallStatus,
     makeCall: () -> T,
     writeReturn: (T) -> Unit,
 ) {
     try {
         writeReturn(makeCall())
-    } catch (e: kotlin.Exception) {
+    } catch(e: kotlin.Exception) {
         callStatus.code = UNIFFI_CALL_UNEXPECTED_ERROR
         callStatus.error_buf = FfiConverterString.lower(e.toString())
     }
 }
 
-internal inline fun <T, reified E : Throwable> uniffiTraitInterfaceCallWithError(
+internal inline fun<T, reified E: Throwable> uniffiTraitInterfaceCallWithError(
     callStatus: UniffiRustCallStatus,
     makeCall: () -> T,
     writeReturn: (T) -> Unit,
-    lowerError: (E) -> RustBuffer.ByValue,
+    lowerError: (E) -> RustBuffer.ByValue
 ) {
     try {
         writeReturn(makeCall())
-    } catch (e: kotlin.Exception) {
+    } catch(e: kotlin.Exception) {
         if (e is E) {
             callStatus.code = UNIFFI_CALL_ERROR
             callStatus.error_buf = lowerError(e)
@@ -368,15 +339,12 @@ internal inline fun <T, reified E : Throwable> uniffiTraitInterfaceCallWithError
         }
     }
 }
-
 // Map handles to objects
 //
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
-internal class UniffiHandleMap<T : Any> {
+internal class UniffiHandleMap<T: Any> {
     private val map = ConcurrentHashMap<Long, T>()
-    private val counter =
-        java.util.concurrent.atomic
-            .AtomicLong(0)
+    private val counter = java.util.concurrent.atomic.AtomicLong(0)
 
     val size: Int
         get() = map.size
@@ -389,10 +357,14 @@ internal class UniffiHandleMap<T : Any> {
     }
 
     // Get an object from the handle map
-    fun get(handle: Long): T = map.get(handle) ?: throw InternalException("UniffiHandleMap.get: Invalid handle")
+    fun get(handle: Long): T {
+        return map.get(handle) ?: throw InternalException("UniffiHandleMap.get: Invalid handle")
+    }
 
     // Remove an entry from the handlemap and get the Kotlin object back
-    fun remove(handle: Long): T = map.remove(handle) ?: throw InternalException("UniffiHandleMap: Invalid handle")
+    fun remove(handle: Long): T {
+        return map.remove(handle) ?: throw InternalException("UniffiHandleMap: Invalid handle")
+    }
 }
 
 // Contains loading, initialization code,
@@ -406,25 +378,22 @@ private fun findLibraryName(componentName: String): String {
     return "ssi_pq_mobile_ffi"
 }
 
-private inline fun <reified Lib : Library> loadIndirect(componentName: String): Lib =
-    Native.load<Lib>(findLibraryName(componentName), Lib::class.java)
+private inline fun <reified Lib : Library> loadIndirect(
+    componentName: String
+): Lib {
+    return Native.load<Lib>(findLibraryName(componentName), Lib::class.java)
+}
 
 // Define FFI callback types
 internal interface UniffiRustFutureContinuationCallback : com.sun.jna.Callback {
-    fun callback(
-        `data`: Long,
-        `pollResult`: Byte,
-    )
+    fun callback(`data`: Long,`pollResult`: Byte,)
 }
-
 internal interface UniffiForeignFutureFree : com.sun.jna.Callback {
-    fun callback(`handle`: Long)
+    fun callback(`handle`: Long,)
 }
-
 internal interface UniffiCallbackInterfaceFree : com.sun.jna.Callback {
-    fun callback(`handle`: Long)
+    fun callback(`handle`: Long,)
 }
-
 @Structure.FieldOrder("handle", "free")
 internal open class UniffiForeignFuture(
     @JvmField internal var `handle`: Long = 0.toLong(),
@@ -433,15 +402,14 @@ internal open class UniffiForeignFuture(
     class UniffiByValue(
         `handle`: Long = 0.toLong(),
         `free`: UniffiForeignFutureFree? = null,
-    ) : UniffiForeignFuture(`handle`, `free`),
-        Structure.ByValue
+    ): UniffiForeignFuture(`handle`,`free`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFuture) {
+   internal fun uniffiSetValue(other: UniffiForeignFuture) {
         `handle` = other.`handle`
         `free` = other.`free`
     }
-}
 
+}
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructU8(
     @JvmField internal var `returnValue`: Byte = 0.toByte(),
@@ -450,22 +418,17 @@ internal open class UniffiForeignFutureStructU8(
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructU8(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructU8(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructU8) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructU8) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteU8 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructU8.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructU8.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructI8(
     @JvmField internal var `returnValue`: Byte = 0.toByte(),
@@ -474,22 +437,17 @@ internal open class UniffiForeignFutureStructI8(
     class UniffiByValue(
         `returnValue`: Byte = 0.toByte(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructI8(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructI8(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructI8) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructI8) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteI8 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructI8.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructI8.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructU16(
     @JvmField internal var `returnValue`: Short = 0.toShort(),
@@ -498,22 +456,17 @@ internal open class UniffiForeignFutureStructU16(
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructU16(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructU16(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructU16) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructU16) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteU16 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructU16.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructU16.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructI16(
     @JvmField internal var `returnValue`: Short = 0.toShort(),
@@ -522,22 +475,17 @@ internal open class UniffiForeignFutureStructI16(
     class UniffiByValue(
         `returnValue`: Short = 0.toShort(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructI16(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructI16(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructI16) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructI16) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteI16 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructI16.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructI16.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructU32(
     @JvmField internal var `returnValue`: Int = 0,
@@ -546,22 +494,17 @@ internal open class UniffiForeignFutureStructU32(
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructU32(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructU32(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructU32) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructU32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteU32 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructU32.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructU32.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructI32(
     @JvmField internal var `returnValue`: Int = 0,
@@ -570,22 +513,17 @@ internal open class UniffiForeignFutureStructI32(
     class UniffiByValue(
         `returnValue`: Int = 0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructI32(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructI32(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructI32) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructI32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteI32 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructI32.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructI32.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructU64(
     @JvmField internal var `returnValue`: Long = 0.toLong(),
@@ -594,22 +532,17 @@ internal open class UniffiForeignFutureStructU64(
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructU64(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructU64(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructU64) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructU64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteU64 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructU64.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructU64.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructI64(
     @JvmField internal var `returnValue`: Long = 0.toLong(),
@@ -618,22 +551,17 @@ internal open class UniffiForeignFutureStructI64(
     class UniffiByValue(
         `returnValue`: Long = 0.toLong(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructI64(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructI64(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructI64) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructI64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteI64 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructI64.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructI64.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructF32(
     @JvmField internal var `returnValue`: Float = 0.0f,
@@ -642,22 +570,17 @@ internal open class UniffiForeignFutureStructF32(
     class UniffiByValue(
         `returnValue`: Float = 0.0f,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructF32(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructF32(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructF32) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructF32) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteF32 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructF32.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructF32.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructF64(
     @JvmField internal var `returnValue`: Double = 0.0,
@@ -666,22 +589,17 @@ internal open class UniffiForeignFutureStructF64(
     class UniffiByValue(
         `returnValue`: Double = 0.0,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructF64(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructF64(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructF64) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructF64) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteF64 : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructF64.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructF64.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructPointer(
     @JvmField internal var `returnValue`: Pointer = Pointer.NULL,
@@ -690,22 +608,17 @@ internal open class UniffiForeignFutureStructPointer(
     class UniffiByValue(
         `returnValue`: Pointer = Pointer.NULL,
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructPointer(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructPointer(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructPointer) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructPointer) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompletePointer : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructPointer.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructPointer.UniffiByValue,)
 }
-
 @Structure.FieldOrder("returnValue", "callStatus")
 internal open class UniffiForeignFutureStructRustBuffer(
     @JvmField internal var `returnValue`: RustBuffer.ByValue = RustBuffer.ByValue(),
@@ -714,157 +627,307 @@ internal open class UniffiForeignFutureStructRustBuffer(
     class UniffiByValue(
         `returnValue`: RustBuffer.ByValue = RustBuffer.ByValue(),
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructRustBuffer(`returnValue`, `callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructRustBuffer(`returnValue`,`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructRustBuffer) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructRustBuffer) {
         `returnValue` = other.`returnValue`
         `callStatus` = other.`callStatus`
     }
-}
 
+}
 internal interface UniffiForeignFutureCompleteRustBuffer : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructRustBuffer.UniffiByValue,
-    )
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructRustBuffer.UniffiByValue,)
 }
-
 @Structure.FieldOrder("callStatus")
 internal open class UniffiForeignFutureStructVoid(
     @JvmField internal var `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
 ) : Structure() {
     class UniffiByValue(
         `callStatus`: UniffiRustCallStatus.ByValue = UniffiRustCallStatus.ByValue(),
-    ) : UniffiForeignFutureStructVoid(`callStatus`),
-        Structure.ByValue
+    ): UniffiForeignFutureStructVoid(`callStatus`,), Structure.ByValue
 
-    internal fun uniffiSetValue(other: UniffiForeignFutureStructVoid) {
+   internal fun uniffiSetValue(other: UniffiForeignFutureStructVoid) {
         `callStatus` = other.`callStatus`
     }
+
+}
+internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
+    fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructVoid.UniffiByValue,)
 }
 
-internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
-    fun callback(
-        `callbackData`: Long,
-        `result`: UniffiForeignFutureStructVoid.UniffiByValue,
-    )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // For large crates we prevent `MethodTooLargeException` (see #2340)
-// N.B. the name of the extension is very misleading, since it is
-// rather `InterfaceTooLargeException`, caused by too many methods
+// N.B. the name of the extension is very misleading, since it is 
+// rather `InterfaceTooLargeException`, caused by too many methods 
 // in the interface for large crates.
 //
 // By splitting the otherwise huge interface into two parts
-// * UniffiLib
+// * UniffiLib 
 // * IntegrityCheckingUniffiLib (this)
 // we allow for ~2x as many methods in the UniffiLib interface.
-//
-// The `ffi_uniffi_contract_version` method and all checksum methods are put
+// 
+// The `ffi_uniffi_contract_version` method and all checksum methods are put 
 // into `IntegrityCheckingUniffiLib` and these methods are called only once,
 // when the library is loaded.
 internal interface IntegrityCheckingUniffiLib : Library {
     // Integrity check functions only
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_aes256_gcm_decrypt(): Short
+    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_aes256_gcm_decrypt(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_aes256_gcm_encrypt(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_base64url_decode(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_base64url_encode(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_canonical_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_canonical_json_hash_base64url(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_create_did_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_create_schema_from_attributes(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_embed_signed_credential_in_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_extract_credential_manifest_from_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_extract_generic_signature_manifest_from_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_issue_credential_from_schema_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_issuer_identifier_base64(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_generate_keypair(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_sign(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_verify(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_decapsulate(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_encapsulate(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_generate_keypair(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_delete(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_get(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_list_prefix(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_put(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_schema_hash_base64(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_secure_random_key(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_sha3_256_base64url(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_sha3_256_hex(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_signed_credential_to_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_supported_profiles(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_did_document(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential_pdf_file(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_generic_pdf(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_generic_pdf_file(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_change_password_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_create_did_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_create_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_embed_signed_credential_in_pdf_file(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_get_did_document_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_issue_credential_from_schema_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_list_dids_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_mlkem_decapsulate(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_open_json(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_sign_generic_pdf_bytes(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_sign_generic_pdf_file(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_constructor_ssipq_new(
+): Short
+fun uniffi_ssi_pq_mobile_ffi_checksum_constructor_ssipq_new_with_storage_dir(
+): Short
+fun ffi_ssi_pq_mobile_ffi_uniffi_contract_version(
+): Int
 
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_aes256_gcm_encrypt(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_base64url_decode(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_base64url_encode(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_canonical_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_canonical_json_hash_base64url(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_create_did_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_create_schema_from_attributes(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_embed_signed_credential_in_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_extract_credential_manifest_from_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_extract_generic_signature_manifest_from_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_issue_credential_from_schema_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_issuer_identifier_base64(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_generate_keypair(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_sign(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mldsa_verify(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_decapsulate(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_encapsulate(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mlkem_generate_keypair(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_delete(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_get(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_list_prefix(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_mobile_storage_put(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_schema_hash_base64(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_secure_random_key(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_sha3_256_base64url(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_sha3_256_hex(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_signed_credential_to_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_supported_profiles(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_did_document(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_credential_pdf_file(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_generic_pdf(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_verify_signed_generic_pdf_file(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_change_password_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_create_did_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_create_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_embed_signed_credential_in_pdf_file(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_get_did_document_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_issue_credential_from_schema_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_list_dids_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_mlkem_decapsulate(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_open_json(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_sign_generic_pdf_bytes(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_wallet_sign_generic_pdf_file(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_constructor_ssipq_new(): Short
-
-    fun uniffi_ssi_pq_mobile_ffi_checksum_constructor_ssipq_new_with_storage_dir(): Short
-
-    fun ffi_ssi_pq_mobile_ffi_uniffi_contract_version(): Int
 }
 
 // A JNA Library to expose the extern-C FFI definitions.
@@ -874,8 +937,8 @@ internal interface UniffiLib : Library {
         internal val INSTANCE: UniffiLib by lazy {
             val componentName = "ssi_pq_mobile_ffi"
             // For large crates we prevent `MethodTooLargeException` (see #2340)
-            // N.B. the name of the extension is very misleading, since it is
-            // rather `InterfaceTooLargeException`, caused by too many methods
+            // N.B. the name of the extension is very misleading, since it is 
+            // rather `InterfaceTooLargeException`, caused by too many methods 
             // in the interface for large crates.
             //
             // By splitting the otherwise huge interface into two parts
@@ -883,7 +946,7 @@ internal interface UniffiLib : Library {
             // * IntegrityCheckingUniffiLib
             // And all checksum methods are put into `IntegrityCheckingUniffiLib`
             // we allow for ~2x as many methods in the UniffiLib interface.
-            //
+            // 
             // Thus we first load the library with `loadIndirect` as `IntegrityCheckingUniffiLib`
             // so that we can (optionally!) call `uniffiCheckApiChecksums`...
             loadIndirect<IntegrityCheckingUniffiLib>(componentName)
@@ -898,12 +961,12 @@ internal interface UniffiLib : Library {
             // to trigger this issue, the performance impact is negligible, running on
             // a macOS M1 machine the `loadIndirect` call takes ~50ms.
             val lib = loadIndirect<UniffiLib>(componentName)
-            // No need to check the contract version and checksums, since
+            // No need to check the contract version and checksums, since 
             // we already did that with `IntegrityCheckingUniffiLib` above.
             // Loading of library with integrity check done.
             lib
         }
-
+        
         // The Cleaner for the whole library
         internal val CLEANER: UniffiCleaner by lazy {
             UniffiCleaner.create()
@@ -911,589 +974,221 @@ internal interface UniffiLib : Library {
     }
 
     // FFI functions
-    fun uniffi_ssi_pq_mobile_ffi_fn_clone_ssipq(
-        `ptr`: Pointer,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Pointer
+    fun uniffi_ssi_pq_mobile_ffi_fn_clone_ssipq(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_ssi_pq_mobile_ffi_fn_free_ssipq(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new(uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new_with_storage_dir(`storageDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_decrypt(`ptr`: Pointer,`key`: RustBuffer.ByValue,`ciphertext`: RustBuffer.ByValue,`nonce`: RustBuffer.ByValue,`authTag`: RustBuffer.ByValue,`aad`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_encrypt(`ptr`: Pointer,`key`: RustBuffer.ByValue,`plaintext`: RustBuffer.ByValue,`aad`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_decode(`ptr`: Pointer,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_encode(`ptr`: Pointer,`bytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json(`ptr`: Pointer,`input`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json_hash_base64url(`ptr`: Pointer,`input`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_did_json(`ptr`: Pointer,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_schema_from_attributes(`ptr`: Pointer,`attributesJson`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_embed_signed_credential_in_pdf(`ptr`: Pointer,`pdfBase`: RustBuffer.ByValue,`signedCredentialJson`: RustBuffer.ByValue,`issuerDidDocumentJson`: RustBuffer.ByValue,`issuerPrivateKey`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_credential_manifest_from_pdf(`ptr`: Pointer,`pdfBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_generic_signature_manifest_from_pdf(`ptr`: Pointer,`pdfBytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issue_credential_from_schema_json(`ptr`: Pointer,`schemaJson`: RustBuffer.ByValue,`attributesJson`: RustBuffer.ByValue,`issuerDidDocumentJson`: RustBuffer.ByValue,`issuerPrivateKey`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issuer_identifier_base64(`ptr`: Pointer,`didDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_generate_keypair(`ptr`: Pointer,`profile`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_sign(`ptr`: Pointer,`profile`: RustBuffer.ByValue,`privateKey`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,`context`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_verify(`ptr`: Pointer,`profile`: RustBuffer.ByValue,`publicKey`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,`context`: RustBuffer.ByValue,`signature`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_decapsulate(`ptr`: Pointer,`profile`: RustBuffer.ByValue,`privateKey`: RustBuffer.ByValue,`ciphertext`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_encapsulate(`ptr`: Pointer,`profile`: RustBuffer.ByValue,`publicKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_generate_keypair(`ptr`: Pointer,`profile`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_delete(`ptr`: Pointer,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_get(`ptr`: Pointer,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_list_prefix(`ptr`: Pointer,`prefix`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_put(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_schema_hash_base64(`ptr`: Pointer,`schemaJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_secure_random_key(`ptr`: Pointer,`length`: Int,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_base64url(`ptr`: Pointer,`bytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_hex(`ptr`: Pointer,`bytes`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_signed_credential_to_pdf(`ptr`: Pointer,`signedCredentialJson`: RustBuffer.ByValue,`renderOptionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_supported_profiles(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_did_document(`ptr`: Pointer,`didDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential(`ptr`: Pointer,`signedCredentialJson`: RustBuffer.ByValue,`issuerDidDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf(`ptr`: Pointer,`pdfBytes`: RustBuffer.ByValue,`issuerDidDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf_file(`ptr`: Pointer,`inputUri`: RustBuffer.ByValue,`issuerDidDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf(`ptr`: Pointer,`pdfBytes`: RustBuffer.ByValue,`signerDidDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf_file(`ptr`: Pointer,`inputUri`: RustBuffer.ByValue,`signerDidDocumentJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_change_password_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`oldPassword`: RustBuffer.ByValue,`newPassword`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_did_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`pdfBase`: RustBuffer.ByValue,`signedCredentialJson`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_file(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`inputUri`: RustBuffer.ByValue,`outputUri`: RustBuffer.ByValue,`signedCredentialJson`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_get_did_document_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_issue_credential_from_schema_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`schemaJson`: RustBuffer.ByValue,`attributesJson`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_list_dids_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_mlkem_decapsulate(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`ciphertext`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_open_json(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_bytes(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`pdfBase`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_file(`ptr`: Pointer,`walletName`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`did`: RustBuffer.ByValue,`inputUri`: RustBuffer.ByValue,`outputUri`: RustBuffer.ByValue,`optionsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun ffi_ssi_pq_mobile_ffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun ffi_ssi_pq_mobile_ffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun ffi_ssi_pq_mobile_ffi_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u8(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_u8(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i8(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_i8(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u16(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_u16(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Short
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i16(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_i16(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Short
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_u32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_i32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_u64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_i64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Long
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_f32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_f32(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Float
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_f64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_f64(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Double
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_pointer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_pointer(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_pointer(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_pointer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_rust_buffer(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_rust_buffer(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun ffi_ssi_pq_mobile_ffi_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_void(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_free_void(`handle`: Long,
+): Unit
+fun ffi_ssi_pq_mobile_ffi_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
 
-    fun uniffi_ssi_pq_mobile_ffi_fn_free_ssipq(
-        `ptr`: Pointer,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Unit
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new(uniffi_out_err: UniffiRustCallStatus): Pointer
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new_with_storage_dir(
-        `storageDir`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Pointer
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_decrypt(
-        `ptr`: Pointer,
-        `key`: RustBuffer.ByValue,
-        `ciphertext`: RustBuffer.ByValue,
-        `nonce`: RustBuffer.ByValue,
-        `authTag`: RustBuffer.ByValue,
-        `aad`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_encrypt(
-        `ptr`: Pointer,
-        `key`: RustBuffer.ByValue,
-        `plaintext`: RustBuffer.ByValue,
-        `aad`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_decode(
-        `ptr`: Pointer,
-        `value`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_encode(
-        `ptr`: Pointer,
-        `bytes`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json(
-        `ptr`: Pointer,
-        `input`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json_hash_base64url(
-        `ptr`: Pointer,
-        `input`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_did_json(
-        `ptr`: Pointer,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_schema_from_attributes(
-        `ptr`: Pointer,
-        `attributesJson`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_embed_signed_credential_in_pdf(
-        `ptr`: Pointer,
-        `pdfBase`: RustBuffer.ByValue,
-        `signedCredentialJson`: RustBuffer.ByValue,
-        `issuerDidDocumentJson`: RustBuffer.ByValue,
-        `issuerPrivateKey`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_credential_manifest_from_pdf(
-        `ptr`: Pointer,
-        `pdfBytes`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_generic_signature_manifest_from_pdf(
-        `ptr`: Pointer,
-        `pdfBytes`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issue_credential_from_schema_json(
-        `ptr`: Pointer,
-        `schemaJson`: RustBuffer.ByValue,
-        `attributesJson`: RustBuffer.ByValue,
-        `issuerDidDocumentJson`: RustBuffer.ByValue,
-        `issuerPrivateKey`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issuer_identifier_base64(
-        `ptr`: Pointer,
-        `didDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_generate_keypair(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_sign(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        `privateKey`: RustBuffer.ByValue,
-        `message`: RustBuffer.ByValue,
-        `context`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_verify(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        `publicKey`: RustBuffer.ByValue,
-        `message`: RustBuffer.ByValue,
-        `context`: RustBuffer.ByValue,
-        `signature`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Byte
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_decapsulate(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        `privateKey`: RustBuffer.ByValue,
-        `ciphertext`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_encapsulate(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        `publicKey`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_generate_keypair(
-        `ptr`: Pointer,
-        `profile`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_delete(
-        `ptr`: Pointer,
-        `key`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Unit
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_get(
-        `ptr`: Pointer,
-        `key`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_list_prefix(
-        `ptr`: Pointer,
-        `prefix`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_put(
-        `ptr`: Pointer,
-        `key`: RustBuffer.ByValue,
-        `value`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Unit
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_schema_hash_base64(
-        `ptr`: Pointer,
-        `schemaJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_secure_random_key(
-        `ptr`: Pointer,
-        `length`: Int,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_base64url(
-        `ptr`: Pointer,
-        `bytes`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_hex(
-        `ptr`: Pointer,
-        `bytes`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_signed_credential_to_pdf(
-        `ptr`: Pointer,
-        `signedCredentialJson`: RustBuffer.ByValue,
-        `renderOptionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_supported_profiles(
-        `ptr`: Pointer,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_did_document(
-        `ptr`: Pointer,
-        `didDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential(
-        `ptr`: Pointer,
-        `signedCredentialJson`: RustBuffer.ByValue,
-        `issuerDidDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf(
-        `ptr`: Pointer,
-        `pdfBytes`: RustBuffer.ByValue,
-        `issuerDidDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf_file(
-        `ptr`: Pointer,
-        `inputUri`: RustBuffer.ByValue,
-        `issuerDidDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf(
-        `ptr`: Pointer,
-        `pdfBytes`: RustBuffer.ByValue,
-        `signerDidDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf_file(
-        `ptr`: Pointer,
-        `inputUri`: RustBuffer.ByValue,
-        `signerDidDocumentJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_change_password_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `oldPassword`: RustBuffer.ByValue,
-        `newPassword`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_did_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `pdfBase`: RustBuffer.ByValue,
-        `signedCredentialJson`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_file(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `inputUri`: RustBuffer.ByValue,
-        `outputUri`: RustBuffer.ByValue,
-        `signedCredentialJson`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_get_did_document_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_issue_credential_from_schema_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `schemaJson`: RustBuffer.ByValue,
-        `attributesJson`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_list_dids_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_mlkem_decapsulate(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `ciphertext`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_open_json(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_bytes(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `pdfBase`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_file(
-        `ptr`: Pointer,
-        `walletName`: RustBuffer.ByValue,
-        `password`: RustBuffer.ByValue,
-        `did`: RustBuffer.ByValue,
-        `inputUri`: RustBuffer.ByValue,
-        `outputUri`: RustBuffer.ByValue,
-        `optionsJson`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun ffi_ssi_pq_mobile_ffi_rustbuffer_alloc(
-        `size`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun ffi_ssi_pq_mobile_ffi_rustbuffer_from_bytes(
-        `bytes`: ForeignBytes.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun ffi_ssi_pq_mobile_ffi_rustbuffer_free(
-        `buf`: RustBuffer.ByValue,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rustbuffer_reserve(
-        `buf`: RustBuffer.ByValue,
-        `additional`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u8(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u8(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_u8(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u8(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Byte
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i8(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i8(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_i8(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i8(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Byte
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u16(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u16(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_u16(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u16(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Short
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i16(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i16(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_i16(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i16(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Short
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u32(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_u32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u32(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Int
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i32(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_i32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i32(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Int
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_u64(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_u64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_u64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_u64(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Long
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_i64(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_i64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_i64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_i64(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Long
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_f32(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_f32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_f32(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_f32(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Float
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_f64(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_f64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_f64(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_f64(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Double
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_pointer(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_pointer(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_pointer(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_pointer(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Pointer
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_rust_buffer(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_rust_buffer(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_rust_buffer(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_rust_buffer(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_poll_void(
-        `handle`: Long,
-        `callback`: UniffiRustFutureContinuationCallback,
-        `callbackData`: Long,
-    ): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_cancel_void(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_free_void(`handle`: Long): Unit
-
-    fun ffi_ssi_pq_mobile_ffi_rust_future_complete_void(
-        `handle`: Long,
-        uniffi_out_err: UniffiRustCallStatus,
-    ): Unit
 }
 
 private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
@@ -1505,7 +1200,6 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
 }
-
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_ssi_pq_mobile_ffi_checksum_method_ssipq_aes256_gcm_decrypt() != 60971.toShort()) {
@@ -1668,6 +1362,7 @@ public fun uniffiEnsureInitialized() {
 
 // Public interface members begin here.
 
+
 // Interface implemented by anything that can contain an object reference.
 //
 // Such types expose a `destroy()` method that must be called to cleanly
@@ -1678,15 +1373,11 @@ public fun uniffiEnsureInitialized() {
 // helper method to execute a block and destroy the object at the end.
 interface Disposable {
     fun destroy()
-
     companion object {
         fun destroy(vararg args: Any?) {
             for (arg in args) {
                 when (arg) {
-                    is Disposable -> {
-                        arg.destroy()
-                    }
-
+                    is Disposable -> arg.destroy()
                     is ArrayList<*> -> {
                         for (idx in arg.indices) {
                             val element = arg[idx]
@@ -1695,7 +1386,6 @@ interface Disposable {
                             }
                         }
                     }
-
                     is Map<*, *> -> {
                         for (element in arg.values) {
                             if (element is Disposable) {
@@ -1703,7 +1393,6 @@ interface Disposable {
                             }
                         }
                     }
-
                     is Iterable<*> -> {
                         for (element in arg) {
                             if (element is Disposable) {
@@ -1732,13 +1421,12 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
         }
     }
 
-/**
+/** 
  * Used to instantiate an interface without an actual pointer, for fakes in tests, mostly.
  *
  * @suppress
  * */
 object NoPointer
-
 /**
  * The cleaner interface for Object finalization code to run.
  * This is the entry point to any implementation that we're using.
@@ -1754,24 +1442,17 @@ interface UniffiCleaner {
         fun clean()
     }
 
-    fun register(
-        value: Any,
-        cleanUpTask: Runnable,
-    ): UniffiCleaner.Cleanable
+    fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable
 
     companion object
 }
 
 // The fallback Jna cleaner, which is available for both Android, and the JVM.
 private class UniffiJnaCleaner : UniffiCleaner {
-    private val cleaner =
-        com.sun.jna.internal.Cleaner
-            .getCleaner()
+    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
 
-    override fun register(
-        value: Any,
-        cleanUpTask: Runnable,
-    ): UniffiCleaner.Cleanable = UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
 }
 
 private class UniffiJnaCleanable(
@@ -1779,6 +1460,7 @@ private class UniffiJnaCleanable(
 ) : UniffiCleaner.Cleanable {
     override fun clean() = cleanable.clean()
 }
+
 
 // We decide at uniffi binding generation time whether we were
 // using Android or not.
@@ -1798,18 +1480,14 @@ private fun UniffiCleaner.Companion.create(): UniffiCleaner =
     }
 
 private class JavaLangRefCleaner : UniffiCleaner {
-    val cleaner =
-        java.lang.ref.Cleaner
-            .create()
+    val cleaner = java.lang.ref.Cleaner.create()
 
-    override fun register(
-        value: Any,
-        cleanUpTask: Runnable,
-    ): UniffiCleaner.Cleanable = JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
 }
 
 private class JavaLangRefCleanable(
-    val cleanable: java.lang.ref.Cleaner.Cleanable,
+    val cleanable: java.lang.ref.Cleaner.Cleanable
 ) : UniffiCleaner.Cleanable {
     override fun clean() = cleanable.clean()
 }
@@ -1817,19 +1495,22 @@ private class JavaLangRefCleanable(
 /**
  * @suppress
  */
-public object FfiConverterUInt : FfiConverter<UInt, Int> {
-    override fun lift(value: Int): UInt = value.toUInt()
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
 
-    override fun read(buf: ByteBuffer): UInt = lift(buf.getInt())
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
 
-    override fun lower(value: UInt): Int = value.toInt()
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
 
     override fun allocationSize(value: UInt) = 4UL
 
-    override fun write(
-        value: UInt,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: UInt, buf: ByteBuffer) {
         buf.putInt(value.toInt())
     }
 }
@@ -1837,19 +1518,22 @@ public object FfiConverterUInt : FfiConverter<UInt, Int> {
 /**
  * @suppress
  */
-public object FfiConverterULong : FfiConverter<ULong, Long> {
-    override fun lift(value: Long): ULong = value.toULong()
+public object FfiConverterULong: FfiConverter<ULong, Long> {
+    override fun lift(value: Long): ULong {
+        return value.toULong()
+    }
 
-    override fun read(buf: ByteBuffer): ULong = lift(buf.getLong())
+    override fun read(buf: ByteBuffer): ULong {
+        return lift(buf.getLong())
+    }
 
-    override fun lower(value: ULong): Long = value.toLong()
+    override fun lower(value: ULong): Long {
+        return value.toLong()
+    }
 
     override fun allocationSize(value: ULong) = 8UL
 
-    override fun write(
-        value: ULong,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: ULong, buf: ByteBuffer) {
         buf.putLong(value.toLong())
     }
 }
@@ -1857,19 +1541,22 @@ public object FfiConverterULong : FfiConverter<ULong, Long> {
 /**
  * @suppress
  */
-public object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
-    override fun lift(value: Byte): Boolean = value.toInt() != 0
+public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean {
+        return value.toInt() != 0
+    }
 
-    override fun read(buf: ByteBuffer): Boolean = lift(buf.get())
+    override fun read(buf: ByteBuffer): Boolean {
+        return lift(buf.get())
+    }
 
-    override fun lower(value: Boolean): Byte = if (value) 1.toByte() else 0.toByte()
+    override fun lower(value: Boolean): Byte {
+        return if (value) 1.toByte() else 0.toByte()
+    }
 
     override fun allocationSize(value: Boolean) = 1UL
 
-    override fun write(
-        value: Boolean,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: Boolean, buf: ByteBuffer) {
         buf.put(lower(value))
     }
 }
@@ -1877,7 +1564,7 @@ public object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
 /**
  * @suppress
  */
-public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
+public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     // Note: we don't inherit from FfiConverterRustBuffer, because we use a
     // special encoding when lowering/lifting.  We can use `RustBuffer.len` to
     // store our length and avoid writing it out to the buffer.
@@ -1924,10 +1611,7 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
         return sizeForLength + sizeForString
     }
 
-    override fun write(
-        value: String,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: String, buf: ByteBuffer) {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
@@ -1937,24 +1621,22 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
 /**
  * @suppress
  */
-public object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
     override fun read(buf: ByteBuffer): ByteArray {
         val len = buf.getInt()
         val byteArr = ByteArray(len)
         buf.get(byteArr)
         return byteArr
     }
-
-    override fun allocationSize(value: ByteArray): ULong = 4UL + value.size.toULong()
-
-    override fun write(
-        value: ByteArray,
-        buf: ByteBuffer,
-    ) {
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
         buf.putInt(value.size)
         buf.put(value)
     }
 }
+
 
 // This template implements a class for working with a Rust struct via a Pointer/Arc<T>
 // to the live Rust struct on the other side of the FFI.
@@ -2053,234 +1735,109 @@ public object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
 // [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
 //
 
+
 public interface SsiPqInterface {
-    fun `aes256GcmDecrypt`(
-        `key`: kotlin.ByteArray,
-        `ciphertext`: kotlin.ByteArray,
-        `nonce`: kotlin.ByteArray,
-        `authTag`: kotlin.ByteArray,
-        `aad`: kotlin.ByteArray?,
-    ): kotlin.ByteArray
-
-    fun `aes256GcmEncrypt`(
-        `key`: kotlin.ByteArray,
-        `plaintext`: kotlin.ByteArray,
-        `aad`: kotlin.ByteArray?,
-    ): Aes256GcmEncryption
-
+    
+    fun `aes256GcmDecrypt`(`key`: kotlin.ByteArray, `ciphertext`: kotlin.ByteArray, `nonce`: kotlin.ByteArray, `authTag`: kotlin.ByteArray, `aad`: kotlin.ByteArray?): kotlin.ByteArray
+    
+    fun `aes256GcmEncrypt`(`key`: kotlin.ByteArray, `plaintext`: kotlin.ByteArray, `aad`: kotlin.ByteArray?): Aes256GcmEncryption
+    
     fun `base64urlDecode`(`value`: kotlin.String): kotlin.ByteArray
-
+    
     fun `base64urlEncode`(`bytes`: kotlin.ByteArray): kotlin.String
-
+    
     fun `canonicalJson`(`input`: kotlin.String): kotlin.String
-
+    
     fun `canonicalJsonHashBase64url`(`input`: kotlin.String): kotlin.String
-
+    
     fun `createDidJson`(`optionsJson`: kotlin.String?): kotlin.String
-
-    fun `createSchemaFromAttributes`(
-        `attributesJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String
-
-    fun `embedSignedCredentialInPdf`(
-        `pdfBase`: kotlin.ByteArray,
-        `signedCredentialJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-        `issuerPrivateKey`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray
-
+    
+    fun `createSchemaFromAttributes`(`attributesJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String
+    
+    fun `embedSignedCredentialInPdf`(`pdfBase`: kotlin.ByteArray, `signedCredentialJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String, `issuerPrivateKey`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.ByteArray
+    
     fun `extractCredentialManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String
-
+    
     fun `extractGenericSignatureManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String
-
-    fun `issueCredentialFromSchemaJson`(
-        `schemaJson`: kotlin.String,
-        `attributesJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-        `issuerPrivateKey`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String
-
+    
+    fun `issueCredentialFromSchemaJson`(`schemaJson`: kotlin.String, `attributesJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String, `issuerPrivateKey`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String
+    
     fun `issuerIdentifierBase64`(`didDocumentJson`: kotlin.String): kotlin.String
-
+    
     fun `mldsaGenerateKeypair`(`profile`: kotlin.String): KeyPair
-
-    fun `mldsaSign`(
-        `profile`: kotlin.String,
-        `privateKey`: kotlin.ByteArray,
-        `message`: kotlin.ByteArray,
-        `context`: kotlin.String,
-    ): kotlin.ByteArray
-
-    fun `mldsaVerify`(
-        `profile`: kotlin.String,
-        `publicKey`: kotlin.ByteArray,
-        `message`: kotlin.ByteArray,
-        `context`: kotlin.String,
-        `signature`: kotlin.ByteArray,
-    ): kotlin.Boolean
-
-    fun `mlkemDecapsulate`(
-        `profile`: kotlin.String,
-        `privateKey`: kotlin.ByteArray,
-        `ciphertext`: kotlin.ByteArray,
-    ): kotlin.ByteArray
-
-    fun `mlkemEncapsulate`(
-        `profile`: kotlin.String,
-        `publicKey`: kotlin.ByteArray,
-    ): MlkemEncapsulation
-
+    
+    fun `mldsaSign`(`profile`: kotlin.String, `privateKey`: kotlin.ByteArray, `message`: kotlin.ByteArray, `context`: kotlin.String): kotlin.ByteArray
+    
+    fun `mldsaVerify`(`profile`: kotlin.String, `publicKey`: kotlin.ByteArray, `message`: kotlin.ByteArray, `context`: kotlin.String, `signature`: kotlin.ByteArray): kotlin.Boolean
+    
+    fun `mlkemDecapsulate`(`profile`: kotlin.String, `privateKey`: kotlin.ByteArray, `ciphertext`: kotlin.ByteArray): kotlin.ByteArray
+    
+    fun `mlkemEncapsulate`(`profile`: kotlin.String, `publicKey`: kotlin.ByteArray): MlkemEncapsulation
+    
     fun `mlkemGenerateKeypair`(`profile`: kotlin.String): KeyPair
-
+    
     fun `mobileStorageDelete`(`key`: kotlin.String)
-
+    
     fun `mobileStorageGet`(`key`: kotlin.String): kotlin.ByteArray?
-
+    
     fun `mobileStorageListPrefix`(`prefix`: kotlin.String): List<kotlin.String>
-
-    fun `mobileStoragePut`(
-        `key`: kotlin.String,
-        `value`: kotlin.ByteArray,
-    )
-
+    
+    fun `mobileStoragePut`(`key`: kotlin.String, `value`: kotlin.ByteArray)
+    
     fun `schemaHashBase64`(`schemaJson`: kotlin.String): kotlin.String
-
+    
     fun `secureRandomKey`(`length`: kotlin.UInt): kotlin.ByteArray
-
+    
     fun `sha3256Base64url`(`bytes`: kotlin.ByteArray): kotlin.String
-
+    
     fun `sha3256Hex`(`bytes`: kotlin.ByteArray): kotlin.String
-
-    fun `signedCredentialToPdf`(
-        `signedCredentialJson`: kotlin.String,
-        `renderOptionsJson`: kotlin.String?,
-    ): kotlin.ByteArray
-
+    
+    fun `signedCredentialToPdf`(`signedCredentialJson`: kotlin.String, `renderOptionsJson`: kotlin.String?): kotlin.ByteArray
+    
     fun `supportedProfiles`(): List<kotlin.String>
-
+    
     fun `verifyDidDocument`(`didDocumentJson`: kotlin.String): kotlin.String
-
-    fun `verifySignedCredential`(
-        `signedCredentialJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String
-
-    fun `verifySignedCredentialPdf`(
-        `pdfBytes`: kotlin.ByteArray,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String
-
-    fun `verifySignedCredentialPdfFile`(
-        `inputUri`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String
-
-    fun `verifySignedGenericPdf`(
-        `pdfBytes`: kotlin.ByteArray,
-        `signerDidDocumentJson`: kotlin.String,
-    ): kotlin.String
-
-    fun `verifySignedGenericPdfFile`(
-        `inputUri`: kotlin.String,
-        `signerDidDocumentJson`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletChangePasswordJson`(
-        `walletName`: kotlin.String,
-        `oldPassword`: kotlin.String,
-        `newPassword`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletCreateDidJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String
-
-    fun `walletCreateJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String
-
-    fun `walletEmbedSignedCredentialInPdfBytes`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `pdfBase`: kotlin.ByteArray,
-        `signedCredentialJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray
-
-    fun `walletEmbedSignedCredentialInPdfFile`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `inputUri`: kotlin.String,
-        `outputUri`: kotlin.String,
-        `signedCredentialJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): FileOperationResult
-
-    fun `walletGetDidDocumentJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletIssueCredentialFromSchemaJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `schemaJson`: kotlin.String,
-        `attributesJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String
-
-    fun `walletListDidsJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletMlkemDecapsulate`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `ciphertext`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletOpenJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-    ): kotlin.String
-
-    fun `walletSignGenericPdfBytes`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `pdfBase`: kotlin.ByteArray,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray
-
-    fun `walletSignGenericPdfFile`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `inputUri`: kotlin.String,
-        `outputUri`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): FileOperationResult
-
+    
+    fun `verifySignedCredential`(`signedCredentialJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String): kotlin.String
+    
+    fun `verifySignedCredentialPdf`(`pdfBytes`: kotlin.ByteArray, `issuerDidDocumentJson`: kotlin.String): kotlin.String
+    
+    fun `verifySignedCredentialPdfFile`(`inputUri`: kotlin.String, `issuerDidDocumentJson`: kotlin.String): kotlin.String
+    
+    fun `verifySignedGenericPdf`(`pdfBytes`: kotlin.ByteArray, `signerDidDocumentJson`: kotlin.String): kotlin.String
+    
+    fun `verifySignedGenericPdfFile`(`inputUri`: kotlin.String, `signerDidDocumentJson`: kotlin.String): kotlin.String
+    
+    fun `walletChangePasswordJson`(`walletName`: kotlin.String, `oldPassword`: kotlin.String, `newPassword`: kotlin.String): kotlin.String
+    
+    fun `walletCreateDidJson`(`walletName`: kotlin.String, `password`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String
+    
+    fun `walletCreateJson`(`walletName`: kotlin.String, `password`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String
+    
+    fun `walletEmbedSignedCredentialInPdfBytes`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `pdfBase`: kotlin.ByteArray, `signedCredentialJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.ByteArray
+    
+    fun `walletEmbedSignedCredentialInPdfFile`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `inputUri`: kotlin.String, `outputUri`: kotlin.String, `signedCredentialJson`: kotlin.String, `optionsJson`: kotlin.String?): FileOperationResult
+    
+    fun `walletGetDidDocumentJson`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String): kotlin.String
+    
+    fun `walletIssueCredentialFromSchemaJson`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `schemaJson`: kotlin.String, `attributesJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String
+    
+    fun `walletListDidsJson`(`walletName`: kotlin.String, `password`: kotlin.String): kotlin.String
+    
+    fun `walletMlkemDecapsulate`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `ciphertext`: kotlin.String): kotlin.String
+    
+    fun `walletOpenJson`(`walletName`: kotlin.String, `password`: kotlin.String): kotlin.String
+    
+    fun `walletSignGenericPdfBytes`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `pdfBase`: kotlin.ByteArray, `optionsJson`: kotlin.String?): kotlin.ByteArray
+    
+    fun `walletSignGenericPdfFile`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `inputUri`: kotlin.String, `outputUri`: kotlin.String, `optionsJson`: kotlin.String?): FileOperationResult
+    
     companion object
 }
 
-open class SsiPq :
-    Disposable,
-    AutoCloseable,
-    SsiPqInterface {
+open class SsiPq: Disposable, AutoCloseable, SsiPqInterface
+{
+
     constructor(pointer: Pointer) {
         this.pointer = pointer
         this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
@@ -2298,10 +1855,11 @@ open class SsiPq :
     }
     constructor() :
         this(
-            uniffiRustCall { _status ->
-                UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new(_status)
-            },
-        )
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new(
+        _status)
+}
+    )
 
     protected val pointer: Pointer?
     protected val cleanable: UniffiCleaner.Cleanable
@@ -2336,7 +1894,7 @@ open class SsiPq :
             if (c == Long.MAX_VALUE) {
                 throw IllegalStateException("${this.javaClass.simpleName} call counter would overflow")
             }
-        } while (!this.callCounter.compareAndSet(c, c + 1L))
+        } while (! this.callCounter.compareAndSet(c, c + 1L))
         // Now we can safely do the method call without the pointer being freed concurrently.
         try {
             return block(this.uniffiClonePointer())
@@ -2350,9 +1908,7 @@ open class SsiPq :
 
     // Use a static inner class instead of a closure so as not to accidentally
     // capture `this` as part of the cleanable's action.
-    private class UniffiCleanAction(
-        private val pointer: Pointer?,
-    ) : Runnable {
+    private class UniffiCleanAction(private val pointer: Pointer?) : Runnable {
         override fun run() {
             pointer?.let { ptr ->
                 uniffiRustCall { status ->
@@ -2362,873 +1918,649 @@ open class SsiPq :
         }
     }
 
-    fun uniffiClonePointer(): Pointer =
-        uniffiRustCall { status ->
+    fun uniffiClonePointer(): Pointer {
+        return uniffiRustCall() { status ->
             UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_clone_ssipq(pointer!!, status)
         }
-
-    @Throws(SsiPqMobileException::class)
-    override fun `aes256GcmDecrypt`(
-        `key`: kotlin.ByteArray,
-        `ciphertext`: kotlin.ByteArray,
-        `nonce`: kotlin.ByteArray,
-        `authTag`: kotlin.ByteArray,
-        `aad`: kotlin.ByteArray?,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_decrypt(
-                        it,
-                        FfiConverterByteArray.lower(`key`),
-                        FfiConverterByteArray.lower(`ciphertext`),
-                        FfiConverterByteArray.lower(`nonce`),
-                        FfiConverterByteArray.lower(`authTag`),
-                        FfiConverterOptionalByteArray.lower(`aad`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `aes256GcmEncrypt`(
-        `key`: kotlin.ByteArray,
-        `plaintext`: kotlin.ByteArray,
-        `aad`: kotlin.ByteArray?,
-    ): Aes256GcmEncryption =
-        FfiConverterTypeAes256GcmEncryption.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_encrypt(
-                        it,
-                        FfiConverterByteArray.lower(`key`),
-                        FfiConverterByteArray.lower(`plaintext`),
-                        FfiConverterOptionalByteArray.lower(`aad`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `base64urlDecode`(`value`: kotlin.String): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_decode(
-                        it,
-                        FfiConverterString.lower(`value`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    override fun `base64urlEncode`(`bytes`: kotlin.ByteArray): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCall { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_encode(
-                        it,
-                        FfiConverterByteArray.lower(`bytes`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `canonicalJson`(`input`: kotlin.String): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json(
-                        it,
-                        FfiConverterString.lower(`input`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `canonicalJsonHashBase64url`(`input`: kotlin.String): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json_hash_base64url(
-                        it,
-                        FfiConverterString.lower(`input`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `createDidJson`(`optionsJson`: kotlin.String?): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_did_json(
-                        it,
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `createSchemaFromAttributes`(
-        `attributesJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_schema_from_attributes(
-                        it,
-                        FfiConverterString.lower(`attributesJson`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `embedSignedCredentialInPdf`(
-        `pdfBase`: kotlin.ByteArray,
-        `signedCredentialJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-        `issuerPrivateKey`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_embed_signed_credential_in_pdf(
-                        it,
-                        FfiConverterByteArray.lower(`pdfBase`),
-                        FfiConverterString.lower(`signedCredentialJson`),
-                        FfiConverterString.lower(`issuerDidDocumentJson`),
-                        FfiConverterString.lower(`issuerPrivateKey`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `extractCredentialManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_credential_manifest_from_pdf(
-                        it,
-                        FfiConverterByteArray.lower(`pdfBytes`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `extractGenericSignatureManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_generic_signature_manifest_from_pdf(
-                        it,
-                        FfiConverterByteArray.lower(`pdfBytes`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `issueCredentialFromSchemaJson`(
-        `schemaJson`: kotlin.String,
-        `attributesJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-        `issuerPrivateKey`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issue_credential_from_schema_json(
-                        it,
-                        FfiConverterString.lower(`schemaJson`),
-                        FfiConverterString.lower(`attributesJson`),
-                        FfiConverterString.lower(`issuerDidDocumentJson`),
-                        FfiConverterString.lower(`issuerPrivateKey`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `issuerIdentifierBase64`(`didDocumentJson`: kotlin.String): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issuer_identifier_base64(
-                        it,
-                        FfiConverterString.lower(`didDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mldsaGenerateKeypair`(`profile`: kotlin.String): KeyPair =
-        FfiConverterTypeKeyPair.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_generate_keypair(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mldsaSign`(
-        `profile`: kotlin.String,
-        `privateKey`: kotlin.ByteArray,
-        `message`: kotlin.ByteArray,
-        `context`: kotlin.String,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_sign(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        FfiConverterByteArray.lower(`privateKey`),
-                        FfiConverterByteArray.lower(`message`),
-                        FfiConverterString.lower(`context`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mldsaVerify`(
-        `profile`: kotlin.String,
-        `publicKey`: kotlin.ByteArray,
-        `message`: kotlin.ByteArray,
-        `context`: kotlin.String,
-        `signature`: kotlin.ByteArray,
-    ): kotlin.Boolean =
-        FfiConverterBoolean.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_verify(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        FfiConverterByteArray.lower(`publicKey`),
-                        FfiConverterByteArray.lower(`message`),
-                        FfiConverterString.lower(`context`),
-                        FfiConverterByteArray.lower(`signature`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mlkemDecapsulate`(
-        `profile`: kotlin.String,
-        `privateKey`: kotlin.ByteArray,
-        `ciphertext`: kotlin.ByteArray,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_decapsulate(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        FfiConverterByteArray.lower(`privateKey`),
-                        FfiConverterByteArray.lower(`ciphertext`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mlkemEncapsulate`(
-        `profile`: kotlin.String,
-        `publicKey`: kotlin.ByteArray,
-    ): MlkemEncapsulation =
-        FfiConverterTypeMlkemEncapsulation.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_encapsulate(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        FfiConverterByteArray.lower(`publicKey`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mlkemGenerateKeypair`(`profile`: kotlin.String): KeyPair =
-        FfiConverterTypeKeyPair.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_generate_keypair(
-                        it,
-                        FfiConverterString.lower(`profile`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mobileStorageDelete`(`key`: kotlin.String) =
-        callWithPointer {
-            uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_delete(
-                    it,
-                    FfiConverterString.lower(`key`),
-                    _status,
-                )
-            }
-        }
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mobileStorageGet`(`key`: kotlin.String): kotlin.ByteArray? =
-        FfiConverterOptionalByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_get(
-                        it,
-                        FfiConverterString.lower(`key`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mobileStorageListPrefix`(`prefix`: kotlin.String): List<kotlin.String> =
-        FfiConverterSequenceString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_list_prefix(
-                        it,
-                        FfiConverterString.lower(`prefix`),
-                        _status,
-                    )
-                }
-            },
-        )
-
-    @Throws(SsiPqMobileException::class)
-    override fun `mobileStoragePut`(
-        `key`: kotlin.String,
-        `value`: kotlin.ByteArray,
-    ) = callWithPointer {
-        uniffiRustCallWithError(SsiPqMobileException) { _status ->
-            UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_put(
-                it,
-                FfiConverterString.lower(`key`),
-                FfiConverterByteArray.lower(`value`),
-                _status,
-            )
-        }
     }
 
-    @Throws(SsiPqMobileException::class)
-    override fun `schemaHashBase64`(`schemaJson`: kotlin.String): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_schema_hash_base64(
-                        it,
-                        FfiConverterString.lower(`schemaJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `aes256GcmDecrypt`(`key`: kotlin.ByteArray, `ciphertext`: kotlin.ByteArray, `nonce`: kotlin.ByteArray, `authTag`: kotlin.ByteArray, `aad`: kotlin.ByteArray?): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_decrypt(
+        it, FfiConverterByteArray.lower(`key`),FfiConverterByteArray.lower(`ciphertext`),FfiConverterByteArray.lower(`nonce`),FfiConverterByteArray.lower(`authTag`),FfiConverterOptionalByteArray.lower(`aad`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `secureRandomKey`(`length`: kotlin.UInt): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_secure_random_key(
-                        it,
-                        FfiConverterUInt.lower(`length`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `aes256GcmEncrypt`(`key`: kotlin.ByteArray, `plaintext`: kotlin.ByteArray, `aad`: kotlin.ByteArray?): Aes256GcmEncryption {
+            return FfiConverterTypeAes256GcmEncryption.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_aes256_gcm_encrypt(
+        it, FfiConverterByteArray.lower(`key`),FfiConverterByteArray.lower(`plaintext`),FfiConverterOptionalByteArray.lower(`aad`),_status)
+}
+    }
+    )
+    }
+    
 
-    override fun `sha3256Base64url`(`bytes`: kotlin.ByteArray): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCall { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_base64url(
-                        it,
-                        FfiConverterByteArray.lower(`bytes`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `base64urlDecode`(`value`: kotlin.String): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_decode(
+        it, FfiConverterString.lower(`value`),_status)
+}
+    }
+    )
+    }
+    
 
-    override fun `sha3256Hex`(`bytes`: kotlin.ByteArray): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCall { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_hex(
-                        it,
-                        FfiConverterByteArray.lower(`bytes`),
-                        _status,
-                    )
-                }
-            },
-        )
+    override fun `base64urlEncode`(`bytes`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_base64url_encode(
+        it, FfiConverterByteArray.lower(`bytes`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `signedCredentialToPdf`(
-        `signedCredentialJson`: kotlin.String,
-        `renderOptionsJson`: kotlin.String?,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_signed_credential_to_pdf(
-                        it,
-                        FfiConverterString.lower(`signedCredentialJson`),
-                        FfiConverterOptionalString.lower(`renderOptionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `canonicalJson`(`input`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json(
+        it, FfiConverterString.lower(`input`),_status)
+}
+    }
+    )
+    }
+    
 
-    override fun `supportedProfiles`(): List<kotlin.String> =
-        FfiConverterSequenceString.lift(
-            callWithPointer {
-                uniffiRustCall { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_supported_profiles(it, _status)
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `canonicalJsonHashBase64url`(`input`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_canonical_json_hash_base64url(
+        it, FfiConverterString.lower(`input`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifyDidDocument`(`didDocumentJson`: kotlin.String): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_did_document(
-                        it,
-                        FfiConverterString.lower(`didDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `createDidJson`(`optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_did_json(
+        it, FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifySignedCredential`(
-        `signedCredentialJson`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential(
-                        it,
-                        FfiConverterString.lower(`signedCredentialJson`),
-                        FfiConverterString.lower(`issuerDidDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `createSchemaFromAttributes`(`attributesJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_create_schema_from_attributes(
+        it, FfiConverterString.lower(`attributesJson`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifySignedCredentialPdf`(
-        `pdfBytes`: kotlin.ByteArray,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf(
-                        it,
-                        FfiConverterByteArray.lower(`pdfBytes`),
-                        FfiConverterString.lower(`issuerDidDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `embedSignedCredentialInPdf`(`pdfBase`: kotlin.ByteArray, `signedCredentialJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String, `issuerPrivateKey`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_embed_signed_credential_in_pdf(
+        it, FfiConverterByteArray.lower(`pdfBase`),FfiConverterString.lower(`signedCredentialJson`),FfiConverterString.lower(`issuerDidDocumentJson`),FfiConverterString.lower(`issuerPrivateKey`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifySignedCredentialPdfFile`(
-        `inputUri`: kotlin.String,
-        `issuerDidDocumentJson`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf_file(
-                        it,
-                        FfiConverterString.lower(`inputUri`),
-                        FfiConverterString.lower(`issuerDidDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `extractCredentialManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_credential_manifest_from_pdf(
+        it, FfiConverterByteArray.lower(`pdfBytes`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifySignedGenericPdf`(
-        `pdfBytes`: kotlin.ByteArray,
-        `signerDidDocumentJson`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf(
-                        it,
-                        FfiConverterByteArray.lower(`pdfBytes`),
-                        FfiConverterString.lower(`signerDidDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `extractGenericSignatureManifestFromPdf`(`pdfBytes`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_extract_generic_signature_manifest_from_pdf(
+        it, FfiConverterByteArray.lower(`pdfBytes`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `verifySignedGenericPdfFile`(
-        `inputUri`: kotlin.String,
-        `signerDidDocumentJson`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf_file(
-                        it,
-                        FfiConverterString.lower(`inputUri`),
-                        FfiConverterString.lower(`signerDidDocumentJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `issueCredentialFromSchemaJson`(`schemaJson`: kotlin.String, `attributesJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String, `issuerPrivateKey`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issue_credential_from_schema_json(
+        it, FfiConverterString.lower(`schemaJson`),FfiConverterString.lower(`attributesJson`),FfiConverterString.lower(`issuerDidDocumentJson`),FfiConverterString.lower(`issuerPrivateKey`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletChangePasswordJson`(
-        `walletName`: kotlin.String,
-        `oldPassword`: kotlin.String,
-        `newPassword`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_change_password_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`oldPassword`),
-                        FfiConverterString.lower(`newPassword`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `issuerIdentifierBase64`(`didDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_issuer_identifier_base64(
+        it, FfiConverterString.lower(`didDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletCreateDidJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_did_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mldsaGenerateKeypair`(`profile`: kotlin.String): KeyPair {
+            return FfiConverterTypeKeyPair.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_generate_keypair(
+        it, FfiConverterString.lower(`profile`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletCreateJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mldsaSign`(`profile`: kotlin.String, `privateKey`: kotlin.ByteArray, `message`: kotlin.ByteArray, `context`: kotlin.String): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_sign(
+        it, FfiConverterString.lower(`profile`),FfiConverterByteArray.lower(`privateKey`),FfiConverterByteArray.lower(`message`),FfiConverterString.lower(`context`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletEmbedSignedCredentialInPdfBytes`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `pdfBase`: kotlin.ByteArray,
-        `signedCredentialJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterByteArray.lower(`pdfBase`),
-                        FfiConverterString.lower(`signedCredentialJson`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mldsaVerify`(`profile`: kotlin.String, `publicKey`: kotlin.ByteArray, `message`: kotlin.ByteArray, `context`: kotlin.String, `signature`: kotlin.ByteArray): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mldsa_verify(
+        it, FfiConverterString.lower(`profile`),FfiConverterByteArray.lower(`publicKey`),FfiConverterByteArray.lower(`message`),FfiConverterString.lower(`context`),FfiConverterByteArray.lower(`signature`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletEmbedSignedCredentialInPdfFile`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `inputUri`: kotlin.String,
-        `outputUri`: kotlin.String,
-        `signedCredentialJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): FileOperationResult =
-        FfiConverterTypeFileOperationResult.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_file(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterString.lower(`inputUri`),
-                        FfiConverterString.lower(`outputUri`),
-                        FfiConverterString.lower(`signedCredentialJson`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mlkemDecapsulate`(`profile`: kotlin.String, `privateKey`: kotlin.ByteArray, `ciphertext`: kotlin.ByteArray): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_decapsulate(
+        it, FfiConverterString.lower(`profile`),FfiConverterByteArray.lower(`privateKey`),FfiConverterByteArray.lower(`ciphertext`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletGetDidDocumentJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_get_did_document_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mlkemEncapsulate`(`profile`: kotlin.String, `publicKey`: kotlin.ByteArray): MlkemEncapsulation {
+            return FfiConverterTypeMlkemEncapsulation.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_encapsulate(
+        it, FfiConverterString.lower(`profile`),FfiConverterByteArray.lower(`publicKey`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletIssueCredentialFromSchemaJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `schemaJson`: kotlin.String,
-        `attributesJson`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_issue_credential_from_schema_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterString.lower(`schemaJson`),
-                        FfiConverterString.lower(`attributesJson`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mlkemGenerateKeypair`(`profile`: kotlin.String): KeyPair {
+            return FfiConverterTypeKeyPair.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mlkem_generate_keypair(
+        it, FfiConverterString.lower(`profile`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletListDidsJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_list_dids_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mobileStorageDelete`(`key`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_delete(
+        it, FfiConverterString.lower(`key`),_status)
+}
+    }
+    
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletMlkemDecapsulate`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `ciphertext`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_mlkem_decapsulate(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterString.lower(`ciphertext`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mobileStorageGet`(`key`: kotlin.String): kotlin.ByteArray? {
+            return FfiConverterOptionalByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_get(
+        it, FfiConverterString.lower(`key`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletOpenJson`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-    ): kotlin.String =
-        FfiConverterString.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_open_json(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mobileStorageListPrefix`(`prefix`: kotlin.String): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_list_prefix(
+        it, FfiConverterString.lower(`prefix`),_status)
+}
+    }
+    )
+    }
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletSignGenericPdfBytes`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `pdfBase`: kotlin.ByteArray,
-        `optionsJson`: kotlin.String?,
-    ): kotlin.ByteArray =
-        FfiConverterByteArray.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_bytes(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterByteArray.lower(`pdfBase`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `mobileStoragePut`(`key`: kotlin.String, `value`: kotlin.ByteArray)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_mobile_storage_put(
+        it, FfiConverterString.lower(`key`),FfiConverterByteArray.lower(`value`),_status)
+}
+    }
+    
+    
 
-    @Throws(SsiPqMobileException::class)
-    override fun `walletSignGenericPdfFile`(
-        `walletName`: kotlin.String,
-        `password`: kotlin.String,
-        `did`: kotlin.String,
-        `inputUri`: kotlin.String,
-        `outputUri`: kotlin.String,
-        `optionsJson`: kotlin.String?,
-    ): FileOperationResult =
-        FfiConverterTypeFileOperationResult.lift(
-            callWithPointer {
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_file(
-                        it,
-                        FfiConverterString.lower(`walletName`),
-                        FfiConverterString.lower(`password`),
-                        FfiConverterString.lower(`did`),
-                        FfiConverterString.lower(`inputUri`),
-                        FfiConverterString.lower(`outputUri`),
-                        FfiConverterOptionalString.lower(`optionsJson`),
-                        _status,
-                    )
-                }
-            },
-        )
+    
+    @Throws(SsiPqMobileException::class)override fun `schemaHashBase64`(`schemaJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_schema_hash_base64(
+        it, FfiConverterString.lower(`schemaJson`),_status)
+}
+    }
+    )
+    }
+    
 
+    
+    @Throws(SsiPqMobileException::class)override fun `secureRandomKey`(`length`: kotlin.UInt): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_secure_random_key(
+        it, FfiConverterUInt.lower(`length`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `sha3256Base64url`(`bytes`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_base64url(
+        it, FfiConverterByteArray.lower(`bytes`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `sha3256Hex`(`bytes`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_sha3_256_hex(
+        it, FfiConverterByteArray.lower(`bytes`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `signedCredentialToPdf`(`signedCredentialJson`: kotlin.String, `renderOptionsJson`: kotlin.String?): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_signed_credential_to_pdf(
+        it, FfiConverterString.lower(`signedCredentialJson`),FfiConverterOptionalString.lower(`renderOptionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `supportedProfiles`(): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_supported_profiles(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifyDidDocument`(`didDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_did_document(
+        it, FfiConverterString.lower(`didDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifySignedCredential`(`signedCredentialJson`: kotlin.String, `issuerDidDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential(
+        it, FfiConverterString.lower(`signedCredentialJson`),FfiConverterString.lower(`issuerDidDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifySignedCredentialPdf`(`pdfBytes`: kotlin.ByteArray, `issuerDidDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf(
+        it, FfiConverterByteArray.lower(`pdfBytes`),FfiConverterString.lower(`issuerDidDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifySignedCredentialPdfFile`(`inputUri`: kotlin.String, `issuerDidDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_credential_pdf_file(
+        it, FfiConverterString.lower(`inputUri`),FfiConverterString.lower(`issuerDidDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifySignedGenericPdf`(`pdfBytes`: kotlin.ByteArray, `signerDidDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf(
+        it, FfiConverterByteArray.lower(`pdfBytes`),FfiConverterString.lower(`signerDidDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `verifySignedGenericPdfFile`(`inputUri`: kotlin.String, `signerDidDocumentJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_verify_signed_generic_pdf_file(
+        it, FfiConverterString.lower(`inputUri`),FfiConverterString.lower(`signerDidDocumentJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletChangePasswordJson`(`walletName`: kotlin.String, `oldPassword`: kotlin.String, `newPassword`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_change_password_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`oldPassword`),FfiConverterString.lower(`newPassword`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletCreateDidJson`(`walletName`: kotlin.String, `password`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_did_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletCreateJson`(`walletName`: kotlin.String, `password`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_create_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletEmbedSignedCredentialInPdfBytes`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `pdfBase`: kotlin.ByteArray, `signedCredentialJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_bytes(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterByteArray.lower(`pdfBase`),FfiConverterString.lower(`signedCredentialJson`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletEmbedSignedCredentialInPdfFile`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `inputUri`: kotlin.String, `outputUri`: kotlin.String, `signedCredentialJson`: kotlin.String, `optionsJson`: kotlin.String?): FileOperationResult {
+            return FfiConverterTypeFileOperationResult.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_embed_signed_credential_in_pdf_file(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterString.lower(`inputUri`),FfiConverterString.lower(`outputUri`),FfiConverterString.lower(`signedCredentialJson`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletGetDidDocumentJson`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_get_did_document_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletIssueCredentialFromSchemaJson`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `schemaJson`: kotlin.String, `attributesJson`: kotlin.String, `optionsJson`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_issue_credential_from_schema_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterString.lower(`schemaJson`),FfiConverterString.lower(`attributesJson`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletListDidsJson`(`walletName`: kotlin.String, `password`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_list_dids_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletMlkemDecapsulate`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `ciphertext`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_mlkem_decapsulate(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterString.lower(`ciphertext`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletOpenJson`(`walletName`: kotlin.String, `password`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_open_json(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletSignGenericPdfBytes`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `pdfBase`: kotlin.ByteArray, `optionsJson`: kotlin.String?): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_bytes(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterByteArray.lower(`pdfBase`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(SsiPqMobileException::class)override fun `walletSignGenericPdfFile`(`walletName`: kotlin.String, `password`: kotlin.String, `did`: kotlin.String, `inputUri`: kotlin.String, `outputUri`: kotlin.String, `optionsJson`: kotlin.String?): FileOperationResult {
+            return FfiConverterTypeFileOperationResult.lift(
+    callWithPointer {
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_method_ssipq_wallet_sign_generic_pdf_file(
+        it, FfiConverterString.lower(`walletName`),FfiConverterString.lower(`password`),FfiConverterString.lower(`did`),FfiConverterString.lower(`inputUri`),FfiConverterString.lower(`outputUri`),FfiConverterOptionalString.lower(`optionsJson`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+
+    
     companion object {
-        @Throws(SsiPqMobileException::class)
-        fun `newWithStorageDir`(`storageDir`: kotlin.String): SsiPq =
-            FfiConverterTypeSsiPq.lift(
-                uniffiRustCallWithError(SsiPqMobileException) { _status ->
-                    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new_with_storage_dir(
-                        FfiConverterString.lower(`storageDir`),
-                        _status,
-                    )
-                },
-            )
+        
+    @Throws(SsiPqMobileException::class) fun `newWithStorageDir`(`storageDir`: kotlin.String): SsiPq {
+            return FfiConverterTypeSsiPq.lift(
+    uniffiRustCallWithError(SsiPqMobileException) { _status ->
+    UniffiLib.INSTANCE.uniffi_ssi_pq_mobile_ffi_fn_constructor_ssipq_new_with_storage_dir(
+        FfiConverterString.lower(`storageDir`),_status)
+}
+    )
     }
+    
+
+        
+    }
+    
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeSsiPq : FfiConverter<SsiPq, Pointer> {
-    override fun lower(value: SsiPq): Pointer = value.uniffiClonePointer()
+public object FfiConverterTypeSsiPq: FfiConverter<SsiPq, Pointer> {
 
-    override fun lift(value: Pointer): SsiPq = SsiPq(value)
+    override fun lower(value: SsiPq): Pointer {
+        return value.uniffiClonePointer()
+    }
+
+    override fun lift(value: Pointer): SsiPq {
+        return SsiPq(value)
+    }
 
     override fun read(buf: ByteBuffer): SsiPq {
         // The Rust code always writes pointers as 8 bytes, and will
@@ -3238,178 +2570,178 @@ public object FfiConverterTypeSsiPq : FfiConverter<SsiPq, Pointer> {
 
     override fun allocationSize(value: SsiPq) = 8UL
 
-    override fun write(
-        value: SsiPq,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: SsiPq, buf: ByteBuffer) {
         // The Rust code always expects pointers written as 8 bytes,
         // and will fail to compile if they don't fit.
         buf.putLong(Pointer.nativeValue(lower(value)))
     }
 }
 
-data class Aes256GcmEncryption(
-    var `ciphertext`: kotlin.ByteArray,
-    var `nonce`: kotlin.ByteArray,
-    var `authTag`: kotlin.ByteArray,
+
+
+data class Aes256GcmEncryption (
+    var `ciphertext`: kotlin.ByteArray, 
+    var `nonce`: kotlin.ByteArray, 
+    var `authTag`: kotlin.ByteArray
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeAes256GcmEncryption : FfiConverterRustBuffer<Aes256GcmEncryption> {
-    override fun read(buf: ByteBuffer): Aes256GcmEncryption =
-        Aes256GcmEncryption(
+public object FfiConverterTypeAes256GcmEncryption: FfiConverterRustBuffer<Aes256GcmEncryption> {
+    override fun read(buf: ByteBuffer): Aes256GcmEncryption {
+        return Aes256GcmEncryption(
             FfiConverterByteArray.read(buf),
             FfiConverterByteArray.read(buf),
             FfiConverterByteArray.read(buf),
         )
+    }
 
-    override fun allocationSize(value: Aes256GcmEncryption) =
-        (
+    override fun allocationSize(value: Aes256GcmEncryption) = (
             FfiConverterByteArray.allocationSize(value.`ciphertext`) +
-                FfiConverterByteArray.allocationSize(value.`nonce`) +
-                FfiConverterByteArray.allocationSize(value.`authTag`)
-        )
+            FfiConverterByteArray.allocationSize(value.`nonce`) +
+            FfiConverterByteArray.allocationSize(value.`authTag`)
+    )
 
-    override fun write(
-        value: Aes256GcmEncryption,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterByteArray.write(value.`ciphertext`, buf)
-        FfiConverterByteArray.write(value.`nonce`, buf)
-        FfiConverterByteArray.write(value.`authTag`, buf)
+    override fun write(value: Aes256GcmEncryption, buf: ByteBuffer) {
+            FfiConverterByteArray.write(value.`ciphertext`, buf)
+            FfiConverterByteArray.write(value.`nonce`, buf)
+            FfiConverterByteArray.write(value.`authTag`, buf)
     }
 }
 
-data class FileOperationResult(
-    var `outputUri`: kotlin.String,
-    var `bytesWritten`: kotlin.ULong,
-    var `metadataJson`: kotlin.String?,
+
+
+data class FileOperationResult (
+    var `outputUri`: kotlin.String, 
+    var `bytesWritten`: kotlin.ULong, 
+    var `metadataJson`: kotlin.String?
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeFileOperationResult : FfiConverterRustBuffer<FileOperationResult> {
-    override fun read(buf: ByteBuffer): FileOperationResult =
-        FileOperationResult(
+public object FfiConverterTypeFileOperationResult: FfiConverterRustBuffer<FileOperationResult> {
+    override fun read(buf: ByteBuffer): FileOperationResult {
+        return FileOperationResult(
             FfiConverterString.read(buf),
             FfiConverterULong.read(buf),
             FfiConverterOptionalString.read(buf),
         )
+    }
 
-    override fun allocationSize(value: FileOperationResult) =
-        (
+    override fun allocationSize(value: FileOperationResult) = (
             FfiConverterString.allocationSize(value.`outputUri`) +
-                FfiConverterULong.allocationSize(value.`bytesWritten`) +
-                FfiConverterOptionalString.allocationSize(value.`metadataJson`)
-        )
+            FfiConverterULong.allocationSize(value.`bytesWritten`) +
+            FfiConverterOptionalString.allocationSize(value.`metadataJson`)
+    )
 
-    override fun write(
-        value: FileOperationResult,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterString.write(value.`outputUri`, buf)
-        FfiConverterULong.write(value.`bytesWritten`, buf)
-        FfiConverterOptionalString.write(value.`metadataJson`, buf)
+    override fun write(value: FileOperationResult, buf: ByteBuffer) {
+            FfiConverterString.write(value.`outputUri`, buf)
+            FfiConverterULong.write(value.`bytesWritten`, buf)
+            FfiConverterOptionalString.write(value.`metadataJson`, buf)
     }
 }
 
-data class KeyPair(
-    var `profile`: kotlin.String,
-    var `publicKey`: kotlin.ByteArray,
-    var `privateKey`: kotlin.ByteArray,
+
+
+data class KeyPair (
+    var `profile`: kotlin.String, 
+    var `publicKey`: kotlin.ByteArray, 
+    var `privateKey`: kotlin.ByteArray
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeKeyPair : FfiConverterRustBuffer<KeyPair> {
-    override fun read(buf: ByteBuffer): KeyPair =
-        KeyPair(
+public object FfiConverterTypeKeyPair: FfiConverterRustBuffer<KeyPair> {
+    override fun read(buf: ByteBuffer): KeyPair {
+        return KeyPair(
             FfiConverterString.read(buf),
             FfiConverterByteArray.read(buf),
             FfiConverterByteArray.read(buf),
         )
+    }
 
-    override fun allocationSize(value: KeyPair) =
-        (
+    override fun allocationSize(value: KeyPair) = (
             FfiConverterString.allocationSize(value.`profile`) +
-                FfiConverterByteArray.allocationSize(value.`publicKey`) +
-                FfiConverterByteArray.allocationSize(value.`privateKey`)
-        )
+            FfiConverterByteArray.allocationSize(value.`publicKey`) +
+            FfiConverterByteArray.allocationSize(value.`privateKey`)
+    )
 
-    override fun write(
-        value: KeyPair,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterString.write(value.`profile`, buf)
-        FfiConverterByteArray.write(value.`publicKey`, buf)
-        FfiConverterByteArray.write(value.`privateKey`, buf)
+    override fun write(value: KeyPair, buf: ByteBuffer) {
+            FfiConverterString.write(value.`profile`, buf)
+            FfiConverterByteArray.write(value.`publicKey`, buf)
+            FfiConverterByteArray.write(value.`privateKey`, buf)
     }
 }
 
-data class MlkemEncapsulation(
-    var `profile`: kotlin.String,
-    var `ciphertext`: kotlin.ByteArray,
-    var `sharedSecret`: kotlin.ByteArray,
+
+
+data class MlkemEncapsulation (
+    var `profile`: kotlin.String, 
+    var `ciphertext`: kotlin.ByteArray, 
+    var `sharedSecret`: kotlin.ByteArray
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeMlkemEncapsulation : FfiConverterRustBuffer<MlkemEncapsulation> {
-    override fun read(buf: ByteBuffer): MlkemEncapsulation =
-        MlkemEncapsulation(
+public object FfiConverterTypeMlkemEncapsulation: FfiConverterRustBuffer<MlkemEncapsulation> {
+    override fun read(buf: ByteBuffer): MlkemEncapsulation {
+        return MlkemEncapsulation(
             FfiConverterString.read(buf),
             FfiConverterByteArray.read(buf),
             FfiConverterByteArray.read(buf),
         )
+    }
 
-    override fun allocationSize(value: MlkemEncapsulation) =
-        (
+    override fun allocationSize(value: MlkemEncapsulation) = (
             FfiConverterString.allocationSize(value.`profile`) +
-                FfiConverterByteArray.allocationSize(value.`ciphertext`) +
-                FfiConverterByteArray.allocationSize(value.`sharedSecret`)
-        )
+            FfiConverterByteArray.allocationSize(value.`ciphertext`) +
+            FfiConverterByteArray.allocationSize(value.`sharedSecret`)
+    )
 
-    override fun write(
-        value: MlkemEncapsulation,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterString.write(value.`profile`, buf)
-        FfiConverterByteArray.write(value.`ciphertext`, buf)
-        FfiConverterByteArray.write(value.`sharedSecret`, buf)
+    override fun write(value: MlkemEncapsulation, buf: ByteBuffer) {
+            FfiConverterString.write(value.`profile`, buf)
+            FfiConverterByteArray.write(value.`ciphertext`, buf)
+            FfiConverterByteArray.write(value.`sharedSecret`, buf)
     }
 }
 
-data class WalletDidSummary(
-    var `did`: kotlin.String,
-    var `label`: kotlin.String?,
-    var `mldsaAlg`: kotlin.String,
-    var `mlkemAlg`: kotlin.String,
-    var `status`: kotlin.String,
-    var `createdAt`: kotlin.String,
-    var `didDocCid`: kotlin.String?,
+
+
+data class WalletDidSummary (
+    var `did`: kotlin.String, 
+    var `label`: kotlin.String?, 
+    var `mldsaAlg`: kotlin.String, 
+    var `mlkemAlg`: kotlin.String, 
+    var `status`: kotlin.String, 
+    var `createdAt`: kotlin.String, 
+    var `didDocCid`: kotlin.String?
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeWalletDidSummary : FfiConverterRustBuffer<WalletDidSummary> {
-    override fun read(buf: ByteBuffer): WalletDidSummary =
-        WalletDidSummary(
+public object FfiConverterTypeWalletDidSummary: FfiConverterRustBuffer<WalletDidSummary> {
+    override fun read(buf: ByteBuffer): WalletDidSummary {
+        return WalletDidSummary(
             FfiConverterString.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterString.read(buf),
@@ -3418,270 +2750,248 @@ public object FfiConverterTypeWalletDidSummary : FfiConverterRustBuffer<WalletDi
             FfiConverterString.read(buf),
             FfiConverterOptionalString.read(buf),
         )
+    }
 
-    override fun allocationSize(value: WalletDidSummary) =
-        (
+    override fun allocationSize(value: WalletDidSummary) = (
             FfiConverterString.allocationSize(value.`did`) +
-                FfiConverterOptionalString.allocationSize(value.`label`) +
-                FfiConverterString.allocationSize(value.`mldsaAlg`) +
-                FfiConverterString.allocationSize(value.`mlkemAlg`) +
-                FfiConverterString.allocationSize(value.`status`) +
-                FfiConverterString.allocationSize(value.`createdAt`) +
-                FfiConverterOptionalString.allocationSize(value.`didDocCid`)
-        )
+            FfiConverterOptionalString.allocationSize(value.`label`) +
+            FfiConverterString.allocationSize(value.`mldsaAlg`) +
+            FfiConverterString.allocationSize(value.`mlkemAlg`) +
+            FfiConverterString.allocationSize(value.`status`) +
+            FfiConverterString.allocationSize(value.`createdAt`) +
+            FfiConverterOptionalString.allocationSize(value.`didDocCid`)
+    )
 
-    override fun write(
-        value: WalletDidSummary,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterString.write(value.`did`, buf)
-        FfiConverterOptionalString.write(value.`label`, buf)
-        FfiConverterString.write(value.`mldsaAlg`, buf)
-        FfiConverterString.write(value.`mlkemAlg`, buf)
-        FfiConverterString.write(value.`status`, buf)
-        FfiConverterString.write(value.`createdAt`, buf)
-        FfiConverterOptionalString.write(value.`didDocCid`, buf)
+    override fun write(value: WalletDidSummary, buf: ByteBuffer) {
+            FfiConverterString.write(value.`did`, buf)
+            FfiConverterOptionalString.write(value.`label`, buf)
+            FfiConverterString.write(value.`mldsaAlg`, buf)
+            FfiConverterString.write(value.`mlkemAlg`, buf)
+            FfiConverterString.write(value.`status`, buf)
+            FfiConverterString.write(value.`createdAt`, buf)
+            FfiConverterOptionalString.write(value.`didDocCid`, buf)
     }
 }
 
-data class WalletInfo(
-    var `walletId`: kotlin.String,
-    var `version`: kotlin.UInt,
-    var `createdAt`: kotlin.String,
-    var `didCount`: kotlin.UInt,
-    var `backend`: kotlin.String,
+
+
+data class WalletInfo (
+    var `walletId`: kotlin.String, 
+    var `version`: kotlin.UInt, 
+    var `createdAt`: kotlin.String, 
+    var `didCount`: kotlin.UInt, 
+    var `backend`: kotlin.String
 ) {
+    
     companion object
 }
 
 /**
  * @suppress
  */
-public object FfiConverterTypeWalletInfo : FfiConverterRustBuffer<WalletInfo> {
-    override fun read(buf: ByteBuffer): WalletInfo =
-        WalletInfo(
+public object FfiConverterTypeWalletInfo: FfiConverterRustBuffer<WalletInfo> {
+    override fun read(buf: ByteBuffer): WalletInfo {
+        return WalletInfo(
             FfiConverterString.read(buf),
             FfiConverterUInt.read(buf),
             FfiConverterString.read(buf),
             FfiConverterUInt.read(buf),
             FfiConverterString.read(buf),
         )
+    }
 
-    override fun allocationSize(value: WalletInfo) =
-        (
+    override fun allocationSize(value: WalletInfo) = (
             FfiConverterString.allocationSize(value.`walletId`) +
-                FfiConverterUInt.allocationSize(value.`version`) +
-                FfiConverterString.allocationSize(value.`createdAt`) +
-                FfiConverterUInt.allocationSize(value.`didCount`) +
-                FfiConverterString.allocationSize(value.`backend`)
-        )
+            FfiConverterUInt.allocationSize(value.`version`) +
+            FfiConverterString.allocationSize(value.`createdAt`) +
+            FfiConverterUInt.allocationSize(value.`didCount`) +
+            FfiConverterString.allocationSize(value.`backend`)
+    )
 
-    override fun write(
-        value: WalletInfo,
-        buf: ByteBuffer,
-    ) {
-        FfiConverterString.write(value.`walletId`, buf)
-        FfiConverterUInt.write(value.`version`, buf)
-        FfiConverterString.write(value.`createdAt`, buf)
-        FfiConverterUInt.write(value.`didCount`, buf)
-        FfiConverterString.write(value.`backend`, buf)
+    override fun write(value: WalletInfo, buf: ByteBuffer) {
+            FfiConverterString.write(value.`walletId`, buf)
+            FfiConverterUInt.write(value.`version`, buf)
+            FfiConverterString.write(value.`createdAt`, buf)
+            FfiConverterUInt.write(value.`didCount`, buf)
+            FfiConverterString.write(value.`backend`, buf)
     }
 }
 
-sealed class SsiPqMobileException : kotlin.Exception() {
+
+
+
+
+sealed class SsiPqMobileException: kotlin.Exception() {
+    
     class InvalidInput(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Crypto(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Wallet(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Pdf(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Storage(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Io(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
-
+    
     class Unavailable(
-        val `detail`: kotlin.String,
-    ) : SsiPqMobileException() {
+        
+        val `detail`: kotlin.String
+        ) : SsiPqMobileException() {
         override val message
             get() = "detail=${ `detail` }"
     }
+    
 
     companion object ErrorHandler : UniffiRustCallStatusErrorHandler<SsiPqMobileException> {
         override fun lift(error_buf: RustBuffer.ByValue): SsiPqMobileException = FfiConverterTypeSsiPqMobileError.lift(error_buf)
     }
+
+    
 }
 
 /**
  * @suppress
  */
 public object FfiConverterTypeSsiPqMobileError : FfiConverterRustBuffer<SsiPqMobileException> {
-    override fun read(buf: ByteBuffer): SsiPqMobileException =
-        when (buf.getInt()) {
-            1 -> {
-                SsiPqMobileException.InvalidInput(
-                    FfiConverterString.read(buf),
-                )
-            }
+    override fun read(buf: ByteBuffer): SsiPqMobileException {
+        
 
-            2 -> {
-                SsiPqMobileException.Crypto(
-                    FfiConverterString.read(buf),
+        return when(buf.getInt()) {
+            1 -> SsiPqMobileException.InvalidInput(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            3 -> {
-                SsiPqMobileException.Wallet(
-                    FfiConverterString.read(buf),
+            2 -> SsiPqMobileException.Crypto(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            4 -> {
-                SsiPqMobileException.Pdf(
-                    FfiConverterString.read(buf),
+            3 -> SsiPqMobileException.Wallet(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            5 -> {
-                SsiPqMobileException.Storage(
-                    FfiConverterString.read(buf),
+            4 -> SsiPqMobileException.Pdf(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            6 -> {
-                SsiPqMobileException.Io(
-                    FfiConverterString.read(buf),
+            5 -> SsiPqMobileException.Storage(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            7 -> {
-                SsiPqMobileException.Unavailable(
-                    FfiConverterString.read(buf),
+            6 -> SsiPqMobileException.Io(
+                FfiConverterString.read(buf),
                 )
-            }
-
-            else -> {
-                throw RuntimeException("invalid error enum value, something is very wrong!!")
-            }
+            7 -> SsiPqMobileException.Unavailable(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
+    }
 
-    override fun allocationSize(value: SsiPqMobileException): ULong =
-        when (value) {
+    override fun allocationSize(value: SsiPqMobileException): ULong {
+        return when(value) {
             is SsiPqMobileException.InvalidInput -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Crypto -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Wallet -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Pdf -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Storage -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Io -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
-
             is SsiPqMobileException.Unavailable -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL +
-                    FfiConverterString.allocationSize(value.`detail`)
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
             )
         }
+    }
 
-    override fun write(
-        value: SsiPqMobileException,
-        buf: ByteBuffer,
-    ) {
-        when (value) {
+    override fun write(value: SsiPqMobileException, buf: ByteBuffer) {
+        when(value) {
             is SsiPqMobileException.InvalidInput -> {
                 buf.putInt(1)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Crypto -> {
                 buf.putInt(2)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Wallet -> {
                 buf.putInt(3)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Pdf -> {
                 buf.putInt(4)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Storage -> {
                 buf.putInt(5)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Io -> {
                 buf.putInt(6)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
-
             is SsiPqMobileException.Unavailable -> {
                 buf.putInt(7)
                 FfiConverterString.write(value.`detail`, buf)
@@ -3689,12 +2999,16 @@ public object FfiConverterTypeSsiPqMobileError : FfiConverterRustBuffer<SsiPqMob
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
+
 }
+
+
+
 
 /**
  * @suppress
  */
-public object FfiConverterOptionalString : FfiConverterRustBuffer<kotlin.String?> {
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
     override fun read(buf: ByteBuffer): kotlin.String? {
         if (buf.get().toInt() == 0) {
             return null
@@ -3710,10 +3024,7 @@ public object FfiConverterOptionalString : FfiConverterRustBuffer<kotlin.String?
         }
     }
 
-    override fun write(
-        value: kotlin.String?,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
         if (value == null) {
             buf.put(0)
         } else {
@@ -3723,10 +3034,13 @@ public object FfiConverterOptionalString : FfiConverterRustBuffer<kotlin.String?
     }
 }
 
+
+
+
 /**
  * @suppress
  */
-public object FfiConverterOptionalByteArray : FfiConverterRustBuffer<kotlin.ByteArray?> {
+public object FfiConverterOptionalByteArray: FfiConverterRustBuffer<kotlin.ByteArray?> {
     override fun read(buf: ByteBuffer): kotlin.ByteArray? {
         if (buf.get().toInt() == 0) {
             return null
@@ -3742,10 +3056,7 @@ public object FfiConverterOptionalByteArray : FfiConverterRustBuffer<kotlin.Byte
         }
     }
 
-    override fun write(
-        value: kotlin.ByteArray?,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: kotlin.ByteArray?, buf: ByteBuffer) {
         if (value == null) {
             buf.put(0)
         } else {
@@ -3755,10 +3066,13 @@ public object FfiConverterOptionalByteArray : FfiConverterRustBuffer<kotlin.Byte
     }
 }
 
+
+
+
 /**
  * @suppress
  */
-public object FfiConverterSequenceString : FfiConverterRustBuffer<List<kotlin.String>> {
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
     override fun read(buf: ByteBuffer): List<kotlin.String> {
         val len = buf.getInt()
         return List<kotlin.String>(len) {
@@ -3772,13 +3086,11 @@ public object FfiConverterSequenceString : FfiConverterRustBuffer<List<kotlin.St
         return sizeForLength + sizeForItems
     }
 
-    override fun write(
-        value: List<kotlin.String>,
-        buf: ByteBuffer,
-    ) {
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterString.write(it, buf)
         }
     }
 }
+
