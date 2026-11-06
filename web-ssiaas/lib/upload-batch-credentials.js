@@ -105,13 +105,39 @@ async function main() {
   const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
   const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
 
-  const keysFilePath = path.join(__dirname, "keys.txt");
-  const walletPath = path.join(__dirname, "mobile_wallet.db");
+  const walletArgIdx = process.argv.indexOf("--wallet");
+  const customWallet = walletArgIdx !== -1 ? process.argv[walletArgIdx + 1] : process.env.WALLET_PATH;
+  let walletPath = "";
+  if (customWallet) {
+    walletPath = path.resolve(customWallet);
+  } else if (fs.existsSync(path.join(__dirname, "issuer_wallet.db"))) {
+    walletPath = path.join(__dirname, "issuer_wallet.db");
+  } else {
+    walletPath = path.join(__dirname, "mobile_wallet.db");
+  }
+
+  const keysArgIdx = process.argv.indexOf("--keys");
+  const customKeys = keysArgIdx !== -1 ? process.argv[keysArgIdx + 1] : process.env.KEYS_PATH;
+  let keysFilePath = "";
+  if (customKeys) {
+    keysFilePath = path.resolve(customKeys);
+  } else {
+    const baseName = path.basename(walletPath, path.extname(walletPath));
+    const candidateKeys = path.join(path.dirname(walletPath), `${baseName}.keys.txt`);
+    if (fs.existsSync(candidateKeys)) {
+      keysFilePath = candidateKeys;
+    } else {
+      keysFilePath = path.join(__dirname, "keys.txt");
+    }
+  }
+
   const offlineStoragePath = path.join(__dirname, "offline_signed_batches.json");
 
   console.log("=================================================");
   console.log("📤 SIMULANDO APLICATIVO MÓVEL - UPLOAD DE LOTE");
   console.log("=================================================");
+  console.log(`💾 Wallet DB  : ${walletPath}`);
+
 
   // 1. Leitura do cache local do aplicativo
   if (!fs.existsSync(offlineStoragePath)) {

@@ -18,8 +18,16 @@ async function main() {
   console.log("🚀 SIMULANDO ACEITE DO HOLDER");
   console.log("=================================================");
 
+  const targetEmail = process.argv[2];
+  if (targetEmail) {
+    console.log(`🎯 Filtrando para o Holder: ${targetEmail}`);
+  }
+
   const offeredCredentials = await prisma.verifiableCredential.findMany({
-    where: { status: "OFFERED" },
+    where: {
+      status: "OFFERED",
+      ...(targetEmail ? { holder: { email: targetEmail } } : {})
+    },
     include: { holder: true, issuer: true }
   });
 

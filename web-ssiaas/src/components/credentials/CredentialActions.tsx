@@ -10,7 +10,7 @@ import {
 
 type Props = {
   credentialId: string;
-  status: "PENDING" | "ACTIVE" | "REVOKED";
+  status: "PENDING" | "ACTIVE" | "REVOKED" | "OFFERED" | "REJECTED";
   role: "issuer" | "holder";
 };
 

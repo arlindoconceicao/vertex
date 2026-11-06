@@ -21,7 +21,40 @@ const crypto = require("crypto");
 const core = require("./ssi_pq_core.node");
 
 async function main() {
-  const customEndpoint = process.argv[2];
+  const args = process.argv.slice(2);
+  const walletArgIdx = args.indexOf("--wallet");
+  const customWallet = walletArgIdx !== -1 ? args[walletArgIdx + 1] : process.env.WALLET_PATH;
+  let walletPath = "";
+  if (customWallet) {
+    walletPath = path.resolve(customWallet);
+  } else if (fs.existsSync(path.join(__dirname, "issuer_wallet.db"))) {
+    walletPath = path.join(__dirname, "issuer_wallet.db");
+  } else {
+    walletPath = path.join(__dirname, "mobile_wallet.db");
+  }
+
+  const keysArgIdx = args.indexOf("--keys");
+  const customKeys = keysArgIdx !== -1 ? args[keysArgIdx + 1] : process.env.KEYS_PATH;
+  let keysFilePath = "";
+  if (customKeys) {
+    keysFilePath = path.resolve(customKeys);
+  } else {
+    const baseName = path.basename(walletPath, path.extname(walletPath));
+    const candidateKeys = path.join(path.dirname(walletPath), `${baseName}.keys.txt`);
+    if (fs.existsSync(candidateKeys)) {
+      keysFilePath = candidateKeys;
+    } else {
+      keysFilePath = path.join(__dirname, "keys.txt");
+    }
+  }
+
+  const customEndpoint = args.find((a, idx) => {
+    if (a.startsWith("-")) return false;
+    if (walletArgIdx !== -1 && (idx === walletArgIdx || idx === walletArgIdx + 1)) return false;
+    if (keysArgIdx !== -1 && (idx === keysArgIdx || idx === keysArgIdx + 1)) return false;
+    return a.startsWith("http");
+  });
+
   const endpoint =
     customEndpoint ||
       process.env.NEXT_PUBLIC_APP_URL
@@ -31,10 +64,6 @@ async function main() {
   const secretsStr = process.env.SIGNER_SECRETS || process.env.SIGNER_SECRET;
   const signerSecret = secretsStr ? secretsStr.split(',')[0].trim() : "mobile-signer-secret-token";
 
-  // 1. Carregamento da Wallet SQLite e Chaves Locais do Usuário
-  const keysFilePath = path.join(__dirname, "keys.txt");
-  const walletPath = path.join(__dirname, "mobile_wallet.db");
-
   console.log("=================================================");
   console.log("🚀 SIMULANDO APLICATIVO MÓVEL - BUSCA DE ASSINATURAS PENDENTES");
   console.log("=================================================");
@@ -43,6 +72,7 @@ async function main() {
   console.log(`💾 Wallet DB  : ${walletPath}`);
 
   if (!fs.existsSync(keysFilePath) || !fs.existsSync(walletPath)) {
+
     console.error(
       "\n❌ [ERRO] Banco SQLite da wallet (mobile_wallet.db) ou keys.txt não encontrados."
     );

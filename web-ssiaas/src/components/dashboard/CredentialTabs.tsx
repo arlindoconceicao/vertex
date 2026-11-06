@@ -203,7 +203,7 @@ function CredentialGrid({ credentials, perspective, emptyMessage }: CredentialGr
     setCurrentPage(1);
   };
 
-  const handleStatusChange = (val: "ALL" | "ACTIVE" | "PENDING" | "REVOKED") => {
+  const handleStatusChange = (val: string) => {
     setStatusFilter(val);
     setCurrentPage(1);
   };

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     for (const cred of credentials) {
       if (!cred.issuer) continue;
 
-      const expirationDate = new Date(cred.updatedAt || cred.issuedAt);
+      const expirationDate = new Date((cred as any).updatedAt || cred.issuedAt);
 
       if (cred.status === "OFFERED") {
         expirationDate.setDate(expirationDate.getDate() + cred.issuer.offerRetentionDays);

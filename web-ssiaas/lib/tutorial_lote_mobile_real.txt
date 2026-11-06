@@ -1,0 +1,206 @@
+================================================================================
+GUIA DO DESENVOLVEDOR MOBILE: FLUXO REAL DE EMISSÃO, ACEITE E ASSINATURA EM LOTE
+Integração 100% via API HTTP, Criptografia Pós-Quântica (ML-DSA / ML-KEM) e M2M
+================================================================================
+
+Este guia foi elaborado para que o desenvolvedor do APLICATIVO MÓVEL (iOS / Android / Flutter / React Native)
+possa compreender o protocolo de comunicação, implementar as chamadas de API reais e guiar-se
+pelos scripts em Node.js contidos na pasta `lib/` como referências funcionais.
+
+Nenhum script deste tutorial acessa o banco de dados diretamente; todas as operações
+são realizadas via endpoints HTTP autenticados com Prova de Posse (Proof-of-Possession).
+
+--------------------------------------------------------------------------------
+SUMÁRIO DA ARQUITETURA DE SEGURANÇA MOBILE
+--------------------------------------------------------------------------------
+
+Toda requisição segura do App Mobile para a plataforma utiliza dois cabeçalhos obrigatórios:
+
+1. Authorization (Bearer Token M2M HMAC-SHA256):
+   - Formato: Bearer <HMAC-SHA256(SIGNER_SECRET, userDid)>
+   - Exemplo em JS:
+     const bearer = crypto.createHmac("sha256", SIGNER_SECRET).update(userDid).digest("hex");
+   - Header HTTP:
+     Authorization: Bearer <bearer>
+
+2. x-signer-auth-credential (Prova de Posse Criptográfica - PoP):
+   - É uma credencial verificável efêmera gerada e assinada no dispositivo móvel
+     usando a chave privada ML-DSA-65 do titular/emissor.
+   - Atributos obrigatórios do subject:
+     {
+       "action": "<nome_da_acao>",  // ex: "offered_requests_auth", "accept_credential_auth", "pending_requests_auth"
+       "timestamp": "<ISO-8601>"    // O servidor rejeita requisições com diferença > 2 minutos
+     }
+   - O payload assinado é codificado em Base64 e enviado no header:
+     x-signer-auth-credential: <Base64(SignedVC)>
+
+--------------------------------------------------------------------------------
+ROTEIRO PRÁTICO PASSO A PASSO
+--------------------------------------------------------------------------------
+
+1) Iniciar a aplicação e o banco:
+---------------------------------
+No terminal da raiz do projeto:
+
+    docker start vertex_postgres
+    npm run dev
+
+Acesse: http://localhost:3000
+
+
+1) Resetar o banco e iniciar a aplicação:
+bash
+
+    docker start vertex_postgres
+    npx prisma migrate reset
+    npx prisma generate
+    npm run dev
+
+Veja rodando em: http://localhost:3000
+Em caso de erro use: npx prisma db push --force-reset
+
+
+2) Pareamento da Carteira do Emissor (Issuer Mobile Wallet):
+------------------------------------------------------------
+No app real: O usuário abre as configurações na web, o app móvel lê o QR Code e realiza o pareamento.
+Simulação:
+a) Acesse http://localhost:3000/settings.
+b) Na aba de Pareamento, clique em "Iniciar Pareamento" e depois em "Copiar Payload Completo JSON".
+c) Execute o script simulador informando o arquivo da carteira do emissor:
+
+    node lib/complete-pairing.js 'PAYLOAD_COPIADO' --wallet lib/issuer_wallet.db
+
+* O script gera as chaves pós-quânticas ML-DSA-65 e ML-KEM-768, assina o nonce do desafio
+  e envia para POST /api/v1/did-pairings/{id}/complete.
+* A carteira é salva em lib/issuer_wallet.db com senha em lib/issuer_wallet.keys.txt.
+* A tela da web atualizará automaticamente para PAREADO.
+
+
+3) Pareamento da Carteira do Titular (Holder Mobile Wallet):
+------------------------------------------------------------
+Caso você queira testar com usuários distintos:
+a) Faça logout ou abra uma aba anônima e faça login com a conta do titular (ex: titular@teste.com).
+b) Acesse http://localhost:3000/settings, inicie o pareamento e copie o payload JSON.
+c) Execute o script apontando para a carteira do titular:
+
+    node lib/complete-pairing.js 'PAYLOAD_TITULAR' --wallet lib/holder_wallet.db
+
+(Nota: Se você estiver testando com uma única conta de usuário que faz o papel de emissor e titular,
+pode omitir a flag --wallet para usar lib/mobile_wallet.db padrão).
+
+4) Criação do Esquema e Emissão do Lote na Web:
+-----------------------------------------------
+a) Acesse http://localhost:3000/schemas e crie um esquema (ex: nome Certificado com atributos nome, curso, cargaHoraria).
+b) Acesse http://localhost:3000/credentials/issue e clique na aba "Emissão em Lote".
+c) Baixe o template CSV e preencha as linhas com o e-mail do titular pareado no Passo 3:
+
+HolderEmail,nome,curso,cargaHoraria
+titular@teste.com,Carlos Silva,Seguranca Pos-Quantica,40
+titular@teste.com,Mariana Souza,Identidade Auto-Soberana,20
+
+d) Faça o upload do CSV e clique em "Emitir Lote".
+e) No Dashboard (http://localhost:3000/dashboard), selecione o filtro "Oferecida em Lote".
+   As credenciais recém-criadas estarão com status OFERECIDA (OFFERED), aguardando consentimento do titular.
+
+5) [APP DO TITULAR] Consultar Ofertas Recebidas via API:
+--------------------------------------------------------
+O aplicativo móvel do titular busca periodicamente as ofertas destinadas à sua DID:
+- Método: GET /api/signer/requests/offered
+- Script simulador:
+
+    node lib/get-batch-credentials.js --wallet lib/holder_wallet.db
+    # (ou --wallet lib/issuer_wallet.db caso esteja usando a mesma carteira)
+    node lib/get-batch-credentials.js --wallet lib/issuer_wallet.db
+
+O titular visualiza em seu aplicativo:
+- Identificador do lote (batchId)
+- Nome e DID do emissor
+- Dados completos da credencial não assinada
+
+6) [APP DO TITULAR] Aceitar as Credenciais Oferecidas via API (100% HTTP):
+-------------------------------------------------------------------------
+O titular clica em "Aceitar" no seu app móvel. O app dispara uma requisição POST autenticada
+com sua chave privada para a plataforma:
+- Endpoint por credencial: POST /api/signer/requests/offered/{requestId}/accept
+- Endpoint em lote:        POST /api/signer/requests/offered/batch-accept
+
+Execute o novo script de aceite HTTP:
+
+    node lib/holder-accept-offer.js --wallet lib/holder_wallet.db
+    # (ou --wallet lib/issuer_wallet.db caso esteja usando a mesma carteira)
+    node lib/holder-accept-offer.js --wallet lib/issuer_wallet.db
+
+* O script autentica-se com a carteira do titular, busca as ofertas e envia a requisição de aceite via HTTP.
+* Ao ser aceita, o status da credencial é atualizado na plataforma para PENDING (pronta para assinatura do emissor).
+* (Opcional): Para testar a rejeição pelo titular, utilize a flag `--reject`.
+
+7) [APP DO EMISSOR] Assinar o Lote e Enviar PDFs Cifrados via API:
+-----------------------------------------------------------------
+O aplicativo do emissor busca credenciais com status PENDING (que já receberam o aceite do titular):
+- Método: GET /api/signer/requests/pending
+- Assina localmente no celular com ML-DSA-65.
+- Gera o PDF com carimbo visual e credencial embutida.
+- Consulta a chave pública ML-KEM-768 do titular: GET /api/signer/recipient-key/{recipientDid}.
+- Cifra o PDF com ML-KEM-768 + AES-256-GCM (somente a carteira do titular conseguirá abrir).
+- Faz o upload via multipart/form-data: POST /api/signer/callback.
+
+Execute o comando completo de assinatura e upload usando a carteira do emissor:
+
+    node lib/sign-batch-credentials.js --upload --wallet lib/issuer_wallet.db
+
+
+Após a confirmação do upload, a plataforma atualiza o status de todas as credenciais do lote para ATIVO (ACTIVE).
+
+8) Conferência na Plataforma Web:
+---------------------------------
+Atualize a página do lote em http://localhost:3000/credentials/batch/[batchId].
+As credenciais estarão com status ATIVO (ACTIVE) e prontas para validação ou download.
+
+9) [APP DO TITULAR] Download Seguro e Decifragem no Dispositivo:
+---------------------------------------------------------------
+O titular abre sua carteira móvel para receber seus certificados definitivos:
+- Consulta credenciais disponíveis: GET /api/signer/credentials/available
+- Baixa o binário cifrado:         GET /api/signer/download-pdf/{credentialId}
+- Decapsula o segredo com a chave privada ML-KEM-768 da carteira do titular.
+- Decifra o conteúdo AES-256-GCM e armazena o PDF original no dispositivo.
+
+Execute o script simulador com a carteira do titular:
+
+    node lib/simulate-mobile-download.js --wallet lib/holder_wallet.db
+    node lib/simulate-mobile-download.js --wallet lib/issuer_wallet.db
+
+O arquivo PDF decifrado será salvo localmente em `lib/downloaded_credentials/`.
+
+10) Verificação Pública de Autenticidade:
+-----------------------------------------
+Acesse http://localhost:3000/verify e faça o upload do PDF baixado ou informe o seu hash SHA-256.
+A plataforma extrairá a credencial pós-quântica embutida no PDF e confirmará matematicamente
+a assinatura ML-DSA do emissor.
+
+================================================================================
+REFERÊNCIA RÁPIDA DE ENDPOINTS PARA O DESENVOLVEDOR MOBILE
+================================================================================
+
+1. Pareamento DID:
+   POST /api/v1/did-pairings/{pairingId}/complete
+   Headers: Content-Type: application/json
+   Body: { pairingId, did, didDocument, proof: { type: "ML-DSA-65", proofValue }, mldsaPublicKey, mlkemPublicKey }
+
+2. Ofertas de Credencial (Titular):
+   GET  /api/signer/requests/offered
+   POST /api/signer/requests/offered/{id}/accept
+   POST /api/signer/requests/offered/{id}/reject
+   POST /api/signer/requests/offered/batch-accept
+   Headers: Authorization: Bearer <HMAC>, x-signer-auth-credential: <Base64(PoP)>
+
+3. Pendências de Assinatura (Emissor):
+   GET  /api/signer/requests/pending
+   GET  /api/signer/recipient-key/{recipientDid}
+   POST /api/signer/callback (Multipart/form-data com metadata, signedPayload, encryptedPdf)
+   Headers: Authorization: Bearer <HMAC>, x-signer-auth-credential: <Base64(PoP)>
+
+4. Download e Carteira (Titular):
+   GET  /api/signer/credentials/available
+   GET  /api/signer/download-pdf/{id}
+   Headers: Authorization: Bearer <HMAC>, x-signer-auth-credential: <Base64(PoP)>
+================================================================================

@@ -7,17 +7,42 @@ async function main() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const availableEndpoint = `${baseUrl}/api/signer/credentials/available`;
 
-  const keysFilePath = path.join(__dirname, "keys.txt");
-  const walletPath = path.join(__dirname, "mobile_wallet.db");
+  const walletArgIdx = process.argv.indexOf("--wallet");
+  const customWallet = walletArgIdx !== -1 ? process.argv[walletArgIdx + 1] : process.env.WALLET_PATH;
+  let walletPath = "";
+  if (customWallet) {
+    walletPath = path.resolve(customWallet);
+  } else if (fs.existsSync(path.join(__dirname, "holder_wallet.db"))) {
+    walletPath = path.join(__dirname, "holder_wallet.db");
+  } else {
+    walletPath = path.join(__dirname, "mobile_wallet.db");
+  }
+
+  const keysArgIdx = process.argv.indexOf("--keys");
+  const customKeys = keysArgIdx !== -1 ? process.argv[keysArgIdx + 1] : process.env.KEYS_PATH;
+  let keysFilePath = "";
+  if (customKeys) {
+    keysFilePath = path.resolve(customKeys);
+  } else {
+    const baseName = path.basename(walletPath, path.extname(walletPath));
+    const candidateKeys = path.join(path.dirname(walletPath), `${baseName}.keys.txt`);
+    if (fs.existsSync(candidateKeys)) {
+      keysFilePath = candidateKeys;
+    } else {
+      keysFilePath = path.join(__dirname, "keys.txt");
+    }
+  }
 
   console.log("=================================================");
   console.log("📥 SIMULANDO DOWNLOAD PELO APP MOBILE");
   console.log("=================================================");
+  console.log(`💾 Wallet DB  : ${walletPath}`);
 
   if (!fs.existsSync(keysFilePath) || !fs.existsSync(walletPath)) {
-    console.error("❌ [ERRO] Banco SQLite da wallet ou keys.txt não encontrados.");
+    console.error(`❌ [ERRO] Banco SQLite da wallet (${walletPath}) ou arquivo de chaves não encontrados.`);
     process.exit(1);
   }
+
 
   const walletPassword = fs.readFileSync(keysFilePath, "utf-8").trim();
 

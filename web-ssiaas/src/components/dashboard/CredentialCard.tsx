@@ -12,11 +12,14 @@ type Props = {
 export default function CredentialCard({ credential, perspective }: Props) {
   const { t, locale } = useTranslation();
 
-  const statusMap = {
+  const statusMap: Record<string, { label: string; classes: string }> = {
     ACTIVE: { label: t("dashboard.card.statusActive"), classes: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
     PENDING: { label: t("dashboard.card.statusPending"), classes: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
     REVOKED: { label: t("dashboard.card.statusRevoked"), classes: "bg-red-500/10 text-red-400 border-red-500/20" },
-  } as const;
+    OFFERED: { label: t("dashboard.tabs.status.offered") || "Offered", classes: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+    REJECTED: { label: t("dashboard.tabs.status.rejected") || "Rejected", classes: "bg-red-500/10 text-red-400 border-red-500/20" },
+  };
+
 
   const statusInfo = statusMap[credential.status] || {
     label: credential.status,

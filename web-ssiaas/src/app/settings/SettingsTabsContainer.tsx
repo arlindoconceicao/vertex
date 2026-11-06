@@ -18,6 +18,8 @@ type Props = {
     didPairedAt: string | null;
     issuerIdentifier?: string | null;
     pdfRetentionDays: number;
+    offerRetentionDays?: number;
+    rejectionRetentionDays?: number;
     bearerToken?: string | null;
     didDocument?: any;
     didIpfsCid?: string | null;
@@ -215,8 +217,8 @@ export default function SettingsTabsContainer({ user, gatewayUrl }: Props) {
         <div className="space-y-8">
           <RetentionSettingsComponent 
             initialDays={user.pdfRetentionDays} 
-            initialOfferDays={user.offerRetentionDays}
-            initialRejectionDays={user.rejectionRetentionDays}
+            initialOfferDays={user.offerRetentionDays ?? 15}
+            initialRejectionDays={user.rejectionRetentionDays ?? 15}
           />
         </div>
       ) : null}
